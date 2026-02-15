@@ -4,7 +4,10 @@
   "type": "module",
   "main": "src/server.js",
   "scripts": {
-    "dev": "node src/server.js"
+    "dev": "node src/server.js",
+    "postinstall": "prisma generate",
+    "build": "prisma generate",
+    "start": "node src/server.js"
   },
   "dependencies": {
     "@paddle/paddle-node-sdk": "^3.6.0",
