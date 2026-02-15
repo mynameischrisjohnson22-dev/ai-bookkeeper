@@ -2,13 +2,11 @@
   "name": "ai-bookkeeper-backend",
   "version": "1.0.0",
   "type": "module",
-  "main": "src/server.js",
-  "scripts": {
-    "dev": "node src/server.js",
-    "postinstall": "prisma generate",
-    "build": "prisma generate",
-    "start": "node src/server.js"
-  },
+  "main": "src/server.js","scripts": {
+  "dev": "node src/server.js",
+  "build": "prisma generate",
+  "start": "prisma generate && node src/server.js"
+},
   "dependencies": {
     "@paddle/paddle-node-sdk": "^3.6.0",
     "@prisma/client": "^5.9.1",
