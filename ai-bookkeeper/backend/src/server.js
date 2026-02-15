@@ -6,6 +6,14 @@ import app from "./app.js"
 import prisma from "./utils/prisma.js"
 import { seedDefaultCategories } from "./seed/categories.seed.js"
 
+app.get("/", (req, res) => {
+  res.json({
+    status: "AI Bookkeeper Backend Running",
+    environment: process.env.NODE_ENV || "production"
+  });
+});
+
+
 const PORT = process.env.PORT || 4000
 
 /* ================================
