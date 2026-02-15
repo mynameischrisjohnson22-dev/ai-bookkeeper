@@ -21,20 +21,16 @@ model User {
 }
 
 model Category {
-  id         String        @id @default(uuid())
-  userId     String?
-  parent     String
-  name       String
-  builtIn    Boolean       @default(false)
-  isRevenue  Boolean       @default(false)
-  createdAt  DateTime      @default(now())
-
-  user         User?         @relation(fields: [userId], references: [id])
-  transactions Transaction[]
-
-  @@index([parent])
-  @@index([userId])
+  id        String   @id @default(cuid())
+  name      String
+  parent    String
+  icon      String?
+  builtIn   Boolean
+  isRevenue Boolean
+  isCOGS    Boolean
+  createdAt DateTime @default(now())
 }
+
 
 model Transaction {
   id          String   @id @default(uuid())
