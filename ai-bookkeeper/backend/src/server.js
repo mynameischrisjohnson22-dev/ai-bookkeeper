@@ -6,38 +6,42 @@ import app from "./app.js"
 import prisma from "./utils/prisma.js"
 import { seedDefaultCategories } from "./seed/categories.seed.js"
 
+/* =================================
+   HEALTH CHECK ROUTE
+================================= */
+
 app.get("/", (req, res) => {
   res.json({
     status: "AI Bookkeeper Backend Running",
     environment: process.env.NODE_ENV || "production"
-  });
-});
+  })
+})
 
+/* =================================
+   START SERVER
+================================= */
 
 const PORT = process.env.PORT || 4000
 
-/* ================================
-   START SERVER PROPERLY
-================================ */
-
 async function startServer() {
   try {
-    // Ensure DB connection works
+    // Connect to database
     await prisma.$connect()
     console.log("✅ Database connected")
 
-    // Seed built-in categories (safe to run multiple times)
+    // Seed default categories (safe if already exists)
     await seedDefaultCategories()
     console.log("✅ Default categories seeded")
 
     // Start Express
-    app.listen(PORT, () => {
-      console.log(`🚀 Backend running on http://localhost:${PORT}`)
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Backend running on port ${PORT}`)
     })
 
-    /* ================================
+    /* =================================
        OPTIONAL CRON JOBS
     ================================= */
+
     if (process.env.ENABLE_CRON === "true") {
       const { runWeeklyDigest } = await import("./jobs/weeklyDigest.job.js")
 
@@ -49,10 +53,26 @@ async function startServer() {
       console.log("⏰ Cron jobs enabled")
     }
 
-  } catch (err) {
-    console.error("❌ Server failed to start:", err)
+  } catch (error) {
+    console.error("❌ Server failed to start:", error)
     process.exit(1)
   }
 }
+
+/* =================================
+   GRACEFUL SHUTDOWN
+================================= */
+
+process.on("SIGTERM", async () => {
+  console.log("🛑 SIGTERM received. Shutting down...")
+  await prisma.$disconnect()
+  process.exit(0)
+})
+
+process.on("SIGINT", async () => {
+  console.log("🛑 SIGINT received. Shutting down...")
+  await prisma.$disconnect()
+  process.exit(0)
+})
 
 startServer()
