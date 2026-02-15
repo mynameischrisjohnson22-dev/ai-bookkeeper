@@ -1,17 +1,20 @@
 import { Router } from "express"
-import prisma from "../prisma.js"
+import prisma from "../utils/prisma.js"
 import { authMiddleware } from "../middleware/auth.middleware.js"
 
 const router = Router()
 
+// Protect all routes
+router.use(authMiddleware)
+
 /* ======================================================
    GET ALL TRANSACTIONS
 ====================================================== */
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId: req.user.userId
+        userId: req.user.id
       },
       orderBy: {
         date: "desc"
@@ -26,11 +29,10 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 })
 
-
 /* ======================================================
    CREATE TRANSACTION
 ====================================================== */
-router.post("/", authMiddleware, async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { date, description, amount, categoryId } = req.body
 
@@ -44,7 +46,7 @@ router.post("/", authMiddleware, async (req, res) => {
         description,
         amount: Number(amount),
         categoryId: categoryId || null,
-        userId: req.user.userId
+        userId: req.user.id
       }
     })
 
@@ -56,18 +58,17 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 })
 
-
 /* ======================================================
    DELETE SINGLE TRANSACTION (USER SAFE)
 ====================================================== */
-router.delete("/:id", authMiddleware, async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params
 
     await prisma.transaction.deleteMany({
       where: {
         id,
-        userId: req.user.userId
+        userId: req.user.id
       }
     })
 
@@ -79,15 +80,14 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 })
 
-
 /* ======================================================
-   RESET BUSINESS (DELETE USER TRANSACTIONS)
+   RESET BUSINESS
 ====================================================== */
-router.delete("/business/reset", authMiddleware, async (req, res) => {
+router.delete("/business/reset", async (req, res) => {
   try {
     await prisma.transaction.deleteMany({
       where: {
-        userId: req.user.userId
+        userId: req.user.id
       }
     })
 

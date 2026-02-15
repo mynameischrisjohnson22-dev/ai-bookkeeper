@@ -2,12 +2,12 @@ import prisma from "../utils/prisma.js"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_key"
+const JWT_SECRET = process.env.JWT_SECRET
 const TOKEN_EXPIRES_IN = "7d"
 
-// =========================
-// SIGNUP
-// =========================
+/* =========================
+   SIGNUP
+========================= */
 export const signup = async (req, res) => {
   try {
     let { email, password } = req.body
@@ -22,11 +22,11 @@ export const signup = async (req, res) => {
       return res.status(400).json({ error: "Password must be at least 6 characters" })
     }
 
-    const existing = await prisma.user.findUnique({
-      where: { email },
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
     })
 
-    if (existing) {
+    if (existingUser) {
       return res.status(409).json({ error: "User already exists" })
     }
 
@@ -35,34 +35,37 @@ export const signup = async (req, res) => {
     const user = await prisma.user.create({
       data: {
         email,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        email: true,
-        createdAt: true,
-      },
+        password: hashedPassword
+      }
     })
 
     const token = jwt.sign(
-      { sub: user.id },
+      {
+        id: user.id,        // ✅ STANDARDIZED
+        email: user.email
+      },
       JWT_SECRET,
       { expiresIn: TOKEN_EXPIRES_IN }
     )
 
     res.status(201).json({
       token,
-      user,
+      user: {
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt
+      }
     })
+
   } catch (err) {
     console.error("Signup error:", err)
     res.status(500).json({ error: "Signup failed" })
   }
 }
 
-// =========================
-// LOGIN
-// =========================
+/* =========================
+   LOGIN
+========================= */
 export const login = async (req, res) => {
   try {
     let { email, password } = req.body
@@ -74,21 +77,24 @@ export const login = async (req, res) => {
     email = email.toLowerCase().trim()
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email }
     })
 
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password" })
     }
 
-    const valid = await bcrypt.compare(password, user.password)
+    const validPassword = await bcrypt.compare(password, user.password)
 
-    if (!valid) {
+    if (!validPassword) {
       return res.status(401).json({ error: "Invalid email or password" })
     }
 
     const token = jwt.sign(
-      { sub: user.id },
+      {
+        id: user.id,        // ✅ MUST MATCH middleware
+        email: user.email
+      },
       JWT_SECRET,
       { expiresIn: TOKEN_EXPIRES_IN }
     )
@@ -98,9 +104,10 @@ export const login = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        createdAt: user.createdAt,
-      },
+        createdAt: user.createdAt
+      }
     })
+
   } catch (err) {
     console.error("Login error:", err)
     res.status(500).json({ error: "Login failed" })

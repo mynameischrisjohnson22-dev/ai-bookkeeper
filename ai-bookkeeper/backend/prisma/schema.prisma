@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/* ======================================
+   USER
+====================================== */
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -16,7 +20,14 @@ model User {
 
   transactions Transaction[]
   categories   Category[]
+
+  @@index([email])
 }
+
+
+/* ======================================
+   CATEGORY (USER-LOCKED)
+====================================== */
 
 model Category {
   id        String   @id @default(cuid())
@@ -28,11 +39,19 @@ model Category {
   isCOGS    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
+
+  @@index([userId])
+  @@index([userId, name])
 }
+
+
+/* ======================================
+   TRANSACTION (STRICTLY USER-LOCKED)
+====================================== */
 
 model Transaction {
   id          String   @id @default(uuid())
@@ -43,10 +62,10 @@ model Transaction {
   categoryId  String?
   createdAt   DateTime @default(now())
 
-  user     User      @relation(fields: [userId], references: [id])
-  category Category? @relation(fields: [categoryId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  @@unique([id, userId])
   @@index([userId])
   @@index([userId, date])
+  @@index([categoryId])
 }
