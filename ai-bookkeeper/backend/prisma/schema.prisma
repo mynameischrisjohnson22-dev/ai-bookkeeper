@@ -41,12 +41,15 @@ model Category {
   createdAt DateTime @default(now())
   deletedAt DateTime?
 
-  userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // 🔥 OPTIONAL USER (important change)
+  userId String?
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
 
   @@index([userId])
+
+  // Only enforce uniqueness per user (null allowed for built-in)
   @@unique([userId, name])
 }
 
