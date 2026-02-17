@@ -2,6 +2,7 @@
   "name": "ai-bookkeeper-backend",
   "version": "1.0.0",
   "description": "AI Bookkeeper SaaS Backend",
+  "type": "module",
   "main": "src/server.js",
   "engines": {
     "node": ">=18"
