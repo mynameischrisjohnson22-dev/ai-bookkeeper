@@ -1,4 +1,11 @@
-import * as transactionService from "../services/transaction.service.js"
+import {
+  getTransactionsController,
+  createTransactionController,
+  deleteTransactionController,
+  resetBusinessController,
+  uploadTransactionsController
+} from "../controllers/transactions.controller.js"
+
 
 /* =========================================
    GET TRANSACTIONS
