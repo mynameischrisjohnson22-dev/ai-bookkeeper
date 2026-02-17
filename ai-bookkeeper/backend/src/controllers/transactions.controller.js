@@ -1,75 +1,88 @@
-import fs from "fs"
-import csv from "csv-parser"
-import prisma from "../utils/prisma.js"
+import * as transactionService from "../services/transaction.service.js"
 
-/* ===============================
-   UPLOAD CSV TRANSACTIONS
-=============================== */
-export const uploadTransactions = async (req, res) => {
+/* =========================================
+   GET TRANSACTIONS
+========================================= */
+export const getTransactionsController = async (req, res) => {
+  try {
+    const transactions = await transactionService.getAll(req.user.id)
+    res.json(transactions)
+  } catch (error) {
+    console.error("GET TRANSACTIONS ERROR:", error)
+    res.status(500).json({ error: "Failed to fetch transactions" })
+  }
+}
+
+
+/* =========================================
+   CREATE TRANSACTION
+========================================= */
+export const createTransactionController = async (req, res) => {
+  try {
+    const { date, description, amount } = req.body
+
+    if (!date || !description || amount === undefined) {
+      return res.status(400).json({ error: "Missing required fields" })
+    }
+
+    const transaction = await transactionService.create(
+      req.user.id,
+      req.body
+    )
+
+    res.json(transaction)
+  } catch (error) {
+    console.error("CREATE TRANSACTION ERROR:", error)
+    res.status(500).json({ error: "Failed to create transaction" })
+  }
+}
+
+
+/* =========================================
+   DELETE TRANSACTION (SOFT)
+========================================= */
+export const deleteTransactionController = async (req, res) => {
+  try {
+    await transactionService.softDelete(req.user.id, req.params.id)
+    res.json({ success: true })
+  } catch (error) {
+    console.error("DELETE TRANSACTION ERROR:", error)
+    res.status(500).json({ error: "Failed to delete transaction" })
+  }
+}
+
+
+/* =========================================
+   RESET BUSINESS
+========================================= */
+export const resetBusinessController = async (req, res) => {
+  try {
+    await transactionService.reset(req.user.id)
+    res.json({ success: true })
+  } catch (error) {
+    console.error("RESET BUSINESS ERROR:", error)
+    res.status(500).json({ error: "Failed to reset business data" })
+  }
+}
+
+
+/* =========================================
+   CSV UPLOAD
+========================================= */
+export const uploadTransactionsController = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" })
     }
 
-    const userId = req.user.id  // ✅ SECURE
+    const result = await transactionService.uploadCSV(
+      req.user.id,
+      req.file
+    )
 
-    const rows = []
-
-    fs.createReadStream(req.file.path)
-      .pipe(csv())
-      .on("data", (data) => rows.push(data))
-      .on("end", async () => {
-        try {
-          const saved = await Promise.all(
-            rows.map((tx) =>
-              prisma.transaction.create({
-                data: {
-                  userId,
-                  date: new Date(tx.Date || tx.date),
-                  description: tx.Description || tx.description,
-                  amount: parseFloat(tx.Amount || tx.amount),
-                }
-              })
-            )
-          )
-
-          fs.unlinkSync(req.file.path)
-
-          res.json({
-            success: true,
-            count: saved.length
-          })
-
-        } catch (dbErr) {
-          console.error("DB SAVE ERROR:", dbErr)
-          res.status(500).json({ error: "Failed to save transactions" })
-        }
-      })
-
-  } catch (err) {
-    console.error("UPLOAD ERROR:", err)
+    res.json(result)
+  } catch (error) {
+    console.error("UPLOAD ERROR:", error)
     res.status(500).json({ error: "CSV upload failed" })
-  }
-}
-
-/* ===============================
-   GET USER TRANSACTIONS
-=============================== */
-export const getTransactions = async (req, res) => {
-  try {
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        userId: req.user.id   // ✅ SECURE
-      },
-      orderBy: {
-        date: "desc"
-      }
-    })
-
-    res.json(transactions)
-
-  } catch (err) {
-    console.error("FETCH ERROR:", err)
-    res.status(500).json({ error: "Failed to fetch transactions" })
   }
 }

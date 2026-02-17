@@ -1,17 +1,20 @@
 {
   "name": "ai-bookkeeper-backend",
   "version": "1.0.0",
-  "type": "module",
+  "description": "AI Bookkeeper SaaS Backend",
   "main": "src/server.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "node src/server.js",
     "build": "prisma generate",
-    "start": "prisma generate && node src/server.js"
+    "start": "prisma generate && prisma migrate deploy && node src/server.js"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "@paddle/paddle-node-sdk": "^3.6.0",
-    "@prisma/client": "^5.9.1",
-    "bcrypt": "^5.1.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "csv-parser": "^3.0.0",
@@ -22,13 +25,9 @@
     "multer": "^1.4.5-lts.1",
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
-    "prisma": "^5.9.1",
-    "recharts": "^3.7.0",
     "stripe": "^14.25.0"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.24",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18"
+    "prisma": "^5.22.0"
   }
 }

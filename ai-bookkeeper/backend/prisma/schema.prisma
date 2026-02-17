@@ -7,9 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/* ======================================
+/* ============================
    USER
-====================================== */
+============================ */
 
 model User {
   id        String   @id @default(uuid())
@@ -17,17 +17,19 @@ model User {
   password  String
   plan      String   @default("basic")
   createdAt DateTime @default(now())
+  deletedAt DateTime?
 
   transactions Transaction[]
   categories   Category[]
+  audits       AuditLog[]
 
   @@index([email])
 }
 
 
-/* ======================================
-   CATEGORY (USER-LOCKED)
-====================================== */
+/* ============================
+   CATEGORY
+============================ */
 
 model Category {
   id        String   @id @default(cuid())
@@ -38,6 +40,7 @@ model Category {
   isRevenue Boolean  @default(false)
   isCOGS    Boolean  @default(false)
   createdAt DateTime @default(now())
+  deletedAt DateTime?
 
   userId String
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -45,13 +48,13 @@ model Category {
   transactions Transaction[]
 
   @@index([userId])
-  @@index([userId, name])
+  @@unique([userId, name])
 }
 
 
-/* ======================================
-   TRANSACTION (STRICTLY USER-LOCKED)
-====================================== */
+/* ============================
+   TRANSACTION
+============================ */
 
 model Transaction {
   id          String   @id @default(uuid())
@@ -61,11 +64,33 @@ model Transaction {
   amount      Float
   categoryId  String?
   createdAt   DateTime @default(now())
+  deletedAt   DateTime?
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([userId, deletedAt])
   @@index([userId, date])
   @@index([categoryId])
+}
+
+
+/* ============================
+   AUDIT LOG
+============================ */
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
 }
