@@ -16,7 +16,7 @@ import actionsRoutes from "./routes/actions.routes.js"
 const app = express()
 
 /* ======================================================
-   PRODUCTION CORS CONFIG (FINAL FIX)
+   CORS CONFIG
 ====================================================== */
 
 const allowedOrigins = [
@@ -26,31 +26,29 @@ const allowedOrigins = [
   "https://www.albdy.com"
 ]
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true)
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow non-browser requests (like curl, Postman)
+      if (!origin) return callback(null, true)
 
-    // Allow ALL Vercel deployments (preview + prod)
-    if (origin.includes(".vercel.app")) {
-      return callback(null, true)
-    }
+      // Allow all Vercel preview + production deployments
+      if (origin.endsWith(".vercel.app")) {
+        return callback(null, true)
+      }
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true)
-    }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
 
-    return callback(new Error("Not allowed by CORS"))
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}
-
-// Apply CORS
-app.use(cors(corsOptions))
-
-// 🔥 Explicitly handle preflight requests
-app.options("*", cors(corsOptions))
+      console.log("❌ Blocked by CORS:", origin)
+      return callback(new Error("Not allowed by CORS"))
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+)
 
 /* ---------- MIDDLEWARE ---------- */
 app.use(express.json())
@@ -58,14 +56,14 @@ app.use(morgan("dev"))
 
 /* ---------- ROUTES ---------- */
 app.use("/api/auth", authRoutes)
-app.use("/transactions", transactionRoutes)
-app.use("/categories", categoriesRoutes)
-app.use("/metrics", metricsRoutes)
-app.use("/ai", aiRoutes)
-app.use("/cfo", cfoRoutes)
-app.use("/stripe", stripeRoutes)
-app.use("/reports", reportRoutes)
-app.use("/actions", actionsRoutes)
+app.use("/api/transactions", transactionRoutes)
+app.use("/api/categories", categoriesRoutes)
+app.use("/api/metrics", metricsRoutes)
+app.use("/api/ai", aiRoutes)
+app.use("/api/cfo", cfoRoutes)
+app.use("/api/stripe", stripeRoutes)
+app.use("/api/reports", reportRoutes)
+app.use("/api/actions", actionsRoutes)
 
 /* ---------- HEALTH ---------- */
 app.get("/health", (_req, res) => {
