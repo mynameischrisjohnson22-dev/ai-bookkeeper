@@ -85,7 +85,7 @@ export default function Dashboard() {
     await loadData()
   }
 
-  const deleteCategory = async (id: string) => {
+const deleteCategory = async (id) => {
     await api.delete(`/categories/${id}`)
     await loadData()
   }
