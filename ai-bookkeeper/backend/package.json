@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "description": "AI Bookkeeper SaaS Backend",
   "main": "src/server.js",
-  "type": "module",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
     "dev": "node src/server.js",
     "build": "prisma generate",
-    "start": "prisma generate && prisma migrate deploy && node src/server.js"
+    "start": "node src/server.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
