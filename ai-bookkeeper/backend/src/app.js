@@ -16,7 +16,7 @@ import actionsRoutes from "./routes/actions.routes.js"
 const app = express()
 
 /* ======================================================
-   CORS CONFIG (PRODUCTION SAFE)
+   PRODUCTION CORS CONFIG (FINAL FIX)
 ====================================================== */
 
 const allowedOrigins = [
@@ -26,29 +26,33 @@ const allowedOrigins = [
   "https://www.albdy.com"
 ]
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true)
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true)
 
-      // Allow all Vercel preview deployments
-      if (origin.endsWith(".vercel.app")) {
-        return callback(null, true)
-      }
+    // Allow ALL Vercel deployments (preview + prod)
+    if (origin.includes(".vercel.app")) {
+      return callback(null, true)
+    }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true)
-      }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
 
-      callback(new Error("Not allowed by CORS"))
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
-)
+    return callback(new Error("Not allowed by CORS"))
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}
 
+// Apply CORS
+app.use(cors(corsOptions))
 
+// 🔥 Explicitly handle preflight requests
+app.options("*", cors(corsOptions))
+
+/* ---------- MIDDLEWARE ---------- */
 app.use(express.json())
 app.use(morgan("dev"))
 
