@@ -82,13 +82,17 @@ export const login = async (req, res) => {
 
     email = email.toLowerCase().trim()
 
-    const user = await prisma.user.findUnique({
-      where: { email }
-    })
+console.log("Typed password:", password)
+console.log("Hashed password:", user.password)
 
-    if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" })
-    }
+const validPassword = await bcrypt.compare(password, user.password)
+
+console.log("Password match:", validPassword)
+
+if (!validPassword) {
+  return res.status(401).json({ error: "Invalid email or password" })
+}
+
 
     const passwordMatch = await bcrypt.compare(password, user.password)
 
