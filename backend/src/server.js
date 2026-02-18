@@ -20,12 +20,12 @@ const ENABLE_CRON = process.env.ENABLE_CRON === "true"
 app.get("/", (req, res) => {
   res.json({
     status: "AI Bookkeeper Backend Running",
-    environment: process.env.NODE_ENV || "production"
+    environment: process.env.NODE_ENV || "production",
   })
 })
 
 /* =================================
-   SERVER INSTANCE
+   SERVER
 ================================= */
 const server = http.createServer(app)
 
@@ -34,30 +34,55 @@ const server = http.createServer(app)
 ================================= */
 async function startServer() {
   try {
+    console.log("🔄 Starting backend...")
+
+    // Connect DB
     await prisma.$connect()
     console.log("✅ Database connected")
 
-    await seedDefaultCategories()
-    console.log("✅ Default categories seeded")
+    // Seed categories safely
+    try {
+      await seedDefaultCategories()
+      console.log("✅ Default categories seeded")
+    } catch (seedError) {
+      console.error("⚠️ Seeding failed (continuing):", seedError)
+    }
 
+    // Start server
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Backend running on port ${PORT}`)
     })
 
+    // Cron (optional)
     if (ENABLE_CRON) {
       console.log("⏰ Cron jobs enabled")
 
       cron.schedule("*/5 * * * *", async () => {
-        console.log("Running recurring engine...")
-        await runRecurringEngine()
+        try {
+          console.log("Running recurring engine...")
+          await runRecurringEngine()
+        } catch (cronError) {
+          console.error("❌ Cron error:", cronError)
+        }
       })
     }
 
   } catch (error) {
-    console.error("❌ Server failed to start:", error)
+    console.error("❌ Critical startup failure:", error)
     process.exit(1)
   }
 }
+
+/* =================================
+   GLOBAL ERROR HANDLING
+================================= */
+process.on("unhandledRejection", (reason) => {
+  console.error("🔥 Unhandled Rejection:", reason)
+})
+
+process.on("uncaughtException", (err) => {
+  console.error("🔥 Uncaught Exception:", err)
+})
 
 /* =================================
    GRACEFUL SHUTDOWN
@@ -65,14 +90,16 @@ async function startServer() {
 async function shutdown() {
   console.log("🛑 Shutting down gracefully...")
 
-  await prisma.$disconnect()
+  try {
+    await prisma.$disconnect()
+  } catch (e) {
+    console.error("Error during DB disconnect:", e)
+  }
 
   server.close(() => {
     process.exit(0)
   })
 }
-
-// redeploy trigger
 
 process.on("SIGTERM", shutdown)
 process.on("SIGINT", shutdown)
