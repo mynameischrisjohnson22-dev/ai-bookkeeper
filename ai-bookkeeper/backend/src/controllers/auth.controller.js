@@ -3,6 +3,11 @@ import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 
 const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is not defined in environment variables")
+}
+
 const TOKEN_EXPIRES_IN = "7d"
 
 /* =========================
@@ -41,14 +46,14 @@ export const signup = async (req, res) => {
 
     const token = jwt.sign(
       {
-        id: user.id,        // ✅ STANDARDIZED
+        id: user.id,
         email: user.email
       },
       JWT_SECRET,
       { expiresIn: TOKEN_EXPIRES_IN }
     )
 
-    res.status(201).json({
+    return res.status(201).json({
       token,
       user: {
         id: user.id,
@@ -59,9 +64,10 @@ export const signup = async (req, res) => {
 
   } catch (err) {
     console.error("Signup error:", err)
-    res.status(500).json({ error: "Signup failed" })
+    return res.status(500).json({ error: "Signup failed" })
   }
 }
+
 
 /* =========================
    LOGIN
@@ -84,22 +90,22 @@ export const login = async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" })
     }
 
-    const validPassword = await bcrypt.compare(password, user.password)
+    const passwordMatch = await bcrypt.compare(password, user.password)
 
-    if (!validPassword) {
+    if (!passwordMatch) {
       return res.status(401).json({ error: "Invalid email or password" })
     }
 
     const token = jwt.sign(
       {
-        id: user.id,        // ✅ MUST MATCH middleware
+        id: user.id,
         email: user.email
       },
       JWT_SECRET,
       { expiresIn: TOKEN_EXPIRES_IN }
     )
 
-    res.json({
+    return res.status(200).json({
       token,
       user: {
         id: user.id,
@@ -110,6 +116,6 @@ export const login = async (req, res) => {
 
   } catch (err) {
     console.error("Login error:", err)
-    res.status(500).json({ error: "Login failed" })
+    return res.status(500).json({ error: "Login failed" })
   }
 }
