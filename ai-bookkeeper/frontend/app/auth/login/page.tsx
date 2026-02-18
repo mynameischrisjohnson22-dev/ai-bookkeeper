@@ -1,38 +1,56 @@
 "use client"
 
 import { useState } from "react"
-import axios from "axios"
 import { useRouter } from "next/navigation"
+import api from "@/lib/api"
+import type { AxiosError } from "axios"
 
-const API = "http://localhost:4000"
+type LoginResponse = {
+  token: string
+  user: {
+    id: string
+  }
+}
+
+type ApiError = {
+  error?: string
+}
 
 export default function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const login = async () => {
+  const [email, setEmail] = useState<string>("")
+  const [password, setPassword] = useState<string>("")
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string>("")
+
+  const handleLogin = async () => {
+    setError("")
+
     if (!email || !password) {
-      alert("Enter email and password")
+      setError("Please enter email and password")
       return
     }
 
     try {
       setLoading(true)
 
-      const res = await axios.post(`${API}/api/auth/login`, {
-        email,
-        password
-      })
+      const { data } = await api.post<LoginResponse>(
+        "/api/auth/login",
+        { email, password }
+      )
 
-      localStorage.setItem("token", res.data.token)
-      localStorage.setItem("userId", res.data.user.id)
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("userId", data.user.id)
 
       router.push("/dashboard")
-    } catch (err: any) {
-      console.error("Login error:", err.response?.data || err.message)
-      alert(err.response?.data?.error || "Login failed")
+    } catch (err) {
+      const error = err as AxiosError<ApiError>
+
+      setError(
+        error.response?.data?.error ??
+        "Login failed. Please try again."
+      )
     } finally {
       setLoading(false)
     }
@@ -42,11 +60,15 @@ export default function Login() {
     <div className="p-10 max-w-md mx-auto space-y-4">
       <h1 className="text-2xl font-bold">Login</h1>
 
+      {error && (
+        <div className="text-red-500 text-sm">{error}</div>
+      )}
+
       <input
         className="border p-2 w-full"
         placeholder="Email"
         value={email}
-        onChange={e => setEmail(e.target.value)}
+        onChange={(e) => setEmail(e.target.value)}
       />
 
       <input
@@ -54,11 +76,11 @@ export default function Login() {
         type="password"
         placeholder="Password"
         value={password}
-        onChange={e => setPassword(e.target.value)}
+        onChange={(e) => setPassword(e.target.value)}
       />
 
       <button
-        onClick={login}
+        onClick={handleLogin}
         disabled={loading}
         className="bg-black text-white px-4 py-2 rounded w-full disabled:opacity-50"
       >
