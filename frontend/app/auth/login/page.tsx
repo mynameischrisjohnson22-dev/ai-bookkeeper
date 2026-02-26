@@ -16,18 +16,18 @@ type ApiError = {
   error?: string
 }
 
-export default function Login() {
+export default function LoginPage() {
   const router = useRouter()
 
-  const [email, setEmail] = useState<string>("")
-  const [password, setPassword] = useState<string>("")
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string>("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleLogin = async () => {
     setError("")
 
-    if (!email || !password) {
+    if (!email.trim() || !password.trim()) {
       setError("Please enter email and password")
       return
     }
@@ -35,21 +35,38 @@ export default function Login() {
     try {
       setLoading(true)
 
-      const { data } = await api.post<LoginResponse>(
+      const response = await api.post<LoginResponse>(
         "/api/auth/login",
-        { email, password }
+        {
+          email: email.trim(),
+          password: password.trim(),
+        }
       )
 
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("userId", data.user.id)
+      const token = response.data?.token
+      const userId = response.data?.user?.id
 
+      if (!token) {
+        throw new Error("No token returned from server")
+      }
+
+      // Save auth
+      localStorage.setItem("token", token)
+
+      if (userId) {
+        localStorage.setItem("userId", userId)
+      }
+
+      // Force refresh so app picks up auth state
       router.push("/dashboard")
+      router.refresh()
+
     } catch (err) {
-      const error = err as AxiosError<ApiError>
+      const axiosError = err as AxiosError<ApiError>
 
       setError(
-        error.response?.data?.error ??
-        "Login failed. Please try again."
+        axiosError.response?.data?.error ||
+        "Invalid email or password"
       )
     } finally {
       setLoading(false)
@@ -57,35 +74,41 @@ export default function Login() {
   }
 
   return (
-    <div className="p-10 max-w-md mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Login</h1>
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-full max-w-md space-y-6 p-8 border rounded-lg shadow-sm">
+        <h1 className="text-2xl font-bold text-center">
+          Login
+        </h1>
 
-      {error && (
-        <div className="text-red-500 text-sm">{error}</div>
-      )}
+        {error && (
+          <div className="text-red-500 text-sm text-center">
+            {error}
+          </div>
+        )}
 
-      <input
-        className="border p-2 w-full"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <input
+          className="border p-3 w-full rounded"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-      <input
-        className="border p-2 w-full"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          className="border p-3 w-full rounded"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <button
-        onClick={handleLogin}
-        disabled={loading}
-        className="bg-black text-white px-4 py-2 rounded w-full disabled:opacity-50"
-      >
-        {loading ? "Logging in..." : "Login"}
-      </button>
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          className="bg-black text-white px-4 py-3 rounded w-full disabled:opacity-50"
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </div>
     </div>
   )
 }
