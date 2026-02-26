@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import api from "@/lib/api"
 import ChatBox from "@/components/ChatBox"
 import {
@@ -23,7 +24,6 @@ type Transaction = {
 type Category = {
   id: string
   name: string
-  parent: string
   isRevenue: boolean
 }
 
@@ -35,6 +35,8 @@ type Tab =
   | "askai"
 
 export default function Dashboard() {
+  const router = useRouter()
+
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [values, setValues] = useState<Record<string, string>>({})
@@ -45,13 +47,13 @@ export default function Dashboard() {
   const [newCategoryType, setNewCategoryType] =
     useState<"Revenue" | "Expense">("Expense")
 
-  /* ================= LOAD ================= */
+  /* ================= AUTH + LOAD ================= */
 
   const loadData = async () => {
     try {
       const [txRes, catRes] = await Promise.all([
-        api.get("/transactions"),
-        api.get("/categories"),
+        api.get("/api/transactions"),
+        api.get("/api/categories"),
       ])
 
       setTransactions(txRes.data || [])
@@ -64,7 +66,7 @@ export default function Dashboard() {
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (!token) {
-      window.location.href = "/auth/login"
+      router.push("/auth/login")
     } else {
       loadData()
     }
@@ -75,9 +77,8 @@ export default function Dashboard() {
   const createCategory = async () => {
     if (!newCategoryName.trim()) return
 
-    await api.post("/categories", {
+    await api.post("/api/categories", {
       name: newCategoryName,
-      parent: newCategoryType,
       isRevenue: newCategoryType === "Revenue",
     })
 
@@ -86,7 +87,7 @@ export default function Dashboard() {
   }
 
   const deleteCategory = async (id: string) => {
-    await api.delete(`/categories/${id}`)
+    await api.delete(`/api/categories/${id}`)
     await loadData()
   }
 
@@ -112,7 +113,7 @@ export default function Dashboard() {
       .filter(Boolean)
 
     await Promise.all(
-      entries.map((entry) => api.post("/transactions", entry))
+      entries.map((entry) => api.post("/api/transactions", entry))
     )
 
     setValues({})
@@ -121,7 +122,7 @@ export default function Dashboard() {
   }
 
   const resetBusiness = async () => {
-    await api.delete("/transactions/business/reset")
+    await api.delete("/api/transactions/business/reset")
     await loadData()
   }
 
@@ -195,80 +196,70 @@ export default function Dashboard() {
           {tabs.find((t) => t.key === activeTab)?.label}
         </h1>
 
-        {/* ================= OVERVIEW ================= */}
-        {activeTab === "dashboard" && (
-          <>
-            <div className="grid md:grid-cols-3 gap-8">
-              <StatCard label="Income" value={income} />
-              <StatCard label="Expenses" value={Math.abs(expenses)} />
-              <StatCard label="Balance" value={balance} />
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl border shadow-sm">
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="income" stroke="#16a34a" strokeWidth={3} dot={false} />
-                  <Line type="monotone" dataKey="expense" stroke="#dc2626" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </>
-        )}
-
-        {/* ================= TRANSACTIONS ================= */}
-        {activeTab === "transactions" && (
-          <div className="space-y-6 max-w-3xl">
-            <input
-              placeholder="Search transactions"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border px-4 py-2 rounded-md w-full"
-            />
-
-            {filteredTransactions.map((tx) => (
-              <div key={tx.id} className="p-4 border rounded-lg flex justify-between">
-                <div>
-                  <div className="font-medium">{tx.description}</div>
-                  <div className="text-sm text-slate-500">
-                    {new Date(tx.date).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className={tx.amount > 0 ? "text-green-600" : "text-red-600"}>
-                  ${tx.amount.toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ================= BUSINESS ================= */}
+        {/* ================= BUSINESS TAB ================= */}
         {activeTab === "business" && (
-          <div className="space-y-10 max-w-5xl">
+          <div className="space-y-10 max-w-6xl">
 
             {/* REVENUE */}
-            <SectionGrid
-              title="Revenue"
-              categories={categories.filter((c) => c.isRevenue)}
-              values={values}
-              setValues={setValues}
-              deleteCategory={deleteCategory}
-            />
+            <div>
+              <h2 className="text-lg font-semibold mb-3">Revenue</h2>
+              <div className="flex flex-wrap gap-3 border p-4 rounded-md bg-slate-50">
+                {categories.filter(c => c.isRevenue).map(cat => (
+                  <div key={cat.id} className="flex items-center gap-2 border px-3 py-2 rounded-md bg-white">
+                    <span className="text-sm">{cat.name}</span>
+                    <input
+                      type="number"
+                      value={values[cat.id] ?? ""}
+                      onChange={(e) =>
+                        setValues(prev => ({
+                          ...prev,
+                          [cat.id]: e.target.value
+                        }))
+                      }
+                      className="w-24 border p-1 rounded text-sm"
+                    />
+                    <button
+                      onClick={() => deleteCategory(cat.id)}
+                      className="text-red-600 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* EXPENSES */}
-            <SectionGrid
-              title="Expenses"
-              categories={categories.filter((c) => !c.isRevenue)}
-              values={values}
-              setValues={setValues}
-              deleteCategory={deleteCategory}
-            />
+            <div>
+              <h2 className="text-lg font-semibold mb-3">Expenses</h2>
+              <div className="flex flex-wrap gap-3 border p-4 rounded-md bg-slate-50">
+                {categories.filter(c => !c.isRevenue).map(cat => (
+                  <div key={cat.id} className="flex items-center gap-2 border px-3 py-2 rounded-md bg-white">
+                    <span className="text-sm">{cat.name}</span>
+                    <input
+                      type="number"
+                      value={values[cat.id] ?? ""}
+                      onChange={(e) =>
+                        setValues(prev => ({
+                          ...prev,
+                          [cat.id]: e.target.value
+                        }))
+                      }
+                      className="w-24 border p-1 rounded text-sm"
+                    />
+                    <button
+                      onClick={() => deleteCategory(cat.id)}
+                      className="text-red-600 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* CREATE CATEGORY */}
-            <div className="border-t pt-8 space-y-4">
+            <div className="border-t pt-6 space-y-4">
               <h3 className="text-lg font-semibold">Create Category</h3>
               <div className="flex gap-4">
                 <input
@@ -296,7 +287,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* SAVE / REMOVE */}
+            {/* SAVE / RESET */}
             <div className="flex gap-4">
               <button
                 onClick={saveBusiness}
@@ -311,75 +302,11 @@ export default function Dashboard() {
                 Remove Business Numbers
               </button>
             </div>
-          </div>
-        )}
 
-        {/* ================= BILLING ================= */}
-        {activeTab === "billing" && (
-          <div className="p-8 border rounded-xl">
-            Billing system coming soon.
-          </div>
-        )}
-
-        {/* ================= ASK AI ================= */}
-        {activeTab === "askai" && (
-          <div className="p-8 border rounded-xl">
-            <ChatBox />
           </div>
         )}
 
       </main>
-    </div>
-  )
-}
-
-/* ================= HELPER COMPONENTS ================= */
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-white p-8 rounded-xl border shadow-sm">
-      <div className="text-sm text-slate-500">{label}</div>
-      <div className="text-2xl font-semibold">
-        ${value.toFixed(2)}
-      </div>
-    </div>
-  )
-}
-
-function SectionGrid({
-  title,
-  categories,
-  values,
-  setValues,
-  deleteCategory,
-}: any) {
-  return (
-    <div>
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
-      <div className="grid md:grid-cols-3 gap-6">
-        {categories.map((cat: any) => (
-          <div key={cat.id} className="border p-4 rounded-lg space-y-2">
-            <label className="text-sm text-slate-500">{cat.name}</label>
-            <input
-              type="number"
-              value={values[cat.id] ?? ""}
-              onChange={(e) =>
-                setValues((prev: any) => ({
-                  ...prev,
-                  [cat.id]: e.target.value,
-                }))
-              }
-              className="w-full border p-2 rounded-md"
-            />
-            <button
-              onClick={() => deleteCategory(cat.id)}
-              className="text-sm text-red-600"
-            >
-              Delete Category
-            </button>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
