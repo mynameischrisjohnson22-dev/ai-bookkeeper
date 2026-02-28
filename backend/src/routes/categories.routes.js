@@ -1,16 +1,21 @@
 import { Router } from "express"
-import prisma from "../prisma.js"
-import { authMiddleware } from "../middleware/auth.middleware.js"
+import prisma from "../utils/prisma.js"
+import authMiddleware from "../middleware/auth.middleware.js"
 
 const router = Router()
 
-// GET categories
+/* ================================
+   GET CATEGORIES
+================================ */
+
 router.get("/", authMiddleware, async (req, res) => {
   try {
+    const userId = req.user.id
+
     const categories = await prisma.category.findMany({
       where: {
         OR: [
-          { userId: req.user.userId },
+          { userId },
           { builtIn: true }
         ]
       },
@@ -18,45 +23,60 @@ router.get("/", authMiddleware, async (req, res) => {
     })
 
     res.json(categories)
-  } catch (err) {
+  } catch (error) {
+    console.error("GET CATEGORIES ERROR:", error)
     res.status(500).json({ error: "Failed to fetch categories" })
   }
 })
 
-// CREATE category
+/* ================================
+   CREATE CATEGORY
+================================ */
+
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { name, parent, isRevenue } = req.body
+    const userId = req.user.id
+    const { name, parent = null, isRevenue } = req.body
+
+    if (!name) {
+      return res.status(400).json({ error: "Category name required" })
+    }
 
     const category = await prisma.category.create({
       data: {
         name,
         parent,
-        isRevenue,
-        userId: req.user.userId
+        isRevenue: Boolean(isRevenue),
+        userId
       }
     })
 
-    res.json(category)
-  } catch (err) {
+    res.status(201).json(category)
+  } catch (error) {
+    console.error("CREATE CATEGORY ERROR:", error)
     res.status(500).json({ error: "Failed to create category" })
   }
 })
 
-// DELETE category (must belong to user)
+/* ================================
+   DELETE CATEGORY
+================================ */
+
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
+    const userId = req.user.id
     const { id } = req.params
 
     await prisma.category.deleteMany({
       where: {
         id,
-        userId: req.user.userId
+        userId
       }
     })
 
     res.json({ success: true })
-  } catch (err) {
+  } catch (error) {
+    console.error("DELETE CATEGORY ERROR:", error)
     res.status(500).json({ error: "Failed to delete category" })
   }
 })

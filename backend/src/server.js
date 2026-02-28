@@ -5,13 +5,11 @@ import http from "http"
 import cron from "node-cron"
 import app from "./app.js"
 import prisma from "./utils/prisma.js"
+import categoriesRoutes from "./routes/categories.routes.js"
 import { seedDefaultCategories } from "./seed/categories.seed.js"
 import { runRecurringEngine } from "./jobs/recurring.engine.js"
 
-/* =================================
-   CONFIG
-================================= */
-const PORT = process.env.PORT || 8080
+const PORT = process.env.PORT || 3000
 const ENABLE_CRON = process.env.ENABLE_CRON === "true"
 
 /* =================================
@@ -25,6 +23,11 @@ app.get("/", (req, res) => {
 })
 
 /* =================================
+   ROUTES
+================================= */
+app.use("/api/categories", categoriesRoutes)
+
+/* =================================
    SERVER
 ================================= */
 const server = http.createServer(app)
@@ -36,11 +39,9 @@ async function startServer() {
   try {
     console.log("🔄 Starting backend...")
 
-    // Connect DB
     await prisma.$connect()
     console.log("✅ Database connected")
 
-    // Seed categories safely
     try {
       await seedDefaultCategories()
       console.log("✅ Default categories seeded")
@@ -48,12 +49,10 @@ async function startServer() {
       console.error("⚠️ Seeding failed (continuing):", seedError)
     }
 
-    // Start server
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Backend running on port ${PORT}`)
     })
 
-    // Cron (optional)
     if (ENABLE_CRON) {
       console.log("⏰ Cron jobs enabled")
 
@@ -96,9 +95,7 @@ async function shutdown() {
     console.error("Error during DB disconnect:", e)
   }
 
-  server.close(() => {
-    process.exit(0)
-  })
+  server.close(() => process.exit(0))
 }
 
 process.on("SIGTERM", shutdown)
