@@ -16,24 +16,23 @@ import actionsRoutes from "./routes/actions.routes.js"
 const app = express()
 
 /* ======================================================
-   CORS CONFIG
+   CORS (SIMPLIFIED + SAFE)
 ====================================================== */
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://ai-bookkeeper-frontend-alpha.vercel.app",
   "https://albdy.com",
-  "https://www.albdy.com"
+  "https://www.albdy.com",
 ]
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow non-browser requests (like curl, Postman)
+    origin: (origin, callback) => {
+      // Allow server-to-server or Postman
       if (!origin) return callback(null, true)
 
-      // Allow all Vercel preview + production deployments
-      if (origin.endsWith(".vercel.app")) {
+      // Allow all Vercel deployments automatically
+      if (origin.includes(".vercel.app")) {
         return callback(null, true)
       }
 
@@ -41,14 +40,19 @@ app.use(
         return callback(null, true)
       }
 
-      console.log("❌ Blocked by CORS:", origin)
-      return callback(new Error("Not allowed by CORS"))
+      console.log("❌ CORS blocked:", origin)
+
+      // IMPORTANT: Do NOT throw error (causes 502)
+      return callback(null, false)
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 )
+
+/* ---- VERY IMPORTANT FOR PREFLIGHT ---- */
+app.options("*", cors())
 
 /* ---------- MIDDLEWARE ---------- */
 app.use(express.json())
