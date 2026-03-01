@@ -7,9 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// =====================================================
+///////////////////////////////////////////////////////
 // USER
-// =====================================================
+///////////////////////////////////////////////////////
 
 model User {
   id        String   @id @default(uuid())
@@ -26,9 +26,9 @@ model User {
   @@index([email])
 }
 
-// =====================================================
+///////////////////////////////////////////////////////
 // CATEGORY
-// =====================================================
+///////////////////////////////////////////////////////
 
 model Category {
   id        String   @id @default(cuid())
@@ -41,21 +41,19 @@ model Category {
   createdAt DateTime @default(now())
   deletedAt DateTime?
 
-  // 🔥 OPTIONAL USER (important change)
+  // 👇 Make this REQUIRED for user-created categories
   userId String?
   user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
 
   @@index([userId])
-
-  // Only enforce uniqueness per user (null allowed for built-in)
   @@unique([userId, name])
 }
 
-// =====================================================
+///////////////////////////////////////////////////////
 // TRANSACTION
-// =====================================================
+///////////////////////////////////////////////////////
 
 model Transaction {
   id          String   @id @default(uuid())
@@ -76,9 +74,9 @@ model Transaction {
   @@index([categoryId])
 }
 
-// =====================================================
+///////////////////////////////////////////////////////
 // AUDIT LOG
-// =====================================================
+///////////////////////////////////////////////////////
 
 model AuditLog {
   id        String   @id @default(uuid())
