@@ -6,18 +6,26 @@ import {
   deleteTransactionController,
   resetBusinessController,
   uploadTransactionsController
-} from "../controllers/transactions.controller.js" // ✅ plural
+} from "../controllers/transactions.controller.js"
 
 const router = Router()
 
-// 🔐 Protect all routes
+// 🔐 Protect ALL transaction routes
 router.use(authMiddleware)
 
-// Routes
+// GET all transactions
 router.get("/", getTransactionsController)
+
+// CREATE transaction (used by Save Business Numbers)
 router.post("/", createTransactionController)
+
+// DELETE single transaction
 router.delete("/:id", deleteTransactionController)
+
+// RESET business transactions
 router.delete("/business/reset", resetBusinessController)
+
+// Upload transactions
 router.post("/upload", uploadTransactionsController)
 
 export default router

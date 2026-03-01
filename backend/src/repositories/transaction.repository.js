@@ -3,10 +3,15 @@ import prisma from "../utils/prisma.js"
 /* ================= CREATE ================= */
 
 export const create = async (userId, data) => {
+  const { date, description, amount, categoryId } = data
+
   return prisma.transaction.create({
     data: {
       userId,
-      ...data,
+      date: new Date(date),            // 🔥 force correct Date type
+      description: description?.trim(),
+      amount: Number(amount),          // 🔥 force number
+      categoryId: categoryId || null   // 🔥 prevent undefined
     },
   })
 }
@@ -23,16 +28,17 @@ export const getAll = async (userId) => {
 /* ================= DELETE ================= */
 
 export const remove = async (userId, id) => {
-  return prisma.transaction.delete({
+  return prisma.transaction.deleteMany({
     where: {
       id,
+      userId,   // 🔥 prevent deleting other user's data
     },
   })
 }
 
 /* ================= RESET BUSINESS ================= */
 
-export const resetBusiness = async (userId) => {
+export const reset = async (userId) => {
   return prisma.transaction.deleteMany({
     where: {
       userId,

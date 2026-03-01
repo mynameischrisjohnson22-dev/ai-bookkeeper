@@ -4,18 +4,19 @@ import { authMiddleware } from "../middleware/auth.middleware.js"
 
 const router = Router()
 
-/* ================================
-   GET CATEGORIES
-================================ */
+// 🔐 Protect ALL category routes
+router.use(authMiddleware)
 
-router.get("/", authMiddleware, async (req, res) => {
+///////////////////////////////////////////////////////
+// GET categories
+///////////////////////////////////////////////////////
+
+router.get("/", async (req, res) => {
   try {
-    const userId = req.user.id
-
     const categories = await prisma.category.findMany({
       where: {
         OR: [
-          { userId },
+          { userId: req.user.id },
           { builtIn: true }
         ]
       },
@@ -23,60 +24,57 @@ router.get("/", authMiddleware, async (req, res) => {
     })
 
     res.json(categories)
-  } catch (error) {
-    console.error("GET CATEGORIES ERROR:", error)
+  } catch (err) {
+    console.error("GET categories error:", err)
     res.status(500).json({ error: "Failed to fetch categories" })
   }
 })
 
-/* ================================
-   CREATE CATEGORY
-================================ */
+///////////////////////////////////////////////////////
+// CREATE category
+///////////////////////////////////////////////////////
 
-router.post("/", authMiddleware, async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const userId = req.user.id
-    const { name, parent = null, isRevenue } = req.body
+    const { name, isRevenue } = req.body
 
-    if (!name) {
+    if (!name || !name.trim()) {
       return res.status(400).json({ error: "Category name required" })
     }
 
     const category = await prisma.category.create({
       data: {
-        name,
-        parent,
+        name: name.trim(),
         isRevenue: Boolean(isRevenue),
-        userId
+        userId: req.user.id
       }
     })
 
     res.status(201).json(category)
-  } catch (error) {
-    console.error("CREATE CATEGORY ERROR:", error)
+
+  } catch (err) {
+    console.error("CREATE category error:", err)
     res.status(500).json({ error: "Failed to create category" })
   }
 })
 
-/* ================================
-   DELETE CATEGORY
-================================ */
+///////////////////////////////////////////////////////
+// DELETE category
+///////////////////////////////////////////////////////
 
-router.delete("/:id", authMiddleware, async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
-    const userId = req.user.id
-    const { id } = req.params
-
     await prisma.category.deleteMany({
       where: {
-        id,
-        userId
+        id: req.params.id,
+        userId: req.user.id
       }
     })
 
     res.json({ success: true })
-  } catch (error) {
-    console.error("DELETE CATEGORY ERROR:", error)
+
+  } catch (err) {
+    console.error("DELETE category error:", err)
     res.status(500).json({ error: "Failed to delete category" })
   }
 })
