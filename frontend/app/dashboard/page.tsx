@@ -41,7 +41,6 @@ export default function Dashboard() {
   const [categories, setCategories] = useState<Category[]>([])
   const [values, setValues] = useState<Record<string, string>>({})
   const [activeTab, setActiveTab] = useState<Tab>("dashboard")
-  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [search, setSearch] = useState("")
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryType, setNewCategoryType] =
@@ -57,7 +56,15 @@ export default function Dashboard() {
       ])
 
       setTransactions(txRes.data || [])
-      setCategories(catRes.data || [])
+
+      // 🔥 Normalize boolean properly
+      const normalized = (catRes.data || []).map((c: any) => ({
+        ...c,
+        isRevenue: Boolean(c.isRevenue),
+      }))
+
+      setCategories(normalized)
+
     } catch (err) {
       console.error("Failed to load data", err)
     }
@@ -66,7 +73,7 @@ export default function Dashboard() {
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (!token) {
-      window.location.href = "/auth/login"
+      router.push("/auth/login")
       return
     }
     loadData()
@@ -83,12 +90,12 @@ export default function Dashboard() {
     })
 
     setNewCategoryName("")
-    loadData()
+    await loadData()
   }
 
   const deleteCategory = async (id: string) => {
     await api.delete(`/api/categories/${id}`)
-    loadData()
+    await loadData()
   }
 
   /* ================= BUSINESS SAVE ================= */
@@ -100,6 +107,7 @@ export default function Dashboard() {
       .map((cat) => {
         const raw = values[cat.id]
         if (!raw) return null
+
         const value = Number(raw)
         if (isNaN(value)) return null
 
@@ -113,17 +121,14 @@ export default function Dashboard() {
       .filter(Boolean)
 
     await Promise.all(
-      entries.map((entry) => api.post("/api/transactions", entry))
+      entries.map((entry) =>
+        api.post("/api/transactions", entry)
+      )
     )
 
     setValues({})
-    loadData()
+    await loadData()
     setActiveTab("transactions")
-  }
-
-  const resetBusiness = async () => {
-    await api.delete("/api/transactions/business/reset")
-    loadData()
   }
 
   /* ================= CALCULATIONS ================= */
@@ -150,53 +155,39 @@ export default function Dashboard() {
     expense: t.amount < 0 ? Math.abs(t.amount) : 0,
   }))
 
-  const tabs = [
-    { key: "dashboard", label: "Overview" },
-    { key: "transactions", label: "Transactions" },
-    { key: "business", label: "Business" },
-    { key: "billing", label: "Billing" },
-    { key: "askai", label: "Ask AI" },
-  ] as { key: Tab; label: string }[]
+  /* ================= UI ================= */
 
   return (
     <div className="bg-white min-h-screen flex">
 
       {/* SIDEBAR */}
-      <aside className={`${sidebarOpen ? "w-64" : "w-20"} border-r p-6`}>
-        <div className="flex justify-between mb-10">
-          {sidebarOpen && (
-            <h2 className="text-red-600 font-semibold text-lg">
-              AI Bookkeeper
-            </h2>
-          )}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
-        </div>
+      <aside className="w-64 border-r p-6">
+        <h2 className="text-red-600 font-semibold text-lg mb-10">
+          AI Bookkeeper
+        </h2>
 
-        <nav className="space-y-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm ${
-                activeTab === tab.key
-                  ? "bg-red-600 text-white"
-                  : "text-slate-600 hover:bg-red-50 hover:text-red-600"
-              }`}
-            >
-              {sidebarOpen ? tab.label : tab.label[0]}
-            </button>
-          ))}
-        </nav>
+        {["dashboard","transactions","business","billing","askai"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab as Tab)}
+            className={`w-full text-left px-3 py-2 rounded-md mb-2 ${
+              activeTab === tab
+                ? "bg-red-600 text-white"
+                : "text-slate-600 hover:bg-red-50 hover:text-red-600"
+            }`}
+          >
+            {tab === "dashboard" && "Overview"}
+            {tab === "transactions" && "Transactions"}
+            {tab === "business" && "Business"}
+            {tab === "billing" && "Billing"}
+            {tab === "askai" && "Ask AI"}
+          </button>
+        ))}
       </aside>
 
       {/* MAIN */}
       <main className="flex-1 px-16 py-14 space-y-12">
 
-        <h1 className="text-2xl font-semibold">
-          {tabs.find((t) => t.key === activeTab)?.label}
-        </h1>
-
-        {/* ================= OVERVIEW ================= */}
         {activeTab === "dashboard" && (
           <>
             <div className="grid md:grid-cols-3 gap-8">
@@ -220,22 +211,14 @@ export default function Dashboard() {
           </>
         )}
 
-        {/* ================= TRANSACTIONS ================= */}
         {activeTab === "transactions" && (
           <div className="space-y-6 max-w-3xl">
-
             <input
               placeholder="Search transactions"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="border px-4 py-2 rounded-md w-full"
             />
-
-            {filteredTransactions.length === 0 && (
-              <div className="text-slate-500">
-                No transactions yet.
-              </div>
-            )}
 
             {filteredTransactions.map((tx) => (
               <div key={tx.id} className="p-4 border rounded-lg flex justify-between">
@@ -245,17 +228,14 @@ export default function Dashboard() {
                     {new Date(tx.date).toLocaleDateString()}
                   </div>
                 </div>
-
-                <div className={tx.amount > 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                <div className={tx.amount > 0 ? "text-green-600" : "text-red-600"}>
                   ${tx.amount.toFixed(2)}
                 </div>
               </div>
             ))}
-
           </div>
         )}
 
-        {/* ================= BUSINESS ================= */}
         {activeTab === "business" && (
           <BusinessSection
             categories={categories}
@@ -268,28 +248,17 @@ export default function Dashboard() {
             setNewCategoryType={setNewCategoryType}
             createCategory={createCategory}
             saveBusiness={saveBusiness}
-            resetBusiness={resetBusiness}
           />
         )}
 
-        {activeTab === "billing" && (
-          <div className="p-8 border rounded-xl">
-            Billing system coming soon.
-          </div>
-        )}
-
-        {activeTab === "askai" && (
-          <div className="p-8 border rounded-xl">
-            <ChatBox />
-          </div>
-        )}
+        {activeTab === "askai" && <ChatBox />}
 
       </main>
     </div>
   )
 }
 
-/* ================= COMPONENTS ================= */
+/* COMPONENTS */
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
@@ -314,15 +283,16 @@ function BusinessSection(props: any) {
     setNewCategoryType,
     createCategory,
     saveBusiness,
-    resetBusiness,
   } = props
 
   return (
     <div className="space-y-10 max-w-6xl">
-      {["Revenue", "Expenses"].map((section) => {
+
+      {["Revenue","Expenses"].map((section) => {
         const isRevenue = section === "Revenue"
-        const filtered = categories.filter((c: any) =>
-          isRevenue ? c.isRevenue : !c.isRevenue
+
+        const filtered = categories.filter(
+          (c: any) => c.isRevenue === isRevenue
         )
 
         return (
@@ -381,14 +351,13 @@ function BusinessSection(props: any) {
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <button onClick={saveBusiness} className="bg-red-600 text-white px-6 py-2 rounded-md">
-          Save Business Numbers
-        </button>
-        <button onClick={resetBusiness} className="bg-red-500 text-white px-6 py-2 rounded-md">
-          Remove Business Numbers
-        </button>
-      </div>
+      <button
+        onClick={saveBusiness}
+        className="bg-red-600 text-white px-6 py-2 rounded-md"
+      >
+        Save Business Numbers
+      </button>
+
     </div>
   )
 }
