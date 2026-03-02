@@ -144,12 +144,12 @@ export default function Dashboard() {
   }))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-red-50 flex">
 
       {/* SIDEBAR */}
       <aside className="w-64 bg-white/80 backdrop-blur border-r border-slate-100 p-8">
-        <h2 className="text-indigo-600 font-bold text-xl mb-12">
-          AI Bookkeeper
+        <h2 className="text-red-600 font-bold text-xl mb-12">
+          Albdy
         </h2>
 
         {["dashboard","transactions","business","billing","askai"].map((tab) => (
@@ -158,8 +158,8 @@ export default function Dashboard() {
             onClick={() => setActiveTab(tab as Tab)}
             className={`w-full text-left px-4 py-3 rounded-xl mb-2 transition-all ${
               activeTab === tab
-                ? "bg-indigo-600 text-white shadow-md"
-                : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
+                ? "bg-red-600 text-white shadow-md"
+                : "text-slate-600 hover:bg-red-50 hover:text-red-600"
             }`}
           >
             {tab === "dashboard" && "Overview"}
@@ -192,14 +192,14 @@ export default function Dashboard() {
                   <Line
                     type="monotone"
                     dataKey="income"
-                    stroke="#22c55e"
+                    stroke="#16a34a"
                     strokeWidth={3}
                     dot={false}
                   />
                   <Line
                     type="monotone"
                     dataKey="expense"
-                    stroke="#f97316"
+                    stroke="#dc2626"
                     strokeWidth={3}
                     dot={false}
                   />
@@ -215,7 +215,7 @@ export default function Dashboard() {
               placeholder="Search transactions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border border-slate-200 focus:ring-2 focus:ring-indigo-400 outline-none"
+              className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border border-slate-200 focus:ring-2 focus:ring-red-400 outline-none"
             />
 
             <div className="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
@@ -237,7 +237,7 @@ export default function Dashboard() {
                     className={`font-semibold ${
                       tx.amount > 0
                         ? "text-green-600"
-                        : "text-red-500"
+                        : "text-red-600"
                     }`}
                   >
                     {tx.amount > 0 ? "+" : "-"}$
@@ -271,19 +271,11 @@ export default function Dashboard() {
   )
 }
 
-/* COMPONENTS */
-
-function StatCard({
-  label,
-  value,
-  positive,
-  negative,
-  highlight,
-}: any) {
+function StatCard({ label, value, positive, negative, highlight }: any) {
   return (
     <div
       className={`p-8 rounded-3xl bg-white shadow-lg transition hover:-translate-y-1 ${
-        highlight ? "ring-2 ring-indigo-500" : ""
+        highlight ? "ring-2 ring-red-500" : ""
       }`}
     >
       <div className="text-sm text-slate-400 mb-2">{label}</div>
@@ -292,118 +284,12 @@ function StatCard({
           positive
             ? "text-green-600"
             : negative
-            ? "text-red-500"
+            ? "text-red-600"
             : "text-slate-800"
         }`}
       >
         ${value.toFixed(2)}
       </div>
-    </div>
-  )
-}
-
-function BusinessSection(props: any) {
-  const {
-    categories,
-    values,
-    setValues,
-    deleteCategory,
-    newCategoryName,
-    setNewCategoryName,
-    newCategoryType,
-    setNewCategoryType,
-    createCategory,
-    saveBusiness,
-  } = props
-
-  return (
-    <div className="space-y-14 max-w-6xl">
-
-      {["Revenue","Expenses"].map((section) => {
-        const isRevenue = section === "Revenue"
-
-        const filtered = categories.filter(
-          (c: any) => c.isRevenue === isRevenue
-        )
-
-        return (
-          <div
-            key={section}
-            className="bg-white p-8 rounded-3xl shadow-md"
-          >
-            <h2 className="text-xl font-semibold mb-6 text-slate-800">
-              {section}
-            </h2>
-
-            <div className="flex flex-wrap gap-4">
-              {filtered.map((cat: any) => (
-                <div
-                  key={cat.id}
-                  className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl shadow-sm"
-                >
-                  <span className="text-sm text-slate-700">
-                    {cat.name}
-                  </span>
-                  <input
-                    type="number"
-                    value={values[cat.id] ?? ""}
-                    onChange={(e) =>
-                      setValues((prev: any) => ({
-                        ...prev,
-                        [cat.id]: e.target.value,
-                      }))
-                    }
-                    className="w-24 px-2 py-1 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
-                  />
-                  <button
-                    onClick={() => deleteCategory(cat.id)}
-                    className="text-red-400 hover:text-red-600 text-sm"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-      })}
-
-      <div className="bg-white p-8 rounded-3xl shadow-md space-y-6">
-        <h3 className="text-xl font-semibold">Create Category</h3>
-
-        <div className="flex gap-4">
-          <input
-            placeholder="Category name"
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-400 outline-none"
-          />
-          <select
-            value={newCategoryType}
-            onChange={(e) =>
-              setNewCategoryType(e.target.value as "Revenue" | "Expense")
-            }
-            className="px-4 py-2 rounded-xl border border-slate-200"
-          >
-            <option value="Expense">Expense</option>
-            <option value="Revenue">Revenue</option>
-          </select>
-          <button
-            onClick={createCategory}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-xl shadow hover:bg-indigo-700 transition"
-          >
-            Create
-          </button>
-        </div>
-
-        <button
-          onClick={saveBusiness}
-          className="bg-indigo-600 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition"
-        >
-          Save Configuration
-        </button>
-      </div>
-
     </div>
   )
 }
