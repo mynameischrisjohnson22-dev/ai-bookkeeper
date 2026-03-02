@@ -13,19 +13,25 @@ const router = Router()
 // 🔐 Protect ALL transaction routes
 router.use(authMiddleware)
 
+/* ================= GET ================= */
+
 // GET all transactions
 router.get("/", getTransactionsController)
 
-// CREATE transaction (used by Save Business Numbers)
+/* ================= CREATE ================= */
+
+// CREATE transaction
 router.post("/", createTransactionController)
-
-// DELETE single transaction
-router.delete("/:id", deleteTransactionController)
-
-// RESET business transactions
-router.delete("/business/reset", resetBusinessController)
 
 // Upload transactions
 router.post("/upload", uploadTransactionsController)
+
+/* ================= DELETE ================= */
+
+// RESET business transactions (PUT THIS FIRST)
+router.delete("/business/reset", resetBusinessController)
+
+// DELETE single transaction (PUT THIS LAST)
+router.delete("/:id", deleteTransactionController)
 
 export default router
