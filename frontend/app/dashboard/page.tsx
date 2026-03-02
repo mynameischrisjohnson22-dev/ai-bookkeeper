@@ -382,24 +382,35 @@ function BusinessSection(props: any) {
   } = props
 
   return (
-    <div className="space-y-14 max-w-6xl">
-      {["Revenue","Expenses"].map((section) => {
+    <div className="space-y-12 max-w-4xl">
+
+      {/* REVENUE + EXPENSE SECTIONS */}
+      {["Revenue", "Expenses"].map((section) => {
         const isRevenue = section === "Revenue"
+
         const filtered = categories.filter(
           (c: any) => c.isRevenue === isRevenue
         )
 
         return (
-          <div key={section} className="bg-white p-8 rounded-3xl shadow-md">
-            <h2 className="text-xl font-semibold mb-6">{section}</h2>
+          <div
+            key={section}
+            className="bg-white p-10 rounded-2xl shadow-md"
+          >
+            <h2 className="text-xl font-semibold mb-6">
+              {section}
+            </h2>
 
             <div className="flex flex-wrap gap-4">
               {filtered.map((cat: any) => (
                 <div
                   key={cat.id}
-                  className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl"
+                  className="flex items-center gap-3 bg-slate-100 px-4 py-3 rounded-xl"
                 >
-                  <span>{cat.name}</span>
+                  <span className="text-sm font-medium text-slate-700">
+                    {cat.name}
+                  </span>
+
                   <input
                     type="number"
                     value={values[cat.id] ?? ""}
@@ -409,11 +420,12 @@ function BusinessSection(props: any) {
                         [cat.id]: e.target.value,
                       }))
                     }
-                    className="w-24 px-2 py-1 rounded-lg border"
+                    className="w-28 bg-white border border-slate-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-red-400 outline-none"
                   />
+
                   <button
                     onClick={() => deleteCategory(cat.id)}
-                    className="text-red-500"
+                    className="text-red-500 text-sm hover:text-red-700"
                   >
                     ✕
                   </button>
@@ -424,29 +436,34 @@ function BusinessSection(props: any) {
         )
       })}
 
-      <div className="bg-white p-8 rounded-3xl shadow-md space-y-6">
-        <h3 className="text-xl font-semibold">Create Category</h3>
+      {/* CREATE CATEGORY */}
+      <div className="bg-white p-10 rounded-2xl shadow-md space-y-6">
+        <h3 className="text-xl font-semibold">
+          Create Category
+        </h3>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-wrap">
           <input
             placeholder="Category name"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            className="px-4 py-2 rounded-xl border"
+            className="px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-400 outline-none"
           />
+
           <select
             value={newCategoryType}
             onChange={(e) =>
               setNewCategoryType(e.target.value as "Revenue" | "Expense")
             }
-            className="px-4 py-2 rounded-xl border"
+            className="px-4 py-2 rounded-xl border border-slate-300"
           >
             <option value="Expense">Expense</option>
             <option value="Revenue">Revenue</option>
           </select>
+
           <button
             onClick={createCategory}
-            className="bg-red-500 text-white px-6 py-2 rounded-xl"
+            className="bg-red-500 text-white px-6 py-2 rounded-xl hover:bg-red-600 transition"
           >
             Create
           </button>
@@ -454,11 +471,12 @@ function BusinessSection(props: any) {
 
         <button
           onClick={saveBusiness}
-          className="bg-red-500 text-white px-8 py-3 rounded-xl"
+          className="bg-red-500 text-white px-8 py-3 rounded-xl hover:bg-red-600 transition"
         >
           Save Configuration
         </button>
       </div>
+
     </div>
   )
 }
