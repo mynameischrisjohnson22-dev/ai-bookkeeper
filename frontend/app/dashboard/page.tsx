@@ -175,39 +175,85 @@ export default function Dashboard() {
       <main className="flex-1 px-16 py-14 space-y-14">
 
         {activeTab === "dashboard" && (
-          <>
-            <div className="grid md:grid-cols-3 gap-8">
-              <StatCard label="Income" value={income} positive />
-              <StatCard label="Expenses" value={Math.abs(expenses)} negative />
-              <StatCard label="Balance" value={balance} highlight />
-            </div>
+  <>
+    {/* TOP ROW – BALANCE (DOMINANT) */}
+    <div className="max-w-3xl">
+      <div className="bg-white p-10 rounded-3xl shadow-lg">
+        <div className="text-sm text-slate-500 mb-2">
+          Current Balance
+        </div>
 
-            <div className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50">
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={chartData}>
-                  <CartesianGrid stroke="#e2e8f0" strokeDasharray="4 4" />
-                  <XAxis dataKey="date" stroke="#64748b" />
-                  <YAxis stroke="#64748b" />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="income"
-                    stroke="#22c55e"
-                    strokeWidth={3}
-                    dot={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="expense"
-                    stroke="#f97316"
-                    strokeWidth={3}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </>
-        )}
+        <div
+          className={`text-4xl font-bold ${
+            balance > 0
+              ? "text-green-600"
+              : balance < 0
+              ? "text-red-600"
+              : "text-slate-800"
+          }`}
+        >
+          ${balance.toFixed(2)}
+        </div>
+
+        <div className="text-sm text-slate-400 mt-2">
+          Income minus expenses
+        </div>
+      </div>
+    </div>
+
+    {/* BOTTOM ROW – INCOME + EXPENSES */}
+    <div className="grid md:grid-cols-2 gap-8 max-w-3xl">
+      <div className="bg-white p-8 rounded-2xl shadow-sm">
+        <div className="text-sm text-slate-500">Income</div>
+        <div className="text-2xl font-semibold text-green-600">
+          ${income.toFixed(2)}
+        </div>
+      </div>
+
+      <div className="bg-white p-8 rounded-2xl shadow-sm">
+        <div className="text-sm text-slate-500">Expenses</div>
+        <div className="text-2xl font-semibold text-red-600">
+          ${Math.abs(expenses).toFixed(2)}
+        </div>
+      </div>
+    </div>
+
+    {/* CHART */}
+    <div className="bg-white p-10 rounded-3xl shadow-lg">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold">
+          Financial Overview
+        </h2>
+        <p className="text-sm text-slate-400">
+          Track income and expenses over time
+        </p>
+      </div>
+
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart data={chartData}>
+          <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Line
+            type="monotone"
+            dataKey="income"
+            stroke="#16a34a"
+            strokeWidth={3}
+            dot={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="expense"
+            stroke="#dc2626"
+            strokeWidth={3}
+            dot={false}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  </>
+)}
 
         {activeTab === "transactions" && (
           <div className="max-w-3xl space-y-6">
