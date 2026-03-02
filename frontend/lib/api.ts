@@ -1,24 +1,19 @@
 import axios from "axios"
 
 // ================================
-// BASE URL
+// BASE URL (NO LOCALHOST FALLBACK)
 // ================================
 
-const getBaseURL = () => {
-  const envURL = process.env.NEXT_PUBLIC_API_URL?.trim()
+const baseURL = process.env.NEXT_PUBLIC_API_URL
 
-  if (!envURL) {
-    console.warn("⚠️ NEXT_PUBLIC_API_URL not set. Using localhost.")
-    return "http://localhost:4000"
-  }
-
-  return envURL.endsWith("/")
-    ? envURL.slice(0, -1)
-    : envURL
+if (!baseURL) {
+  throw new Error(
+    "NEXT_PUBLIC_API_URL is not defined. Set it in Vercel environment variables."
+  )
 }
 
 const api = axios.create({
-  baseURL: getBaseURL(),
+  baseURL: baseURL.replace(/\/$/, ""), // remove trailing slash safely
   headers: {
     "Content-Type": "application/json",
   },
@@ -52,8 +47,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.warn("🔒 Unauthorized. Token may be invalid.")
-
       if (typeof window !== "undefined") {
         localStorage.removeItem("token")
         window.location.href = "/auth/login"

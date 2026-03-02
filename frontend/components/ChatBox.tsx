@@ -1,9 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import axios from "axios"
-
-const API = "http://localhost:4000"
+import api from "@/lib/api"
 
 type Msg = {
   role: "user" | "ai"
@@ -19,40 +17,30 @@ export default function ChatBox({
   const [messages, setMessages] = useState<Msg[]>([])
   const [loading, setLoading] = useState(false)
 
-  const userId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("userId")
-      : null
-
   const send = async () => {
     if (!input.trim()) return
-    if (!userId) return alert("Not logged in")
 
     const text = input
     setInput("")
-
     setMessages(prev => [...prev, { role: "user", text }])
 
     try {
       setLoading(true)
 
-      const res = await axios.post(`${API}/ai/chat`, {
-        userId,
+      const res = await api.post("/api/ai/chat", {
         message: text,
-        period
+        period,
       })
 
       setMessages(prev => [
         ...prev,
-        { role: "ai", text: res.data.reply }
+        { role: "ai", text: res.data.reply },
       ])
-
     } catch (err) {
       console.error("AI failed:", err)
-
       setMessages(prev => [
         ...prev,
-        { role: "ai", text: "Chat failed." }
+        { role: "ai", text: "Chat failed." },
       ])
     } finally {
       setLoading(false)
@@ -61,9 +49,7 @@ export default function ChatBox({
 
   return (
     <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 flex flex-col h-full">
-      <h2 className="text-white font-semibold mb-4">
-        AI Assistant
-      </h2>
+      <h2 className="text-white font-semibold mb-4">AI Assistant</h2>
 
       <div className="flex-1 overflow-y-auto space-y-2 mb-4">
         {messages.map((m, i) => (
@@ -80,9 +66,7 @@ export default function ChatBox({
         ))}
 
         {loading && (
-          <p className="text-slate-400 text-sm">
-            Thinking…
-          </p>
+          <p className="text-slate-400 text-sm">Thinking…</p>
         )}
       </div>
 
@@ -92,9 +76,7 @@ export default function ChatBox({
           onChange={e => setInput(e.target.value)}
           placeholder="Ask about your finances..."
           className="flex-1 bg-slate-800 border border-slate-700 p-2 rounded text-white"
-          onKeyDown={e => {
-            if (e.key === "Enter") send()
-          }}
+          onKeyDown={e => e.key === "Enter" && send()}
         />
 
         <button

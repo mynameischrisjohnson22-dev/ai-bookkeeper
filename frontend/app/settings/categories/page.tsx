@@ -1,9 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import axios from "axios"
-
-const API = "http://localhost:4000"
+import api from "@/lib/api"
 
 type Category = {
   id: string
@@ -16,25 +14,21 @@ type Category = {
 }
 
 export default function CategorySettingsPage() {
-  const userId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("userId")
-      : null
-
   const [cats, setCats] = useState<Category[]>([])
 
+  // ================= LOAD =================
   const load = async () => {
-    if (!userId) return
-    const res = await axios.get(
-      `${API}/categories?userId=${userId}`
-    )
-
-    setCats(Array.isArray(res.data) ? res.data : [])
+    try {
+      const res = await api.get("/api/categories")
+      setCats(Array.isArray(res.data) ? res.data : [])
+    } catch (err) {
+      console.error("Failed to load categories", err)
+    }
   }
 
   useEffect(() => {
     load()
-  }, [userId])
+  }, [])
 
   const builtIn = cats.filter(c => c.builtIn)
   const custom = cats.filter(c => !c.builtIn)
@@ -43,7 +37,6 @@ export default function CategorySettingsPage() {
     const set = new Set<string>()
     builtIn.forEach(c => set.add(c.parent))
 
-    // fallback if DB is empty
     if (set.size === 0) {
       return ["Income", "Expenses", "Other"]
     }
@@ -51,9 +44,8 @@ export default function CategorySettingsPage() {
     return Array.from(set)
   }, [builtIn])
 
+  // ================= ADD =================
   const addCategory = async () => {
-    if (!userId) return
-
     const name = prompt("Category name")
     if (!name) return
 
@@ -78,30 +70,43 @@ export default function CategorySettingsPage() {
     const isRevenue = realParent.toLowerCase() === "income"
     const isCOGS = realParent.toLowerCase() === "cogs"
 
-    await axios.post(`${API}/categories`, {
-      userId,
-      parent: realParent,
-      name,
-      icon,
-      isRevenue,
-      isCOGS
-    })
+    try {
+      await api.post("/api/categories", {
+        parent: realParent,
+        name,
+        icon,
+        isRevenue,
+        isCOGS,
+      })
 
-    await load()
+      await load()
+    } catch (err) {
+      console.error("Create category failed", err)
+    }
   }
 
+  // ================= DELETE =================
   const remove = async (id: string) => {
     if (!confirm("Delete this category?")) return
-    await axios.delete(`${API}/categories/${id}`)
-    await load()
+
+    try {
+      await api.delete(`/api/categories/${id}`)
+      await load()
+    } catch (err) {
+      console.error("Delete failed", err)
+    }
   }
 
+  // ================= RESET =================
   const reset = async () => {
-    if (!userId) return
     if (!confirm("Reset all custom categories?")) return
 
-    await axios.post(`${API}/categories/reset`, { userId })
-    await load()
+    try {
+      await api.post("/api/categories/reset")
+      await load()
+    } catch (err) {
+      console.error("Reset failed", err)
+    }
   }
 
   return (
@@ -189,7 +194,7 @@ export default function CategorySettingsPage() {
       </button>
 
       <p className="text-xs text-gray-500">
-        Note: Built-in categories cannot be renamed or deleted.
+        Built-in categories cannot be renamed or deleted.
       </p>
     </div>
   )
