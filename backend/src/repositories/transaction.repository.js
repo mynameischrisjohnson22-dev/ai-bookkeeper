@@ -8,40 +8,52 @@ export const create = async (userId, data) => {
   return prisma.transaction.create({
     data: {
       userId,
-      date: new Date(date),            // 🔥 force correct Date type
-      description: description?.trim(),
-      amount: Number(amount),          // 🔥 force number
-      categoryId: categoryId || null   // 🔥 prevent undefined
+      date: new Date(date),
+      description: description?.trim() || "",
+      amount: Number(amount),
+      categoryId: categoryId || null,
     },
   })
 }
+
 
 /* ================= GET ALL ================= */
 
 export const getAll = async (userId) => {
   return prisma.transaction.findMany({
-    where: { userId },
-    orderBy: { date: "desc" },
-  })
-}
-
-/* ================= DELETE ================= */
-
-export const remove = async (userId, id) => {
-  return prisma.transaction.deleteMany({
     where: {
-      id,
-      userId,   // 🔥 prevent deleting other user's data
+      userId,
+    },
+    orderBy: {
+      date: "desc",
     },
   })
 }
+
+
+/* ================= DELETE (SAFE) ================= */
+
+export const remove = async (userId, id) => {
+  const result = await prisma.transaction.deleteMany({
+    where: {
+      id,
+      userId,
+    },
+  })
+
+  // Return boolean instead of raw prisma object
+  return result.count > 0
+}
+
 
 /* ================= RESET BUSINESS ================= */
 
 export const reset = async (userId) => {
-  return prisma.transaction.deleteMany({
+  const result = await prisma.transaction.deleteMany({
     where: {
       userId,
     },
   })
+
+  return result.count
 }

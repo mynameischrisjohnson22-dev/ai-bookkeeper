@@ -6,10 +6,12 @@ import * as transactionService from "../services/transaction.service.js"
 export const getTransactionsController = async (req, res) => {
   try {
     const transactions = await transactionService.getAll(req.user.id)
-    return res.json(transactions)
+    return res.status(200).json(transactions)
   } catch (error) {
     console.error("GET TRANSACTIONS ERROR:", error)
-    return res.status(500).json({ error: "Failed to fetch transactions" })
+    return res.status(500).json({
+      error: "Failed to fetch transactions",
+    })
   }
 }
 
@@ -22,32 +24,52 @@ export const createTransactionController = async (req, res) => {
     const { date, description, amount } = req.body
 
     if (!date || !description || amount === undefined) {
-      return res.status(400).json({ error: "Missing required fields" })
+      return res.status(400).json({
+        error: "Missing required fields",
+      })
     }
 
     const transaction = await transactionService.create(
       req.user.id,
-      req.body
+      {
+        ...req.body,
+        amount: Number(amount),
+      }
     )
 
     return res.status(201).json(transaction)
   } catch (error) {
     console.error("CREATE TRANSACTION ERROR:", error)
-    return res.status(500).json({ error: "Failed to create transaction" })
+    return res.status(500).json({
+      error: "Failed to create transaction",
+    })
   }
 }
 
 
 /* =========================================
-   DELETE TRANSACTION (SOFT)
+   DELETE TRANSACTION (SOFT DELETE)
 ========================================= */
 export const deleteTransactionController = async (req, res) => {
   try {
-    await transactionService.softDelete(req.user.id, req.params.id)
-    return res.json({ success: true })
+    const { id } = req.params
+
+    if (!id) {
+      return res.status(400).json({
+        error: "Transaction ID required",
+      })
+    }
+
+    await transactionService.softDelete(req.user.id, id)
+
+    return res.status(200).json({
+      success: true,
+    })
   } catch (error) {
     console.error("DELETE TRANSACTION ERROR:", error)
-    return res.status(500).json({ error: "Failed to delete transaction" })
+    return res.status(500).json({
+      error: "Failed to delete transaction",
+    })
   }
 }
 
@@ -58,10 +80,15 @@ export const deleteTransactionController = async (req, res) => {
 export const resetBusinessController = async (req, res) => {
   try {
     await transactionService.reset(req.user.id)
-    return res.json({ success: true })
+
+    return res.status(200).json({
+      success: true,
+    })
   } catch (error) {
     console.error("RESET BUSINESS ERROR:", error)
-    return res.status(500).json({ error: "Failed to reset business data" })
+    return res.status(500).json({
+      error: "Failed to reset business data",
+    })
   }
 }
 
@@ -72,7 +99,9 @@ export const resetBusinessController = async (req, res) => {
 export const uploadTransactionsController = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" })
+      return res.status(400).json({
+        error: "No file uploaded",
+      })
     }
 
     const result = await transactionService.uploadCSV(
@@ -80,9 +109,11 @@ export const uploadTransactionsController = async (req, res) => {
       req.file
     )
 
-    return res.json(result)
+    return res.status(200).json(result)
   } catch (error) {
     console.error("UPLOAD ERROR:", error)
-    return res.status(500).json({ error: "CSV upload failed" })
+    return res.status(500).json({
+      error: "CSV upload failed",
+    })
   }
 }

@@ -22,17 +22,21 @@ export const getAll = async (userId) => {
   return transactionRepository.getAll(userId)
 }
 
-/* ================= DELETE ================= */
+/* ================= DELETE (SAFE HARD DELETE) ================= */
 
 export const remove = async (userId, id) => {
-  const transaction = await transactionRepository.remove(userId, id)
+  // 🔥 This must NOT throw if not found
+  const deleted = await transactionRepository.remove(userId, id)
 
-  await logAudit({
-    userId,
-    action: "DELETE",
-    entity: "Transaction",
-    entityId: id,
-  })
+  // Only log if something was deleted
+  if (deleted) {
+    await logAudit({
+      userId,
+      action: "DELETE",
+      entity: "Transaction",
+      entityId: id,
+    })
+  }
 
-  return transaction
+  return deleted
 }
