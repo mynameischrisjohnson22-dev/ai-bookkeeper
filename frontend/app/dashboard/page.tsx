@@ -46,8 +46,6 @@ export default function Dashboard() {
   const [newCategoryType, setNewCategoryType] =
     useState<"Revenue" | "Expense">("Expense")
 
-  /* ================= LOAD ================= */
-
   const loadData = async () => {
     try {
       const [txRes, catRes] = await Promise.all([
@@ -57,14 +55,12 @@ export default function Dashboard() {
 
       setTransactions(txRes.data || [])
 
-      // 🔥 Normalize boolean properly
       const normalized = (catRes.data || []).map((c: any) => ({
         ...c,
         isRevenue: Boolean(c.isRevenue),
       }))
 
       setCategories(normalized)
-
     } catch (err) {
       console.error("Failed to load data", err)
     }
@@ -78,8 +74,6 @@ export default function Dashboard() {
     }
     loadData()
   }, [])
-
-  /* ================= CATEGORY ================= */
 
   const createCategory = async () => {
     if (!newCategoryName.trim()) return
@@ -97,8 +91,6 @@ export default function Dashboard() {
     await api.delete(`/api/categories/${id}`)
     await loadData()
   }
-
-  /* ================= BUSINESS SAVE ================= */
 
   const saveBusiness = async () => {
     const today = new Date().toISOString()
@@ -121,17 +113,13 @@ export default function Dashboard() {
       .filter(Boolean)
 
     await Promise.all(
-      entries.map((entry) =>
-        api.post("/api/transactions", entry)
-      )
+      entries.map((entry) => api.post("/api/transactions", entry))
     )
 
     setValues({})
     await loadData()
     setActiveTab("transactions")
   }
-
-  /* ================= CALCULATIONS ================= */
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) =>
@@ -155,14 +143,12 @@ export default function Dashboard() {
     expense: t.amount < 0 ? Math.abs(t.amount) : 0,
   }))
 
-  /* ================= UI ================= */
-
   return (
-    <div className="bg-white min-h-screen flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
 
       {/* SIDEBAR */}
-      <aside className="w-64 border-r p-6">
-        <h2 className="text-red-600 font-semibold text-lg mb-10">
+      <aside className="w-64 bg-white/80 backdrop-blur border-r border-slate-100 p-8">
+        <h2 className="text-indigo-600 font-bold text-xl mb-12">
           AI Bookkeeper
         </h2>
 
@@ -170,10 +156,10 @@ export default function Dashboard() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab as Tab)}
-            className={`w-full text-left px-3 py-2 rounded-md mb-2 ${
+            className={`w-full text-left px-4 py-3 rounded-xl mb-2 transition-all ${
               activeTab === tab
-                ? "bg-red-600 text-white"
-                : "text-slate-600 hover:bg-red-50 hover:text-red-600"
+                ? "bg-indigo-600 text-white shadow-md"
+                : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
             }`}
           >
             {tab === "dashboard" && "Overview"}
@@ -186,25 +172,37 @@ export default function Dashboard() {
       </aside>
 
       {/* MAIN */}
-      <main className="flex-1 px-16 py-14 space-y-12">
+      <main className="flex-1 px-16 py-14 space-y-14">
 
         {activeTab === "dashboard" && (
           <>
             <div className="grid md:grid-cols-3 gap-8">
-              <StatCard label="Income" value={income} />
-              <StatCard label="Expenses" value={Math.abs(expenses)} />
-              <StatCard label="Balance" value={balance} />
+              <StatCard label="Income" value={income} positive />
+              <StatCard label="Expenses" value={Math.abs(expenses)} negative />
+              <StatCard label="Balance" value={balance} highlight />
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border shadow-sm">
+            <div className="bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50">
               <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
+                  <CartesianGrid stroke="#e2e8f0" strokeDasharray="4 4" />
+                  <XAxis dataKey="date" stroke="#64748b" />
+                  <YAxis stroke="#64748b" />
                   <Tooltip />
-                  <Line type="monotone" dataKey="income" stroke="#16a34a" strokeWidth={3} dot={false} />
-                  <Line type="monotone" dataKey="expense" stroke="#dc2626" strokeWidth={3} dot={false} />
+                  <Line
+                    type="monotone"
+                    dataKey="income"
+                    stroke="#22c55e"
+                    strokeWidth={3}
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="expense"
+                    stroke="#f97316"
+                    strokeWidth={3}
+                    dot={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -212,27 +210,42 @@ export default function Dashboard() {
         )}
 
         {activeTab === "transactions" && (
-          <div className="space-y-6 max-w-3xl">
+          <div className="max-w-3xl space-y-6">
             <input
-              placeholder="Search transactions"
+              placeholder="Search transactions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border px-4 py-2 rounded-md w-full"
+              className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border border-slate-200 focus:ring-2 focus:ring-indigo-400 outline-none"
             />
 
-            {filteredTransactions.map((tx) => (
-              <div key={tx.id} className="p-4 border rounded-lg flex justify-between">
-                <div>
-                  <div className="font-medium">{tx.description}</div>
-                  <div className="text-sm text-slate-500">
-                    {new Date(tx.date).toLocaleDateString()}
+            <div className="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
+              {filteredTransactions.map((tx) => (
+                <div
+                  key={tx.id}
+                  className="flex justify-between items-center px-6 py-4 hover:bg-slate-50 transition"
+                >
+                  <div>
+                    <div className="font-medium text-slate-800">
+                      {tx.description}
+                    </div>
+                    <div className="text-sm text-slate-400">
+                      {new Date(tx.date).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`font-semibold ${
+                      tx.amount > 0
+                        ? "text-green-600"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {tx.amount > 0 ? "+" : "-"}$
+                    {Math.abs(tx.amount).toFixed(2)}
                   </div>
                 </div>
-                <div className={tx.amount > 0 ? "text-green-600" : "text-red-600"}>
-                  ${tx.amount.toFixed(2)}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -260,11 +273,29 @@ export default function Dashboard() {
 
 /* COMPONENTS */
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({
+  label,
+  value,
+  positive,
+  negative,
+  highlight,
+}: any) {
   return (
-    <div className="bg-white p-8 rounded-xl border shadow-sm">
-      <div className="text-sm text-slate-500">{label}</div>
-      <div className="text-2xl font-semibold">
+    <div
+      className={`p-8 rounded-3xl bg-white shadow-lg transition hover:-translate-y-1 ${
+        highlight ? "ring-2 ring-indigo-500" : ""
+      }`}
+    >
+      <div className="text-sm text-slate-400 mb-2">{label}</div>
+      <div
+        className={`text-3xl font-bold ${
+          positive
+            ? "text-green-600"
+            : negative
+            ? "text-red-500"
+            : "text-slate-800"
+        }`}
+      >
         ${value.toFixed(2)}
       </div>
     </div>
@@ -286,7 +317,7 @@ function BusinessSection(props: any) {
   } = props
 
   return (
-    <div className="space-y-10 max-w-6xl">
+    <div className="space-y-14 max-w-6xl">
 
       {["Revenue","Expenses"].map((section) => {
         const isRevenue = section === "Revenue"
@@ -296,12 +327,23 @@ function BusinessSection(props: any) {
         )
 
         return (
-          <div key={section}>
-            <h2 className="text-lg font-semibold mb-3">{section}</h2>
-            <div className="flex flex-wrap gap-3 border p-4 rounded-md bg-slate-50">
+          <div
+            key={section}
+            className="bg-white p-8 rounded-3xl shadow-md"
+          >
+            <h2 className="text-xl font-semibold mb-6 text-slate-800">
+              {section}
+            </h2>
+
+            <div className="flex flex-wrap gap-4">
               {filtered.map((cat: any) => (
-                <div key={cat.id} className="flex items-center gap-2 border px-3 py-2 rounded-md bg-white">
-                  <span className="text-sm">{cat.name}</span>
+                <div
+                  key={cat.id}
+                  className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl shadow-sm"
+                >
+                  <span className="text-sm text-slate-700">
+                    {cat.name}
+                  </span>
                   <input
                     type="number"
                     value={values[cat.id] ?? ""}
@@ -311,9 +353,12 @@ function BusinessSection(props: any) {
                         [cat.id]: e.target.value,
                       }))
                     }
-                    className="w-24 border p-1 rounded text-sm"
+                    className="w-24 px-2 py-1 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
                   />
-                  <button onClick={() => deleteCategory(cat.id)} className="text-red-600 text-xs">
+                  <button
+                    onClick={() => deleteCategory(cat.id)}
+                    className="text-red-400 hover:text-red-600 text-sm"
+                  >
                     ✕
                   </button>
                 </div>
@@ -323,40 +368,41 @@ function BusinessSection(props: any) {
         )
       })}
 
-      <div className="border-t pt-6 space-y-4">
-        <h3 className="text-lg font-semibold">Create Category</h3>
+      <div className="bg-white p-8 rounded-3xl shadow-md space-y-6">
+        <h3 className="text-xl font-semibold">Create Category</h3>
+
         <div className="flex gap-4">
           <input
             placeholder="Category name"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            className="border px-4 py-2 rounded-md"
+            className="px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-400 outline-none"
           />
           <select
             value={newCategoryType}
             onChange={(e) =>
               setNewCategoryType(e.target.value as "Revenue" | "Expense")
             }
-            className="border px-4 py-2 rounded-md"
+            className="px-4 py-2 rounded-xl border border-slate-200"
           >
             <option value="Expense">Expense</option>
             <option value="Revenue">Revenue</option>
           </select>
           <button
             onClick={createCategory}
-            className="bg-red-600 text-white px-6 py-2 rounded-md"
+            className="bg-indigo-600 text-white px-6 py-2 rounded-xl shadow hover:bg-indigo-700 transition"
           >
             Create
           </button>
         </div>
-      </div>
 
-      <button
-        onClick={saveBusiness}
-        className="bg-red-600 text-white px-6 py-2 rounded-md"
-      >
-        Save Business Numbers
-      </button>
+        <button
+          onClick={saveBusiness}
+          className="bg-indigo-600 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition"
+        >
+          Save Configuration
+        </button>
+      </div>
 
     </div>
   )
