@@ -9,7 +9,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-router.post("/", authMiddleware, async (req, res) => {
+// POST /api/ai/ask
+router.post("/ask", authMiddleware, async (req, res) => {
   try {
     const { message } = req.body
 
@@ -17,7 +18,7 @@ router.post("/", authMiddleware, async (req, res) => {
       return res.status(400).json({ error: "Message required" })
     }
 
-    // Get user's transactions
+    // Fetch user's transactions
     const transactions = await prisma.transaction.findMany({
       where: { userId: req.user.id },
       orderBy: { date: "desc" },
@@ -46,7 +47,7 @@ router.post("/", authMiddleware, async (req, res) => {
     })
 
     return res.json({
-      reply: completion.choices[0].message.content,
+      answer: completion.choices[0].message.content,
     })
   } catch (err) {
     console.error("AI ERROR:", err)
