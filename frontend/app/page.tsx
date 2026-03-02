@@ -6,7 +6,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center space-y-6">
-      <h1 className="text-3xl font-bold">AI Bookkeeper</h1>
+      <h1 className="text-3xl font-bold">Albdy</h1>
       <p className="text-gray-600">Your automated business finance assistant</p>
 
       <div className="space-x-4">

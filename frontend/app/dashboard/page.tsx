@@ -149,7 +149,7 @@ export default function Dashboard() {
       {/* SIDEBAR */}
       <aside className="w-64 bg-white/80 backdrop-blur border-r border-slate-100 p-8">
         <h2 className="text-red-500 font-bold text-xl mb-12">
-          AI Bookkeeper
+          Albdy
         </h2>
 
         {["dashboard","transactions","business","billing","askai"].map((tab) => (
