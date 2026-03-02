@@ -46,6 +46,7 @@ export default function Dashboard() {
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryType, setNewCategoryType] =
     useState<"Revenue" | "Expense">("Expense")
+const [selected, setSelected] = useState<string[]>([])
 
   /* ================= LOAD ================= */
 
@@ -127,6 +128,19 @@ export default function Dashboard() {
     await loadData()
     setActiveTab("transactions")
   }
+
+const deleteTransactions = async () => {
+  if (selected.length === 0) return
+
+  await Promise.all(
+    selected.map((id) =>
+      api.delete(`/api/transactions/${id}`)
+    )
+  )
+
+  setSelected([])
+  await loadData()
+}
 
   /* ================= FILTER + TOTALS ================= */
 
@@ -304,45 +318,84 @@ export default function Dashboard() {
           </>
         )}
 
-        {activeTab === "transactions" && (
-          <div className="max-w-3xl space-y-6">
-            <input
-              placeholder="Search transactions..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border border-slate-200 focus:ring-2 focus:ring-indigo-400 outline-none"
-            />
+{activeTab === "transactions" && (
+  <div className="max-w-3xl space-y-6">
 
-            <div className="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
-              {filteredTransactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="flex justify-between items-center px-6 py-4 hover:bg-slate-50 transition"
-                >
-                  <div>
-                    <div className="font-medium text-slate-800">
-                      {tx.description}
-                    </div>
-                    <div className="text-sm text-slate-400">
-                      {new Date(tx.date).toLocaleDateString()}
-                    </div>
-                  </div>
+    <input
+      placeholder="Search transactions..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border border-slate-200 focus:ring-2 focus:ring-indigo-400 outline-none"
+    />
 
-                  <div
-                    className={`font-semibold ${
-                      tx.amount > 0
-                        ? "text-green-600"
-                        : "text-red-500"
-                    }`}
-                  >
-                    {tx.amount > 0 ? "+" : "-"}$
-                    {Math.abs(tx.amount).toFixed(2)}
-                  </div>
+    {selected.length > 0 && (
+      <div className="flex justify-between items-center bg-white px-6 py-3 rounded-xl shadow-sm border">
+        <span className="text-sm text-slate-600">
+          {selected.length} selected
+        </span>
+        <button
+          onClick={deleteTransactions}
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+        >
+          Delete
+        </button>
+      </div>
+    )}
+
+    <div className="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
+
+      {filteredTransactions.map((tx) => {
+        const isSelected = selected.includes(tx.id)
+
+        return (
+          <div
+            key={tx.id}
+            className={`flex justify-between items-center px-6 py-4 transition cursor-pointer ${
+              isSelected ? "bg-red-50" : "hover:bg-slate-50"
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => {
+                  if (isSelected) {
+                    setSelected((prev) =>
+                      prev.filter((id) => id !== tx.id)
+                    )
+                  } else {
+                    setSelected((prev) => [...prev, tx.id])
+                  }
+                }}
+                className="w-4 h-4 accent-red-500"
+              />
+
+              <div>
+                <div className="font-medium text-slate-800">
+                  {tx.description}
                 </div>
-              ))}
+                <div className="text-sm text-slate-400">
+                  {new Date(tx.date).toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`font-semibold ${
+                tx.amount > 0
+                  ? "text-green-600"
+                  : "text-red-500"
+              }`}
+            >
+              {tx.amount > 0 ? "+" : "-"}$
+              {Math.abs(tx.amount).toFixed(2)}
             </div>
           </div>
-        )}
+        )
+      })}
+    </div>
+  </div>
+)}
 
         {activeTab === "business" && (
           <BusinessSection
