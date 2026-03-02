@@ -7,6 +7,7 @@ import ChatBox from "@/components/ChatBox"
 import {
   LineChart,
   Line,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -46,6 +47,8 @@ export default function Dashboard() {
   const [newCategoryType, setNewCategoryType] =
     useState<"Revenue" | "Expense">("Expense")
 
+  /* ================= LOAD ================= */
+
   const loadData = async () => {
     try {
       const [txRes, catRes] = await Promise.all([
@@ -75,6 +78,8 @@ export default function Dashboard() {
     loadData()
   }, [])
 
+  /* ================= CATEGORY ================= */
+
   const createCategory = async () => {
     if (!newCategoryName.trim()) return
 
@@ -91,6 +96,8 @@ export default function Dashboard() {
     await api.delete(`/api/categories/${id}`)
     await loadData()
   }
+
+  /* ================= BUSINESS SAVE ================= */
 
   const saveBusiness = async () => {
     const today = new Date().toISOString()
@@ -121,6 +128,8 @@ export default function Dashboard() {
     setActiveTab("transactions")
   }
 
+  /* ================= FILTER + TOTALS ================= */
+
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) =>
       t.description.toLowerCase().includes(search.toLowerCase())
@@ -137,11 +146,38 @@ export default function Dashboard() {
 
   const balance = income + expenses
 
-  const chartData = filteredTransactions.map((t) => ({
-    date: new Date(t.date).toLocaleDateString(),
-    income: t.amount > 0 ? t.amount : 0,
-    expense: t.amount < 0 ? Math.abs(t.amount) : 0,
-  }))
+  /* ================= CUMULATIVE BALANCE CHART ================= */
+
+  const chartData = useMemo(() => {
+    const grouped: Record<string, number> = {}
+
+    filteredTransactions.forEach((t) => {
+      const date = new Date(t.date).toLocaleDateString()
+
+      if (!grouped[date]) {
+        grouped[date] = 0
+      }
+
+      grouped[date] += t.amount
+    })
+
+    const sortedDates = Object.keys(grouped).sort(
+      (a, b) =>
+        new Date(a).getTime() - new Date(b).getTime()
+    )
+
+    let runningBalance = 0
+
+    return sortedDates.map((date) => {
+      runningBalance += grouped[date]
+      return {
+        date,
+        balance: runningBalance,
+      }
+    })
+  }, [filteredTransactions])
+
+  /* ================= UI ================= */
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
@@ -175,85 +211,98 @@ export default function Dashboard() {
       <main className="flex-1 px-16 py-14 space-y-14">
 
         {activeTab === "dashboard" && (
-  <>
-    {/* TOP ROW – BALANCE (DOMINANT) */}
-    <div className="max-w-3xl">
-      <div className="bg-white p-10 rounded-3xl shadow-lg">
-        <div className="text-sm text-slate-500 mb-2">
-          Current Balance
-        </div>
+          <>
+            {/* BALANCE */}
+            <div className="max-w-3xl">
+              <div className="bg-white p-10 rounded-3xl shadow-lg">
+                <div className="text-sm text-slate-500 mb-2">
+                  Current Balance
+                </div>
 
-        <div
-          className={`text-4xl font-bold ${
-            balance > 0
-              ? "text-green-600"
-              : balance < 0
-              ? "text-red-600"
-              : "text-slate-800"
-          }`}
-        >
-          ${balance.toFixed(2)}
-        </div>
+                <div
+                  className={`text-4xl font-bold ${
+                    balance > 0
+                      ? "text-green-600"
+                      : balance < 0
+                      ? "text-red-600"
+                      : "text-slate-800"
+                  }`}
+                >
+                  ${balance.toFixed(2)}
+                </div>
 
-        <div className="text-sm text-slate-400 mt-2">
-          Income minus expenses
-        </div>
-      </div>
-    </div>
+                <div className="text-sm text-slate-400 mt-2">
+                  Income minus expenses
+                </div>
+              </div>
+            </div>
 
-    {/* BOTTOM ROW – INCOME + EXPENSES */}
-    <div className="grid md:grid-cols-2 gap-8 max-w-3xl">
-      <div className="bg-white p-8 rounded-2xl shadow-sm">
-        <div className="text-sm text-slate-500">Income</div>
-        <div className="text-2xl font-semibold text-green-600">
-          ${income.toFixed(2)}
-        </div>
-      </div>
+            {/* INCOME + EXPENSES */}
+            <div className="grid md:grid-cols-2 gap-8 max-w-3xl">
+              <div className="bg-white p-8 rounded-2xl shadow-sm">
+                <div className="text-sm text-slate-500">Income</div>
+                <div className="text-2xl font-semibold text-green-600">
+                  ${income.toFixed(2)}
+                </div>
+              </div>
 
-      <div className="bg-white p-8 rounded-2xl shadow-sm">
-        <div className="text-sm text-slate-500">Expenses</div>
-        <div className="text-2xl font-semibold text-red-600">
-          ${Math.abs(expenses).toFixed(2)}
-        </div>
-      </div>
-    </div>
+              <div className="bg-white p-8 rounded-2xl shadow-sm">
+                <div className="text-sm text-slate-500">Expenses</div>
+                <div className="text-2xl font-semibold text-red-600">
+                  ${Math.abs(expenses).toFixed(2)}
+                </div>
+              </div>
+            </div>
 
-    {/* CHART */}
-    <div className="bg-white p-10 rounded-3xl shadow-lg">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold">
-          Financial Overview
-        </h2>
-        <p className="text-sm text-slate-400">
-          Track income and expenses over time
-        </p>
-      </div>
+            {/* CHART */}
+            <div className="bg-white p-10 rounded-3xl shadow-lg">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold">
+                  Financial Overview
+                </h2>
+                <p className="text-sm text-slate-400">
+                  Track balance growth over time
+                </p>
+              </div>
 
-      <ResponsiveContainer width="100%" height={320}>
-        <LineChart data={chartData}>
-          <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Line
-            type="monotone"
-            dataKey="income"
-            stroke="#16a34a"
-            strokeWidth={3}
-            dot={false}
-          />
-          <Line
-            type="monotone"
-            dataKey="expense"
-            stroke="#dc2626"
-            strokeWidth={3}
-            dot={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  </>
-)}
+              <ResponsiveContainer width="100%" height={340}>
+                <LineChart data={chartData}>
+                  <defs>
+                    <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#dc2626" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+
+                  <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+
+                  <Line
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="#dc2626"
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={{ r: 6 }}
+                    isAnimationActive
+                    animationDuration={800}
+                  />
+
+                  <Area
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="none"
+                    fill="url(#balanceGradient)"
+                    isAnimationActive
+                    animationDuration={800}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
 
         {activeTab === "transactions" && (
           <div className="max-w-3xl space-y-6">
@@ -311,42 +360,12 @@ export default function Dashboard() {
         )}
 
         {activeTab === "askai" && <ChatBox />}
-
       </main>
     </div>
   )
 }
 
-/* COMPONENTS */
-
-function StatCard({
-  label,
-  value,
-  positive,
-  negative,
-  highlight,
-}: any) {
-  return (
-    <div
-      className={`p-8 rounded-3xl bg-white shadow-lg transition hover:-translate-y-1 ${
-        highlight ? "ring-2 ring-red-500" : ""
-      }`}
-    >
-      <div className="text-sm text-slate-400 mb-2">{label}</div>
-      <div
-        className={`text-3xl font-bold ${
-          positive
-            ? "text-green-600"
-            : negative
-            ? "text-red-500"
-            : "text-slate-800"
-        }`}
-      >
-        ${value.toFixed(2)}
-      </div>
-    </div>
-  )
-}
+/* ================= BUSINESS SECTION ================= */
 
 function BusinessSection(props: any) {
   const {
@@ -364,32 +383,23 @@ function BusinessSection(props: any) {
 
   return (
     <div className="space-y-14 max-w-6xl">
-
       {["Revenue","Expenses"].map((section) => {
         const isRevenue = section === "Revenue"
-
         const filtered = categories.filter(
           (c: any) => c.isRevenue === isRevenue
         )
 
         return (
-          <div
-            key={section}
-            className="bg-white p-8 rounded-3xl shadow-md"
-          >
-            <h2 className="text-xl font-semibold mb-6 text-slate-800">
-              {section}
-            </h2>
+          <div key={section} className="bg-white p-8 rounded-3xl shadow-md">
+            <h2 className="text-xl font-semibold mb-6">{section}</h2>
 
             <div className="flex flex-wrap gap-4">
               {filtered.map((cat: any) => (
                 <div
                   key={cat.id}
-                  className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl shadow-sm"
+                  className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl"
                 >
-                  <span className="text-sm text-slate-700">
-                    {cat.name}
-                  </span>
+                  <span>{cat.name}</span>
                   <input
                     type="number"
                     value={values[cat.id] ?? ""}
@@ -399,11 +409,11 @@ function BusinessSection(props: any) {
                         [cat.id]: e.target.value,
                       }))
                     }
-                    className="w-24 px-2 py-1 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                    className="w-24 px-2 py-1 rounded-lg border"
                   />
                   <button
                     onClick={() => deleteCategory(cat.id)}
-                    className="text-red-400 hover:text-red-600 text-sm"
+                    className="text-red-500"
                   >
                     ✕
                   </button>
@@ -422,21 +432,21 @@ function BusinessSection(props: any) {
             placeholder="Category name"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-400 outline-none"
+            className="px-4 py-2 rounded-xl border"
           />
           <select
             value={newCategoryType}
             onChange={(e) =>
               setNewCategoryType(e.target.value as "Revenue" | "Expense")
             }
-            className="px-4 py-2 rounded-xl border border-slate-200"
+            className="px-4 py-2 rounded-xl border"
           >
             <option value="Expense">Expense</option>
             <option value="Revenue">Revenue</option>
           </select>
           <button
             onClick={createCategory}
-            className="bg-red-500 text-white px-6 py-2 rounded-xl shadow hover:bg-indigo-700 transition"
+            className="bg-red-500 text-white px-6 py-2 rounded-xl"
           >
             Create
           </button>
@@ -444,12 +454,11 @@ function BusinessSection(props: any) {
 
         <button
           onClick={saveBusiness}
-          className="bg-red-500 text-white px-8 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition"
+          className="bg-red-500 text-white px-8 py-3 rounded-xl"
         >
           Save Configuration
         </button>
       </div>
-
     </div>
   )
 }
