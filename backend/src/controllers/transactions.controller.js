@@ -48,7 +48,7 @@ export const createTransactionController = async (req, res) => {
 
 
 /* =========================================
-   DELETE TRANSACTION (SOFT DELETE)
+   DELETE TRANSACTION
 ========================================= */
 export const deleteTransactionController = async (req, res) => {
   try {
@@ -60,7 +60,8 @@ export const deleteTransactionController = async (req, res) => {
       })
     }
 
-    await transactionService.softDelete(req.user.id, id)
+    // 🔥 FIX: use remove (NOT softDelete)
+    await transactionService.remove(req.user.id, id)
 
     return res.status(200).json({
       success: true,
