@@ -325,24 +325,24 @@ const deleteTransactions = async () => {
       placeholder="Search transactions..."
       value={search}
       onChange={(e) => setSearch(e.target.value)}
-      className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border border-slate-200 focus:ring-2 focus:ring-indigo-400 outline-none"
+      className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border border-slate-200 focus:ring-2 focus:ring-red-400 outline-none transition-all duration-200"
     />
 
     {selected.length > 0 && (
-      <div className="flex justify-between items-center bg-white px-6 py-3 rounded-xl shadow-sm border">
-        <span className="text-sm text-slate-600">
+      <div className="flex justify-between items-center bg-white px-6 py-4 rounded-xl shadow-sm border border-slate-200 transition-all duration-200">
+        <span className="text-sm font-medium text-slate-700">
           {selected.length} selected
         </span>
         <button
           onClick={deleteTransactions}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-200 shadow-sm"
         >
           Delete
         </button>
       </div>
     )}
 
-    <div className="bg-white rounded-2xl shadow-sm divide-y divide-slate-100">
+    <div className="bg-white rounded-2xl shadow-sm divide-y divide-slate-100 transition-all duration-200">
 
       {filteredTransactions.map((tx) => {
         const isSelected = selected.includes(tx.id)
@@ -350,11 +350,18 @@ const deleteTransactions = async () => {
         return (
           <div
             key={tx.id}
-            className={`flex justify-between items-center px-6 py-4 transition cursor-pointer ${
-              isSelected ? "bg-red-50" : "hover:bg-slate-50"
-            }`}
+            className={`
+              flex justify-between items-center
+              px-6 py-5
+              transition-all duration-200
+              cursor-pointer
+              ${isSelected
+                ? "bg-red-50 border-l-4 border-red-500"
+                : "hover:bg-slate-50"}
+            `}
           >
             <div className="flex items-center gap-4">
+
               <input
                 type="checkbox"
                 checked={isSelected}
@@ -371,21 +378,22 @@ const deleteTransactions = async () => {
               />
 
               <div>
-                <div className="font-medium text-slate-800">
+                <div className="font-medium text-slate-900">
                   {tx.description}
                 </div>
-                <div className="text-sm text-slate-400">
+                <div className="text-xs text-slate-400">
                   {new Date(tx.date).toLocaleDateString()}
                 </div>
               </div>
             </div>
 
             <div
-              className={`font-semibold ${
-                tx.amount > 0
+              className={`
+                text-sm font-semibold tabular-nums
+                ${tx.amount > 0
                   ? "text-green-600"
-                  : "text-red-500"
-              }`}
+                  : "text-red-500"}
+              `}
             >
               {tx.amount > 0 ? "+" : "-"}$
               {Math.abs(tx.amount).toFixed(2)}
