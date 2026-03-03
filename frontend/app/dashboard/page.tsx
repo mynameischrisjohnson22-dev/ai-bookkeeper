@@ -456,40 +456,42 @@ function BusinessSection(props: any) {
         return (
           <div
             key={section}
-            className="bg-white p-10 rounded-2xl shadow-md"
+            className="bg-white p-10 rounded-2xl border border-slate-100 shadow-sm"
           >
-            <h2 className="text-xl font-semibold mb-6">
+            <h2 className="text-xl font-semibold mb-8 tracking-tight">
               {section}
             </h2>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filtered.map((cat: any) => (
                 <div
                   key={cat.id}
-                  className="flex items-center gap-3 bg-slate-100 px-4 py-3 rounded-xl"
+                  className="flex items-center justify-between gap-4 bg-slate-50 px-5 py-4 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-white transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <span className="text-sm font-medium text-slate-700">
                     {cat.name}
                   </span>
 
-                  <input
-                    type="number"
-                    value={values[cat.id] ?? ""}
-                    onChange={(e) =>
-                      setValues((prev: any) => ({
-                        ...prev,
-                        [cat.id]: e.target.value,
-                      }))
-                    }
-                    className="w-28 bg-white border border-slate-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-red-400 outline-none"
-                  />
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={values[cat.id] ?? ""}
+                      onChange={(e) =>
+                        setValues((prev: any) => ({
+                          ...prev,
+                          [cat.id]: e.target.value,
+                        }))
+                      }
+                      className="w-28 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition-all duration-200"
+                    />
 
-                  <button
-                    onClick={() => deleteCategory(cat.id)}
-                    className="text-red-500 text-sm hover:text-red-700"
-                  >
-                    ✕
-                  </button>
+                    <button
+                      onClick={() => deleteCategory(cat.id)}
+                      className="text-slate-400 hover:text-red-500 transition-colors duration-200 text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -498,17 +500,17 @@ function BusinessSection(props: any) {
       })}
 
       {/* CREATE CATEGORY */}
-      <div className="bg-white p-10 rounded-2xl shadow-md space-y-6">
-        <h3 className="text-xl font-semibold">
+      <div className="bg-white p-10 rounded-2xl border border-slate-100 shadow-sm space-y-8">
+        <h3 className="text-xl font-semibold tracking-tight">
           Create Category
         </h3>
 
-        <div className="flex gap-4 flex-wrap">
+        <div className="flex flex-wrap gap-4">
           <input
             placeholder="Category name"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-400 outline-none"
+            className="px-4 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition-all duration-200"
           />
 
           <select
@@ -516,7 +518,7 @@ function BusinessSection(props: any) {
             onChange={(e) =>
               setNewCategoryType(e.target.value as "Revenue" | "Expense")
             }
-            className="px-4 py-2 rounded-xl border border-slate-300"
+            className="px-4 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all duration-200"
           >
             <option value="Expense">Expense</option>
             <option value="Revenue">Revenue</option>
@@ -524,18 +526,20 @@ function BusinessSection(props: any) {
 
           <button
             onClick={createCategory}
-            className="bg-red-500 text-white px-6 py-2 rounded-xl hover:bg-red-600 transition"
+            className="bg-red-500 text-white px-6 py-2 rounded-xl shadow-sm hover:shadow-md hover:bg-red-600 transition-all duration-200"
           >
             Create
           </button>
         </div>
 
-        <button
-          onClick={saveBusiness}
-          className="bg-red-500 text-white px-8 py-3 rounded-xl hover:bg-red-600 transition"
-        >
-          Save Configuration
-        </button>
+        <div>
+          <button
+            onClick={saveBusiness}
+            className="bg-red-500 text-white px-8 py-3 rounded-xl shadow-md hover:shadow-lg hover:bg-red-600 transition-all duration-200"
+          >
+            Save Configuration
+          </button>
+        </div>
       </div>
 
     </div>
