@@ -443,7 +443,7 @@ function BusinessSection(props: any) {
   } = props
 
   return (
-    <div className="space-y-12 max-w-4xl">
+    <div className="space-y-14 max-w-4xl">
 
       {/* REVENUE + EXPENSE SECTIONS */}
       {["Revenue", "Expenses"].map((section) => {
@@ -456,23 +456,26 @@ function BusinessSection(props: any) {
         return (
           <div
             key={section}
-            className="bg-white p-10 rounded-2xl border border-slate-100 shadow-sm"
+            className="bg-white p-10 rounded-2xl border border-slate-200 shadow-sm"
           >
-            <h2 className="text-xl font-semibold mb-8 tracking-tight">
+            <h2 className="text-xl font-semibold mb-10 tracking-tight text-slate-800">
               {section}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filtered.map((cat: any) => (
                 <div
                   key={cat.id}
-                  className="flex items-center justify-between gap-4 bg-slate-50 px-5 py-4 rounded-xl border border-slate-200 hover:border-red-300 hover:bg-white transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-6 py-5 transition-all duration-200 hover:border-red-300 hover:bg-white"
                 >
-                  <span className="text-sm font-medium text-slate-700">
-                    {cat.name}
-                  </span>
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-sm font-medium text-slate-700">
+                      {cat.name}
+                    </span>
+                  </div>
 
-                  <div className="flex items-center gap-3">
+                  {/* INPUT GROUP */}
+                  <div className="flex items-center">
                     <input
                       type="number"
                       value={values[cat.id] ?? ""}
@@ -482,23 +485,36 @@ function BusinessSection(props: any) {
                           [cat.id]: e.target.value,
                         }))
                       }
-                      className="w-28 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition-all duration-200"
+                      className="
+                        w-full
+                        bg-white
+                        border border-slate-300
+                        rounded-l-lg
+                        px-4 py-2
+                        text-sm
+                        focus:ring-2 focus:ring-red-400
+                        focus:border-red-400
+                        outline-none
+                        transition-all duration-200
+                      "
                     />
 
-<button
-  onClick={() => deleteCategory(cat.id)}
-  className="
-    w-8 h-8
-    flex items-center justify-center
-    rounded-full
-    text-slate-400
-    hover:text-red-500
-    hover:bg-red-50
-    transition-all duration-200
-  "
->
-  ×
-</button>
+                    <button
+                      onClick={() => deleteCategory(cat.id)}
+                      className="
+                        h-[40px]
+                        px-4
+                        bg-slate-100
+                        border border-l-0 border-slate-300
+                        rounded-r-lg
+                        text-slate-400
+                        hover:text-red-500
+                        hover:bg-red-50
+                        transition-all duration-200
+                      "
+                    >
+                      ×
+                    </button>
                   </div>
                 </div>
               ))}
@@ -508,8 +524,8 @@ function BusinessSection(props: any) {
       })}
 
       {/* CREATE CATEGORY */}
-      <div className="bg-white p-10 rounded-2xl border border-slate-100 shadow-sm space-y-8">
-        <h3 className="text-xl font-semibold tracking-tight">
+      <div className="bg-white p-10 rounded-2xl border border-slate-200 shadow-sm space-y-8">
+        <h3 className="text-xl font-semibold tracking-tight text-slate-800">
           Create Category
         </h3>
 
@@ -518,7 +534,15 @@ function BusinessSection(props: any) {
             placeholder="Category name"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition-all duration-200"
+            className="
+              px-4 py-2 rounded-xl
+              border border-slate-300
+              bg-white
+              focus:ring-2 focus:ring-red-400
+              focus:border-red-400
+              outline-none
+              transition-all duration-200
+            "
           />
 
           <select
@@ -526,7 +550,14 @@ function BusinessSection(props: any) {
             onChange={(e) =>
               setNewCategoryType(e.target.value as "Revenue" | "Expense")
             }
-            className="px-4 py-2 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-red-400 outline-none transition-all duration-200"
+            className="
+              px-4 py-2 rounded-xl
+              border border-slate-300
+              bg-white
+              focus:ring-2 focus:ring-red-400
+              outline-none
+              transition-all duration-200
+            "
           >
             <option value="Expense">Expense</option>
             <option value="Revenue">Revenue</option>
@@ -534,7 +565,15 @@ function BusinessSection(props: any) {
 
           <button
             onClick={createCategory}
-            className="bg-red-500 text-white px-6 py-2 rounded-xl shadow-sm hover:shadow-md hover:bg-red-600 transition-all duration-200"
+            className="
+              bg-red-500 text-white
+              px-6 py-2
+              rounded-xl
+              shadow-sm
+              hover:shadow-md
+              hover:bg-red-600
+              transition-all duration-200
+            "
           >
             Create
           </button>
@@ -543,7 +582,15 @@ function BusinessSection(props: any) {
         <div>
           <button
             onClick={saveBusiness}
-            className="bg-red-500 text-white px-8 py-3 rounded-xl shadow-md hover:shadow-lg hover:bg-red-600 transition-all duration-200"
+            className="
+              bg-red-500 text-white
+              px-8 py-3
+              rounded-xl
+              shadow-md
+              hover:shadow-lg
+              hover:bg-red-600
+              transition-all duration-200
+            "
           >
             Save Configuration
           </button>
