@@ -18,13 +18,17 @@ export const signup = async (req, res) => {
     let { email, password } = req.body
 
     if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" })
+      return res.status(400).json({
+        error: "Email and password are required"
+      })
     }
 
     email = email.toLowerCase().trim()
 
     if (password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" })
+      return res.status(400).json({
+        error: "Password must be at least 6 characters"
+      })
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -32,7 +36,9 @@ export const signup = async (req, res) => {
     })
 
     if (existingUser) {
-      return res.status(409).json({ error: "User already exists" })
+      return res.status(409).json({
+        error: "User already exists"
+      })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -45,10 +51,7 @@ export const signup = async (req, res) => {
     })
 
     const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email
-      },
+      { id: user.id, email: user.email },
       JWT_SECRET,
       { expiresIn: TOKEN_EXPIRES_IN }
     )
@@ -68,7 +71,6 @@ export const signup = async (req, res) => {
   }
 }
 
-
 /* =========================
    LOGIN
 ========================= */
@@ -77,34 +79,36 @@ export const login = async (req, res) => {
     let { email, password } = req.body
 
     if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" })
+      return res.status(400).json({
+        error: "Email and password are required"
+      })
     }
 
     email = email.toLowerCase().trim()
 
-console.log("Typed password:", password)
-console.log("Hashed password:", user.password)
+    const user = await prisma.user.findUnique({
+      where: { email }
+    })
 
-const validPassword = await bcrypt.compare(password, user.password)
+    if (!user) {
+      return res.status(401).json({
+        error: "Invalid email or password"
+      })
+    }
 
-console.log("Password match:", validPassword)
-
-if (!validPassword) {
-  return res.status(401).json({ error: "Invalid email or password" })
-}
-
-
-    const passwordMatch = await bcrypt.compare(password, user.password)
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user.password
+    )
 
     if (!passwordMatch) {
-      return res.status(401).json({ error: "Invalid email or password" })
+      return res.status(401).json({
+        error: "Invalid email or password"
+      })
     }
 
     const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email
-      },
+      { id: user.id, email: user.email },
       JWT_SECRET,
       { expiresIn: TOKEN_EXPIRES_IN }
     )

@@ -12,14 +12,13 @@ export const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    // 🔥 FIX — support BOTH id and userId
-    req.user = {
-      id: decoded.id || decoded.userId,
-      email: decoded.email
+    if (!decoded.id) {
+      return res.status(401).json({ error: "Invalid token payload" })
     }
 
-    if (!req.user.id) {
-      return res.status(401).json({ error: "Invalid token payload" })
+    req.user = {
+      id: decoded.id,
+      email: decoded.email
     }
 
     next()

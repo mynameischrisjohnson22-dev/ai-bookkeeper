@@ -5,16 +5,17 @@ import http from "http"
 import cron from "node-cron"
 import app from "./app.js"
 import prisma from "./utils/prisma.js"
+
+import authRoutes from "./routes/auth.routes.js"
 import categoriesRoutes from "./routes/categories.routes.js"
+
 import { seedDefaultCategories } from "./seed/categories.seed.js"
 import { runRecurringEngine } from "./jobs/recurring.engine.js"
 
 const PORT = process.env.PORT || 3000
 const ENABLE_CRON = process.env.ENABLE_CRON === "true"
 
-/* =================================
-   HEALTH CHECK
-================================= */
+/* HEALTH CHECK */
 app.get("/", (req, res) => {
   res.json({
     status: "AI Bookkeeper Backend Running",
@@ -22,19 +23,13 @@ app.get("/", (req, res) => {
   })
 })
 
-/* =================================
-   ROUTES
-================================= */
+/* ROUTES */
+app.use("/api/auth", authRoutes)
 app.use("/api/categories", categoriesRoutes)
 
-/* =================================
-   SERVER
-================================= */
+/* SERVER */
 const server = http.createServer(app)
 
-/* =================================
-   START SERVER
-================================= */
 async function startServer() {
   try {
     console.log("🔄 Starting backend...")
@@ -72,9 +67,6 @@ async function startServer() {
   }
 }
 
-/* =================================
-   GLOBAL ERROR HANDLING
-================================= */
 process.on("unhandledRejection", (reason) => {
   console.error("🔥 Unhandled Rejection:", reason)
 })
@@ -83,18 +75,9 @@ process.on("uncaughtException", (err) => {
   console.error("🔥 Uncaught Exception:", err)
 })
 
-/* =================================
-   GRACEFUL SHUTDOWN
-================================= */
 async function shutdown() {
   console.log("🛑 Shutting down gracefully...")
-
-  try {
-    await prisma.$disconnect()
-  } catch (e) {
-    console.error("Error during DB disconnect:", e)
-  }
-
+  await prisma.$disconnect()
   server.close(() => process.exit(0))
 }
 
