@@ -7,14 +7,10 @@ import type { AxiosError } from "axios"
 
 type LoginResponse = {
   token: string
-  user: {
-    id: string
-  }
+  user: { id: string }
 }
 
-type ApiError = {
-  error?: string
-}
+type ApiError = { error?: string }
 
 export default function LoginPage() {
   const router = useRouter()
@@ -35,35 +31,22 @@ export default function LoginPage() {
     try {
       setLoading(true)
 
-      const response = await api.post<LoginResponse>(
+      const res = await api.post<LoginResponse>(
         "/api/auth/login",
         {
           email: email.trim(),
-          password: password.trim(),
+          password: password.trim()
         }
       )
 
-      const token = response.data?.token
-      const userId = response.data?.user?.id
+      localStorage.setItem("token", res.data.token)
+      localStorage.setItem("userId", res.data.user.id)
 
-      if (!token) {
-        throw new Error("No token returned from server")
-      }
-
-      // Save auth
-      localStorage.setItem("token", token)
-
-      if (userId) {
-        localStorage.setItem("userId", userId)
-      }
-
-      // Force refresh so app picks up auth state
       router.push("/dashboard")
       router.refresh()
 
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>
-
       setError(
         axiosError.response?.data?.error ||
         "Invalid email or password"
@@ -75,7 +58,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-full max-w-md space-y-6 p-8 border rounded-lg shadow-sm">
+      <div className="w-full max-w-md p-8 border rounded-lg shadow-sm space-y-6">
+
         <h1 className="text-2xl font-bold text-center">
           Login
         </h1>
@@ -87,18 +71,19 @@ export default function LoginPage() {
         )}
 
         <input
-          className="border p-3 w-full rounded"
+          type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="border p-3 w-full rounded"
         />
 
         <input
-          className="border p-3 w-full rounded"
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="border p-3 w-full rounded"
         />
 
         <button
@@ -108,6 +93,18 @@ export default function LoginPage() {
         >
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        <div className="relative text-center text-sm text-gray-400">
+          OR
+        </div>
+
+        <a
+          href={`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`}
+          className="border px-4 py-3 rounded w-full block text-center hover:bg-gray-50"
+        >
+          Continue with Google
+        </a>
+
       </div>
     </div>
   )

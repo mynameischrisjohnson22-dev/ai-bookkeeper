@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import api from "../../../lib/api"
+import api from "@/lib/api"
 import type { AxiosError } from "axios"
 
 type SignupResponse = {
@@ -23,12 +23,24 @@ export default function Signup() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [emailError, setEmailError] = useState("")
+
+  const validateEmail = (value: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return regex.test(value)
+  }
 
   const handleSignup = async () => {
     setError("")
+    setEmailError("")
 
-    if (!email.trim() || !password.trim()) {
-      setError("Please enter email and password")
+    if (!validateEmail(email)) {
+      setEmailError("Enter a valid email address")
+      return
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters")
       return
     }
 
@@ -37,7 +49,10 @@ export default function Signup() {
 
       const response = await api.post<SignupResponse>(
         "/api/auth/signup",
-        { email, password }
+        {
+          email: email.trim(),
+          password: password.trim(),
+        }
       )
 
       const { token, user } = response.data
@@ -46,6 +61,8 @@ export default function Signup() {
       localStorage.setItem("userId", user.id)
 
       router.push("/dashboard")
+      router.refresh()
+
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>
 
@@ -59,35 +76,55 @@ export default function Signup() {
   }
 
   return (
-    <div className="p-10 max-w-md mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Sign Up</h1>
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-full max-w-md space-y-6 p-8 border rounded-lg shadow-sm">
 
-      {error && (
-        <div className="text-red-500 text-sm">{error}</div>
-      )}
+        <h1 className="text-2xl font-bold text-center">
+          Sign Up
+        </h1>
 
-      <input
-        className="border p-2 w-full"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        {error && (
+          <div className="text-red-500 text-sm text-center">
+            {error}
+          </div>
+        )}
 
-      <input
-        className="border p-2 w-full"
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <div>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              if (emailError) setEmailError("")
+            }}
+            className="border p-3 w-full rounded"
+            required
+          />
+          {emailError && (
+            <p className="text-red-500 text-sm mt-1">
+              {emailError}
+            </p>
+          )}
+        </div>
 
-      <button
-        onClick={handleSignup}
-        disabled={loading}
-        className="bg-black text-white px-4 py-2 rounded w-full disabled:opacity-50"
-      >
-        {loading ? "Creating account..." : "Create Account"}
-      </button>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="border p-3 w-full rounded"
+        />
+
+        <button
+          onClick={handleSignup}
+          disabled={loading}
+          className="bg-black text-white px-4 py-3 rounded w-full disabled:opacity-50"
+        >
+          {loading ? "Creating account..." : "Create Account"}
+        </button>
+
+      </div>
     </div>
   )
 }
