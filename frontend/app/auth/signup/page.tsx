@@ -5,13 +5,6 @@ import { useRouter } from "next/navigation"
 import api from "@/lib/api"
 import type { AxiosError } from "axios"
 
-type SignupResponse = {
-  token: string
-  user: {
-    id: string
-  }
-}
-
 type ApiError = {
   error?: string
 }
@@ -23,6 +16,7 @@ export default function Signup() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [emailError, setEmailError] = useState("")
 
   const validateEmail = (value: string) => {
@@ -33,8 +27,9 @@ export default function Signup() {
   const handleSignup = async () => {
     setError("")
     setEmailError("")
+    setSuccess("")
 
-    if (!validateEmail(email)) {
+    if (!validateEmail(email.trim())) {
       setEmailError("Enter a valid email address")
       return
     }
@@ -47,21 +42,18 @@ export default function Signup() {
     try {
       setLoading(true)
 
-      const response = await api.post<SignupResponse>(
-        "/api/auth/signup",
-        {
-          email: email.trim(),
-          password: password.trim(),
-        }
-      )
+      await api.post("/api/auth/signup", {
+        email: email.trim(),
+        password: password.trim(),
+      })
 
-      const { token, user } = response.data
+      // Show success message
+      setSuccess("Account created! Please check your email to verify.")
 
-      localStorage.setItem("token", token)
-      localStorage.setItem("userId", user.id)
-
-      router.push("/dashboard")
-      router.refresh()
+      // Redirect after short delay
+      setTimeout(() => {
+        router.push("/login?verify=true")
+      }, 2000)
 
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>
@@ -86,6 +78,12 @@ export default function Signup() {
         {error && (
           <div className="text-red-500 text-sm text-center">
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="text-green-600 text-sm text-center">
+            {success}
           </div>
         )}
 
