@@ -2,6 +2,18 @@ import passport from "passport"
 import { Strategy as GoogleStrategy } from "passport-google-oauth20"
 import prisma from "./prisma.js"
 
+if (!process.env.GOOGLE_CLIENT_ID) {
+  throw new Error("GOOGLE_CLIENT_ID not set")
+}
+
+if (!process.env.GOOGLE_CLIENT_SECRET) {
+  throw new Error("GOOGLE_CLIENT_SECRET not set")
+}
+
+if (!process.env.API_URL) {
+  throw new Error("API_URL not set in environment variables")
+}
+
 passport.use(
   new GoogleStrategy(
     {
@@ -11,14 +23,18 @@ passport.use(
     },
     async (_accessToken, _refreshToken, profile, done) => {
       try {
-        const email = profile.emails[0].value
+        const email = profile.emails?.[0]?.value
         const googleId = profile.id
+
+        if (!email) {
+          return done(new Error("Google account has no email"), null)
+        }
 
         let user = await prisma.user.findUnique({
           where: { email }
         })
 
-        // If user doesn't exist, create one
+        // Create new user if not exists
         if (!user) {
           user = await prisma.user.create({
             data: {
