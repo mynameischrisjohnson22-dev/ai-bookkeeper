@@ -12,18 +12,26 @@ datasource db {
 ///////////////////////////////////////////////////////
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  plan      String   @default("basic")
-  createdAt DateTime @default(now())
-  deletedAt DateTime?
+  id                   String   @id @default(uuid())
+  email                String   @unique
+  password             String?
+  plan                 String   @default("basic")
+
+  emailVerified        Boolean  @default(false)
+  verificationToken    String?  @unique
+  resetPasswordToken   String?  @unique
+  resetPasswordExpires DateTime?
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @default(now()) @updatedAt
+  deletedAt            DateTime?
 
   transactions Transaction[]
   categories   Category[]
   audits       AuditLog[]
 
   @@index([email])
+  @@index([deletedAt])
 }
 
 ///////////////////////////////////////////////////////
@@ -38,16 +46,19 @@ model Category {
   builtIn   Boolean  @default(false)
   isRevenue Boolean  @default(false)
   isCOGS    Boolean  @default(false)
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   deletedAt DateTime?
 
-  // 👇 Make this REQUIRED for user-created categories
+  // NULL = system category
   userId String?
   user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
 
   @@index([userId])
+  @@index([deletedAt])
   @@unique([userId, name])
 }
 
@@ -62,7 +73,9 @@ model Transaction {
   description String
   amount      Float
   categoryId  String?
+
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
   deletedAt   DateTime?
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -84,6 +97,7 @@ model AuditLog {
   action    String
   entity    String
   entityId  String
+  metadata  Json?
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

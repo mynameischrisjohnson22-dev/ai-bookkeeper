@@ -1,6 +1,8 @@
 import express from "express"
 import cors from "cors"
 import morgan from "morgan"
+import rateLimit from "express-rate-limit"
+import passport from "./utils/passport.js"
 
 /* ---------- ROUTES ---------- */
 import authRoutes from "./routes/auth.routes.js"
@@ -16,22 +18,40 @@ import actionsRoutes from "./routes/actions.routes.js"
 const app = express()
 
 /* ======================================================
-   CORS (SIMPLIFIED + SAFE)
+   SECURITY: RATE LIMITING
+====================================================== */
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+app.use(globalLimiter)
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: "Too many auth attempts. Try again later." }
+})
+
+app.use("/api/auth", authLimiter)
+
+/* ======================================================
+   CORS
 ====================================================== */
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://albdy.com",
-  "https://www.albdy.com",
+  "https://ai-bookkeeper-jade.vercel.app",
 ]
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow server-to-server or Postman
       if (!origin) return callback(null, true)
 
-      // Allow all Vercel deployments automatically
       if (origin.includes(".vercel.app")) {
         return callback(null, true)
       }
@@ -41,24 +61,26 @@ app.use(
       }
 
       console.log("❌ CORS blocked:", origin)
-
-      // IMPORTANT: Do NOT throw error (causes 502)
       return callback(null, false)
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 )
 
-/* ---- VERY IMPORTANT FOR PREFLIGHT ---- */
 app.options("*", cors())
 
-/* ---------- MIDDLEWARE ---------- */
-app.use(express.json())
-app.use(morgan("dev"))
+/* ======================================================
+   CORE
+====================================================== */
 
-/* ---------- ROUTES ---------- */
+app.use(express.json({ limit: "10mb" }))
+app.use(morgan("dev"))
+app.use(passport.initialize())
+
+/* ======================================================
+   ROUTES
+====================================================== */
+
 app.use("/api/auth", authRoutes)
 app.use("/api/transactions", transactionRoutes)
 app.use("/api/categories", categoriesRoutes)
@@ -69,9 +91,13 @@ app.use("/api/stripe", stripeRoutes)
 app.use("/api/reports", reportRoutes)
 app.use("/api/actions", actionsRoutes)
 
-/* ---------- HEALTH ---------- */
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" })
+})
+
+app.use((err, _req, res, _next) => {
+  console.error("🔥 Unhandled error:", err)
+  res.status(500).json({ error: "Internal server error" })
 })
 
 export default app
