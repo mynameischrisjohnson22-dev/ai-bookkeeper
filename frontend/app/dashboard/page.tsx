@@ -424,6 +424,7 @@ const deleteTransactions = async () => {
         )}
 
         {activeTab === "askai" && <ChatBox />}
+        {activeTab === "settings" && <Settings />}
       </main>
     </div>
   )
