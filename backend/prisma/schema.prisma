@@ -17,8 +17,14 @@ model User {
   password String?
   googleId String? @unique
 
+  // profile
+  businessName String?
+  currency     String  @default("USD")
+
+  // plan
   plan String @default("basic")
 
+  // auth / verification
   emailVerified        Boolean   @default(false)
   verificationToken    String?   @unique
   resetPasswordToken   String?   @unique
@@ -28,11 +34,13 @@ model User {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  transactions Transaction[]
-  categories   Category[]
-  audits       AuditLog[]
+  //////////////////////////////////////////////////////
+  // RELATIONS
+  //////////////////////////////////////////////////////
 
-  // ✅ FIXED RELATIONS
+  transactions  Transaction[]
+  categories    Category[]
+  audits        AuditLog[]
   subscriptions Subscription[]
   invoices      Invoice[]
   usage         Usage[]
@@ -60,7 +68,7 @@ model Category {
   deletedAt DateTime?
 
   userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
 
