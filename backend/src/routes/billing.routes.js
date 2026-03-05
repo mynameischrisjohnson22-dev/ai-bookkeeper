@@ -1,55 +1,46 @@
 import express from "express"
-import { paddle } from "../utils/paddle.js"
+import axios from "axios"
 
 const router = express.Router()
 
-/*
-POST /api/billing/checkout
-
-body:
-{
-  priceId: "pri_xxxxx",
-  userId: "user_uuid"
-}
-*/
-
 router.post("/checkout", async (req, res) => {
+
   try {
-    const { priceId, userId } = req.body
 
-    if (!priceId || !userId) {
-      return res.status(400).json({
-        error: "priceId and userId are required"
-      })
-    }
+    const { priceId } = req.body
 
-    const transaction = await paddle.transactions.create({
-      items: [
-        {
-          price_id: priceId,
-          quantity: 1
+    const response = await axios.post(
+      "https://api.paddle.com/transactions",
+      {
+        items: [
+          {
+            price_id: priceId,
+            quantity: 1
+          }
+        ]
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PADDLE_API_KEY}`,
+          "Content-Type": "application/json"
         }
-      ],
-      custom_data: {
-        userId
       }
+    )
+
+    res.json({
+      url: response.data.data.checkout.url
     })
 
-    if (!transaction?.checkout?.url) {
-      throw new Error("Checkout URL not returned from Paddle")
-    }
+  } catch (err) {
 
-    return res.json({
-      checkoutUrl: transaction.checkout.url
+    console.error(err.response?.data || err)
+
+    res.status(500).json({
+      error: "Checkout failed"
     })
 
-  } catch (error) {
-    console.error("❌ Paddle checkout error:", error)
-
-    return res.status(500).json({
-      error: "Failed to create checkout"
-    })
   }
+
 })
 
 export default router
