@@ -11,7 +11,6 @@ import categoriesRoutes from "./routes/categories.routes.js"
 import metricsRoutes from "./routes/metrics.routes.js"
 import aiRoutes from "./routes/ai.routes.js"
 import cfoRoutes from "./routes/cfo.routes.js"
-import stripeRoutes from "./routes/stripe.routes.js"
 import reportRoutes from "./routes/reports.routes.js"
 import actionsRoutes from "./routes/actions.routes.js"
 
@@ -87,7 +86,7 @@ app.use("/api/categories", categoriesRoutes)
 app.use("/api/metrics", metricsRoutes)
 app.use("/api/ai", aiRoutes)
 app.use("/api/cfo", cfoRoutes)
-app.use("/api/stripe", stripeRoutes)
+app.use("/api/paddle", paddleRoutes)
 app.use("/api/reports", reportRoutes)
 app.use("/api/actions", actionsRoutes)
 
