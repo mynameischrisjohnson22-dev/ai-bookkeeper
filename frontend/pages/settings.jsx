@@ -1,12 +1,15 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import api from "@/lib/api"
 
 export default function Settings() {
 
   const router = useRouter()
+
+  const [loading,setLoading] = useState(false)
+  const [error,setError] = useState("")
 
   const [profile,setProfile] = useState({
     email:"",
@@ -20,26 +23,151 @@ export default function Settings() {
     confirm:""
   })
 
+  //////////////////////////////////////////////////////
+  // LOAD PROFILE
+  //////////////////////////////////////////////////////
+
+  useEffect(()=>{
+    loadProfile()
+  },[])
+
+  const loadProfile = async () => {
+
+    try{
+
+      const res = await api.get("/api/user/profile")
+
+      setProfile({
+        email:res.data.email,
+        businessName:res.data.businessName || "",
+        currency:res.data.currency || "USD"
+      })
+
+    }catch(err){
+      console.error("Failed to load profile",err)
+    }
+
+  }
+
+  //////////////////////////////////////////////////////
+  // SAVE PROFILE
+  //////////////////////////////////////////////////////
+
+  const saveProfile = async () => {
+
+    try{
+
+      setLoading(true)
+      setError("")
+
+      await api.patch("/api/user/profile",{
+        businessName:profile.businessName,
+        currency:profile.currency
+      })
+
+    }catch(err){
+
+      setError("Failed to update profile")
+
+    }finally{
+
+      setLoading(false)
+
+    }
+
+  }
+
+  //////////////////////////////////////////////////////
+  // UPDATE PASSWORD
+  //////////////////////////////////////////////////////
+
+  const updatePassword = async () => {
+
+    if(password.new !== password.confirm){
+      setError("Passwords do not match")
+      return
+    }
+
+    try{
+
+      setLoading(true)
+      setError("")
+
+      await api.patch("/api/user/password",{
+        currentPassword:password.current,
+        newPassword:password.new
+      })
+
+      setPassword({
+        current:"",
+        new:"",
+        confirm:""
+      })
+
+    }catch(err){
+
+      setError("Failed to update password")
+
+    }finally{
+
+      setLoading(false)
+
+    }
+
+  }
+
+  //////////////////////////////////////////////////////
+  // LOGOUT
+  //////////////////////////////////////////////////////
+
   const logout = () => {
+
     localStorage.removeItem("token")
     localStorage.removeItem("userId")
+
     router.push("/auth/login")
+
   }
+
+  //////////////////////////////////////////////////////
+  // DELETE ACCOUNT
+  //////////////////////////////////////////////////////
 
   const deleteAccount = async () => {
 
-    if(!confirm("Delete your account permanently?")) return
+    const confirmed = confirm("Delete your account permanently?")
 
-    await api.delete("/api/user/delete")
+    if(!confirmed) return
 
-    localStorage.removeItem("token")
-    localStorage.removeItem("userId")
+    try{
 
-    router.push("/auth/signup")
+      await api.delete("/api/user/delete")
+
+      localStorage.removeItem("token")
+      localStorage.removeItem("userId")
+
+      router.push("/auth/signup")
+
+    }catch(err){
+
+      setError("Failed to delete account")
+
+    }
+
   }
+
+  //////////////////////////////////////////////////////
+  // UI
+  //////////////////////////////////////////////////////
 
   return (
     <div className="max-w-2xl space-y-10">
+
+      {error && (
+        <div className="text-red-500 text-sm">
+          {error}
+        </div>
+      )}
 
       {/* PROFILE */}
 
@@ -50,36 +178,44 @@ export default function Settings() {
         </h2>
 
         <input
-          placeholder="Email"
           value={profile.email}
           disabled
-          className="w-full border p-3 rounded"
+          className="w-full border p-3 rounded bg-slate-100"
         />
 
         <input
           placeholder="Business Name"
           value={profile.businessName}
-          onChange={(e)=>setProfile({...profile,businessName:e.target.value})}
+          onChange={(e)=>
+            setProfile({...profile,businessName:e.target.value})
+          }
           className="w-full border p-3 rounded"
         />
 
         <select
           value={profile.currency}
-          onChange={(e)=>setProfile({...profile,currency:e.target.value})}
+          onChange={(e)=>
+            setProfile({...profile,currency:e.target.value})
+          }
           className="w-full border p-3 rounded"
         >
-          <option>USD</option>
-          <option>EUR</option>
-          <option>GBP</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+          <option value="CAD">CAD</option>
         </select>
 
-        <button className="bg-red-500 text-white px-6 py-3 rounded-xl">
+        <button
+          onClick={saveProfile}
+          disabled={loading}
+          className="bg-red-500 text-white px-6 py-3 rounded-xl"
+        >
           Save Profile
         </button>
 
       </div>
 
-      {/* PASSWORD */}
+      {/* SECURITY */}
 
       <div className="bg-white p-10 rounded-2xl border shadow-sm space-y-6">
 
@@ -91,7 +227,9 @@ export default function Settings() {
           type="password"
           placeholder="Current Password"
           value={password.current}
-          onChange={(e)=>setPassword({...password,current:e.target.value})}
+          onChange={(e)=>
+            setPassword({...password,current:e.target.value})
+          }
           className="w-full border p-3 rounded"
         />
 
@@ -99,7 +237,9 @@ export default function Settings() {
           type="password"
           placeholder="New Password"
           value={password.new}
-          onChange={(e)=>setPassword({...password,new:e.target.value})}
+          onChange={(e)=>
+            setPassword({...password,new:e.target.value})
+          }
           className="w-full border p-3 rounded"
         />
 
@@ -107,11 +247,17 @@ export default function Settings() {
           type="password"
           placeholder="Confirm Password"
           value={password.confirm}
-          onChange={(e)=>setPassword({...password,confirm:e.target.value})}
+          onChange={(e)=>
+            setPassword({...password,confirm:e.target.value})
+          }
           className="w-full border p-3 rounded"
         />
 
-        <button className="bg-black text-white px-6 py-3 rounded-xl">
+        <button
+          onClick={updatePassword}
+          disabled={loading}
+          className="bg-black text-white px-6 py-3 rounded-xl"
+        >
           Update Password
         </button>
 
@@ -134,13 +280,17 @@ export default function Settings() {
 
       </div>
 
-      {/* DANGER */}
+      {/* DANGER ZONE */}
 
       <div className="bg-white p-10 rounded-2xl border border-red-200 shadow-sm">
 
         <h2 className="text-xl font-semibold text-red-600 mb-4">
           Danger Zone
         </h2>
+
+        <p className="text-sm text-slate-500 mb-6">
+          Deleting your account will permanently remove all data.
+        </p>
 
         <button
           onClick={deleteAccount}
