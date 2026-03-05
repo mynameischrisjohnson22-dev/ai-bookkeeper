@@ -9,6 +9,10 @@ router.post("/checkout", async (req, res) => {
 
     const { priceId } = req.body
 
+    if (!priceId) {
+      return res.status(400).json({ error: "Missing priceId" })
+    }
+
     const response = await axios.post(
       "https://api.paddle.com/transactions",
       {
@@ -17,7 +21,13 @@ router.post("/checkout", async (req, res) => {
             price_id: priceId,
             quantity: 1
           }
-        ]
+        ],
+
+        checkout: {
+          success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
+          cancel_url: `${process.env.FRONTEND_URL}/dashboard?payment=cancel`
+        }
+
       },
       {
         headers: {
@@ -27,13 +37,19 @@ router.post("/checkout", async (req, res) => {
       }
     )
 
+    const checkoutUrl = response.data?.data?.checkout?.url
+
+    if (!checkoutUrl) {
+      return res.status(500).json({ error: "Checkout URL missing" })
+    }
+
     res.json({
-      url: response.data.data.checkout.url
+      url: checkoutUrl
     })
 
-  } catch (err) {
+  } catch (error) {
 
-    console.error(err.response?.data || err)
+    console.error("Paddle checkout error:", error.response?.data || error)
 
     res.status(500).json({
       error: "Checkout failed"
