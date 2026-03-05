@@ -13,6 +13,7 @@ type LoginResponse = {
 type ApiError = { error?: string }
 
 export default function LoginPage() {
+
   const router = useRouter()
 
   const [email, setEmail] = useState("")
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const [error, setError] = useState("")
 
   const handleLogin = async () => {
+
     setError("")
 
     if (!email.trim() || !password.trim()) {
@@ -29,6 +31,7 @@ export default function LoginPage() {
     }
 
     try {
+
       setLoading(true)
 
       const res = await api.post<LoginResponse>(
@@ -46,18 +49,24 @@ export default function LoginPage() {
       router.refresh()
 
     } catch (err) {
+
       const axiosError = err as AxiosError<ApiError>
+
       setError(
         axiosError.response?.data?.error ||
         "Invalid email or password"
       )
+
     } finally {
+
       setLoading(false)
+
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
+
       <div className="w-full max-w-md p-8 border rounded-lg shadow-sm space-y-6">
 
         <h1 className="text-2xl font-bold text-center">
@@ -94,7 +103,7 @@ export default function LoginPage() {
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <div className="relative text-center text-sm text-gray-400">
+        <div className="text-center text-sm text-gray-400">
           OR
         </div>
 
@@ -105,7 +114,18 @@ export default function LoginPage() {
           Continue with Google
         </a>
 
+        <div className="text-center text-sm text-gray-500">
+          Don't have an account?{" "}
+          <a
+            href="/auth/signup"
+            className="text-blue-600 hover:underline"
+          >
+            Create one
+          </a>
+        </div>
+
       </div>
+
     </div>
   )
 }
