@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import api from "@/lib/api"
 import ChatBox from "@/components/ChatBox"
 import Settings from "@/pages/settings"
+import Billing from "@/components/Billing"
 import {
   LineChart,
   Line,
@@ -423,8 +424,9 @@ const deleteTransactions = async () => {
           />
         )}
 
-        {activeTab === "askai" && <ChatBox />}
-        {activeTab === "settings" && <Settings />}
+{activeTab === "billing" && <Billing />}
+{activeTab === "askai" && <ChatBox />}
+{activeTab === "settings" && <Settings />}
       </main>
     </div>
   )
