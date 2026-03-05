@@ -1,104 +1,114 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import api from "@/lib/api"
+import { useState } from "react"
 
 export default function Billing() {
 
-  const [plan,setPlan] = useState("basic")
   const [loading,setLoading] = useState(false)
 
-  useEffect(() => {
-    loadPlan()
-  },[])
-
-  const loadPlan = async () => {
-    try{
-
-      const res = await api.get("/api/billing/plan")
-
-      if(res?.data?.plan){
-        setPlan(res.data.plan)
-      }
-
-    }catch(err){
-      console.log("Billing API not ready yet")
-    }
-  }
-
-  const openPortal = async () => {
+  const checkout = async (priceId:string) => {
     try{
 
       setLoading(true)
 
-      const res = await api.post("/api/billing/portal")
+      const res = await api.post("/api/billing/checkout",{
+        priceId
+      })
 
-      if(res?.data?.url){
-        window.location.href = res.data.url
-      }
+      window.location.href = res.data.url
 
     }catch(err){
-      console.log("Billing portal not ready")
-
+      console.error(err)
     }finally{
       setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-2xl space-y-10">
+    <div className="max-w-4xl space-y-10">
 
-      {/* PLAN CARD */}
-
-      <div className="bg-white p-10 rounded-2xl border shadow-sm">
-
-        <h2 className="text-xl font-semibold mb-6">
-          Current Plan
+      <div>
+        <h2 className="text-2xl font-bold mb-2">
+          Billing
         </h2>
 
-        <div className="text-2xl font-bold text-red-500 mb-6">
-          {plan === "pro" ? "Pro Plan" : "Basic Plan"}
-        </div>
-
-        {plan === "basic" && (
-          <button
-            onClick={openPortal}
-            className="bg-red-500 text-white px-6 py-3 rounded-xl"
-          >
-            Upgrade to Pro
-          </button>
-        )}
-
-        {plan === "pro" && (
-          <button
-            onClick={openPortal}
-            className="bg-black text-white px-6 py-3 rounded-xl"
-          >
-            Manage Subscription
-          </button>
-        )}
-
+        <p className="text-slate-500">
+          Upgrade your Albdy plan
+        </p>
       </div>
 
-      {/* BILLING PORTAL */}
+      {/* PLAN CARDS */}
 
-      <div className="bg-white p-10 rounded-2xl border shadow-sm">
+      <div className="grid md:grid-cols-2 gap-8">
 
-        <h2 className="text-xl font-semibold mb-6">
-          Billing Portal
-        </h2>
+        {/* MONTHLY */}
 
-        <p className="text-slate-500 mb-6">
-          Manage invoices, payment methods, and cancel your subscription.
-        </p>
+        <div className="bg-white p-10 rounded-2xl border shadow-sm">
 
-        <button
-          onClick={openPortal}
-          disabled={loading}
-          className="bg-black text-white px-6 py-3 rounded-xl"
-        >
-          {loading ? "Opening..." : "Open Billing Portal"}
-        </button>
+          <h3 className="text-lg font-semibold mb-2">
+            Monthly
+          </h3>
+
+          <div className="text-3xl font-bold mb-4">
+            $5
+            <span className="text-sm text-slate-500">
+              /month
+            </span>
+          </div>
+
+          <p className="text-sm text-slate-500 mb-6">
+            3 day free trial
+          </p>
+
+          <ul className="space-y-2 text-sm mb-8">
+            <li>✔ Unlimited transactions</li>
+            <li>✔ AI bookkeeping assistant</li>
+            <li>✔ Financial dashboard</li>
+          </ul>
+
+          <button
+            onClick={()=>checkout("pri_01kjtcazh9v64m557f0zsbdvwg")}
+            disabled={loading}
+            className="w-full bg-red-500 text-white py-3 rounded-xl"
+          >
+            Start Trial
+          </button>
+
+        </div>
+
+
+        {/* LIFETIME */}
+
+        <div className="bg-white p-10 rounded-2xl border shadow-sm">
+
+          <h3 className="text-lg font-semibold mb-2">
+            Lifetime
+          </h3>
+
+          <div className="text-3xl font-bold mb-4">
+            $47
+          </div>
+
+          <p className="text-sm text-slate-500 mb-6">
+            Pay once, use forever
+          </p>
+
+          <ul className="space-y-2 text-sm mb-8">
+            <li>✔ Everything in Monthly</li>
+            <li>✔ No recurring payments</li>
+            <li>✔ Lifetime access</li>
+          </ul>
+
+          <button
+            onClick={()=>checkout("pri_01kjtcazmqj9b8rvgmpd3j8kb")}
+            disabled={loading}
+            className="w-full bg-black text-white py-3 rounded-xl"
+          >
+            Buy Lifetime
+          </button>
+
+        </div>
 
       </div>
 
