@@ -1,7 +1,7 @@
 "use client"
 
-import api from "@/lib/api"
 import { useEffect, useState } from "react"
+import api from "@/lib/api"
 
 export default function Billing() {
 
@@ -10,7 +10,7 @@ export default function Billing() {
 
   useEffect(() => {
     loadPlan()
-  },[])
+  }, [])
 
   const loadPlan = async () => {
     try{
@@ -45,7 +45,7 @@ export default function Billing() {
           Current Plan
         </h2>
 
-        <div className="text-2xl font-bold text-red-500 mb-4">
+        <div className="text-2xl font-bold text-red-500 mb-6">
           {plan === "pro" ? "Pro Plan" : "Basic Plan"}
         </div>
 
@@ -78,7 +78,7 @@ export default function Billing() {
         </h2>
 
         <p className="text-slate-500 mb-6">
-          Manage invoices, payment methods, and cancel your plan.
+          Manage invoices, payment methods, and cancel your subscription.
         </p>
 
         <button
