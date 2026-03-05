@@ -1,14 +1,15 @@
 import dotenv from "dotenv"
 dotenv.config()
 
-import express from "express"
 import http from "http"
+import express from "express"
 import cron from "node-cron"
 
 import app from "./app.js"
 import prisma from "./utils/prisma.js"
 
 /* ROUTES */
+
 import authRoutes from "./routes/auth.routes.js"
 import categoriesRoutes from "./routes/categories.routes.js"
 import billingRoutes from "./routes/billing.routes.js"
@@ -17,27 +18,30 @@ import transactionRoutes from "./routes/transactions.routes.js"
 import dashboardRoutes from "./routes/dashboard.routes.js"
 
 /* JOBS */
+
 import { seedDefaultCategories } from "./seed/categories.seed.js"
 import { runRecurringEngine } from "./jobs/recurring.engine.js"
+
+/* CONFIG */
 
 const PORT = process.env.PORT || 3000
 const ENABLE_CRON = process.env.ENABLE_CRON === "true"
 
-/* ========================================
-   PROXY CONFIG (Railway / Render / Heroku)
-======================================== */
+/* =================================
+   TRUST PROXY (Railway / Render)
+================================= */
 
 app.set("trust proxy", 1)
 
-/* ========================================
+/* =================================
    MIDDLEWARE
-======================================== */
+================================= */
 
 app.use(express.json({ limit: "2mb" }))
 
-/* ========================================
+/* =================================
    HEALTH CHECK
-======================================== */
+================================= */
 
 app.get("/", (req, res) => {
   res.json({
@@ -46,9 +50,9 @@ app.get("/", (req, res) => {
   })
 })
 
-/* ========================================
+/* =================================
    API ROUTES
-======================================== */
+================================= */
 
 app.use("/api/auth", authRoutes)
 app.use("/api/categories", categoriesRoutes)
@@ -57,104 +61,125 @@ app.use("/api/paddle", paddleRoutes)
 app.use("/api/transactions", transactionRoutes)
 app.use("/api/dashboard", dashboardRoutes)
 
-/* ========================================
-   CREATE SERVER
-======================================== */
+/* =================================
+   SERVER
+================================= */
 
 const server = http.createServer(app)
 
-/* ========================================
+/* =================================
    START SERVER
-======================================== */
+================================= */
 
 async function startServer() {
+
   try {
 
     console.log("🔄 Starting backend...")
 
-    /* CONNECT DATABASE */
-
     await prisma.$connect()
+
     console.log("✅ Database connected")
 
-    /* SEED DEFAULT CATEGORIES */
+    /* Seed categories */
 
     try {
+
       await seedDefaultCategories()
+
       console.log("✅ Default categories seeded")
+
     } catch (err) {
-      console.warn("⚠️ Category seed skipped:", err.message)
+
+      console.log("⚠️ Seed skipped:", err.message)
+
     }
 
-    /* START HTTP SERVER */
-
     server.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Backend running on port ${PORT}`)
+      console.log(`🚀 Server running on port ${PORT}`)
     })
 
     /* CRON JOBS */
 
     if (ENABLE_CRON) {
+
       console.log("⏰ Cron jobs enabled")
 
       cron.schedule("*/5 * * * *", async () => {
+
         try {
-          console.log("🔁 Running recurring engine...")
+
+          console.log("🔁 Running recurring engine")
+
           await runRecurringEngine()
+
         } catch (err) {
-          console.error("❌ Cron job error:", err)
+
+          console.error("❌ Cron error:", err)
+
         }
+
       })
+
     }
 
-  } catch (error) {
-    console.error("❌ Critical startup failure:", error)
+  } catch (err) {
+
+    console.error("❌ Startup failure:", err)
+
     process.exit(1)
+
   }
+
 }
 
-/* ========================================
-   GLOBAL ERROR HANDLERS
-======================================== */
+/* =================================
+   GLOBAL ERROR HANDLING
+================================= */
 
-process.on("unhandledRejection", (reason) => {
-  console.error("🔥 Unhandled Rejection:", reason)
+process.on("unhandledRejection", (err) => {
+  console.error("🔥 Unhandled rejection:", err)
 })
 
 process.on("uncaughtException", (err) => {
-  console.error("🔥 Uncaught Exception:", err)
+  console.error("🔥 Uncaught exception:", err)
 })
 
-/* ========================================
+/* =================================
    GRACEFUL SHUTDOWN
-======================================== */
+================================= */
 
 async function shutdown(signal) {
 
-  console.log(`🛑 ${signal} received. Shutting down...`)
+  console.log(`🛑 ${signal} received`)
 
   try {
 
     await prisma.$disconnect()
 
     server.close(() => {
-      console.log("✅ Server closed")
+
+      console.log("✅ Server stopped")
+
       process.exit(0)
+
     })
 
-  } catch (error) {
+  } catch (err) {
 
-    console.error("Shutdown error:", error)
+    console.error("Shutdown error:", err)
+
     process.exit(1)
 
   }
+
 }
 
-process.on("SIGTERM", shutdown)
 process.on("SIGINT", shutdown)
+process.on("SIGTERM", shutdown)
 
-/* ========================================
+/* =================================
    START APP
-======================================== */
+================================= */
 
 startServer()
