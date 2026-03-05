@@ -18,13 +18,14 @@ export default function Settings() {
     localStorage.removeItem("userId")
 
     router.push("/auth/login")
+    router.refresh()
   }
 
   /* ================= DELETE ACCOUNT ================= */
 
   const deleteAccount = async () => {
 
-    const confirmed = confirm(
+    const confirmed = window.confirm(
       "Are you sure you want to permanently delete your account?"
     )
 
@@ -44,7 +45,7 @@ export default function Settings() {
 
     } catch (err) {
 
-      console.error(err)
+      console.error("Delete account error:", err)
       setError("Failed to delete account")
 
     } finally {
