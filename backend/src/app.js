@@ -11,6 +11,7 @@ import categoriesRoutes from "./routes/categories.routes.js"
 import metricsRoutes from "./routes/metrics.routes.js"
 import aiRoutes from "./routes/ai.routes.js"
 import cfoRoutes from "./routes/cfo.routes.js"
+import paddleRoutes from "./routes/paddle.routes.js"
 import reportRoutes from "./routes/reports.routes.js"
 import actionsRoutes from "./routes/actions.routes.js"
 
