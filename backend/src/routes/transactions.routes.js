@@ -1,5 +1,6 @@
 import { Router } from "express"
 import { authMiddleware } from "../middleware/auth.middleware.js"
+
 import {
   getTransactionsController,
   createTransactionController,
@@ -10,28 +11,57 @@ import {
 
 const router = Router()
 
-// 🔐 Protect ALL transaction routes
+/*
+================================================
+🔐 AUTH PROTECTION
+All transaction routes require authentication
+================================================
+*/
+
 router.use(authMiddleware)
 
-/* ================= GET ================= */
+/*
+================================================
+📥 FETCH TRANSACTIONS
+================================================
+*/
 
-// GET all transactions
+// GET all user transactions
+// GET /api/transactions
 router.get("/", getTransactionsController)
 
-/* ================= CREATE ================= */
+/*
+================================================
+➕ CREATE TRANSACTIONS
+================================================
+*/
 
-// CREATE transaction
+// Create a single transaction
+// POST /api/transactions
 router.post("/", createTransactionController)
 
-// Upload transactions
+// Upload multiple transactions (CSV / bank import)
+// POST /api/transactions/upload
 router.post("/upload", uploadTransactionsController)
 
-/* ================= DELETE ================= */
+/*
+================================================
+🧹 RESET BUSINESS DATA
+================================================
+*/
 
-// RESET business transactions (PUT THIS FIRST)
+// Delete ALL transactions for the business
+// DELETE /api/transactions/business/reset
 router.delete("/business/reset", resetBusinessController)
 
-// DELETE single transaction (PUT THIS LAST)
+/*
+================================================
+❌ DELETE SINGLE TRANSACTION
+================================================
+*/
+
+// Delete one transaction
+// DELETE /api/transactions/:id
 router.delete("/:id", deleteTransactionController)
 
 export default router
