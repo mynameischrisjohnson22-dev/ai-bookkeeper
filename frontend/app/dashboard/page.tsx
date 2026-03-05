@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import api from "@/lib/api"
 import ChatBox from "@/components/ChatBox"
+import Settings from "@/pages/settings"
 import {
   LineChart,
   Line,
@@ -34,6 +35,7 @@ type Tab =
   | "business"
   | "billing"
   | "askai"
+  | "settings"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -202,7 +204,7 @@ const deleteTransactions = async () => {
           Albdy
         </h2>
 
-        {["dashboard","transactions","business","billing","askai"].map((tab) => (
+        {["dashboard","transactions","business","billing","askai","settings"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as Tab)}
@@ -217,6 +219,7 @@ const deleteTransactions = async () => {
             {tab === "business" && "Business"}
             {tab === "billing" && "Billing"}
             {tab === "askai" && "Ask AI"}
+            {tab === "settings" && "Settings"}
           </button>
         ))}
       </aside>
