@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
+import toast from "react-hot-toast"
 import api from "@/lib/api"
 
 export default function Settings() {
@@ -9,7 +10,6 @@ export default function Settings() {
   const router = useRouter()
 
   const [loading,setLoading] = useState(false)
-  const [error,setError] = useState("")
 
   const [profile,setProfile] = useState({
     email:"",
@@ -23,8 +23,6 @@ export default function Settings() {
     confirm:""
   })
 
-  //////////////////////////////////////////////////////
-  // LOAD PROFILE
   //////////////////////////////////////////////////////
 
   useEffect(()=>{
@@ -44,13 +42,11 @@ export default function Settings() {
       })
 
     }catch(err){
-      console.error("Failed to load profile",err)
+      toast.error("Failed to load profile")
     }
 
   }
 
-  //////////////////////////////////////////////////////
-  // SAVE PROFILE
   //////////////////////////////////////////////////////
 
   const saveProfile = async () => {
@@ -58,16 +54,17 @@ export default function Settings() {
     try{
 
       setLoading(true)
-      setError("")
 
       await api.patch("/api/user/profile",{
         businessName:profile.businessName,
         currency:profile.currency
       })
 
+      toast.success("Profile updated")
+
     }catch(err){
 
-      setError("Failed to update profile")
+      toast.error("Failed to update profile")
 
     }finally{
 
@@ -78,20 +75,17 @@ export default function Settings() {
   }
 
   //////////////////////////////////////////////////////
-  // UPDATE PASSWORD
-  //////////////////////////////////////////////////////
 
   const updatePassword = async () => {
 
     if(password.new !== password.confirm){
-      setError("Passwords do not match")
+      toast.error("Passwords do not match")
       return
     }
 
     try{
 
       setLoading(true)
-      setError("")
 
       await api.patch("/api/user/password",{
         currentPassword:password.current,
@@ -104,9 +98,11 @@ export default function Settings() {
         confirm:""
       })
 
+      toast.success("Password updated")
+
     }catch(err){
 
-      setError("Failed to update password")
+      toast.error("Failed to update password")
 
     }finally{
 
@@ -116,8 +112,6 @@ export default function Settings() {
 
   }
 
-  //////////////////////////////////////////////////////
-  // LOGOUT
   //////////////////////////////////////////////////////
 
   const logout = () => {
@@ -130,14 +124,12 @@ export default function Settings() {
   }
 
   //////////////////////////////////////////////////////
-  // DELETE ACCOUNT
-  //////////////////////////////////////////////////////
 
   const deleteAccount = async () => {
 
-    const confirmed = confirm("Delete your account permanently?")
+    const confirmDelete = prompt("Type DELETE to confirm")
 
-    if(!confirmed) return
+    if(confirmDelete !== "DELETE") return
 
     try{
 
@@ -150,37 +142,37 @@ export default function Settings() {
 
     }catch(err){
 
-      setError("Failed to delete account")
+      toast.error("Failed to delete account")
 
     }
 
   }
 
   //////////////////////////////////////////////////////
-  // UI
-  //////////////////////////////////////////////////////
 
   return (
-    <div className="max-w-2xl space-y-10">
 
-      {error && (
-        <div className="text-red-500 text-sm">
-          {error}
-        </div>
-      )}
+    <div className="max-w-4xl mx-auto py-12 space-y-12">
+
+      <h1 className="text-3xl font-bold">
+        Settings
+      </h1>
 
       {/* PROFILE */}
 
-      <div className="bg-white p-10 rounded-2xl border shadow-sm space-y-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
 
-        <h2 className="text-xl font-semibold">
-          Profile
-        </h2>
+        <div>
+          <h2 className="text-xl font-semibold">Profile</h2>
+          <p className="text-sm text-slate-500">
+            Manage your account information and preferences.
+          </p>
+        </div>
 
         <input
           value={profile.email}
           disabled
-          className="w-full border p-3 rounded bg-slate-100"
+          className="w-full border border-slate-300 rounded-lg p-3 bg-slate-100"
         />
 
         <input
@@ -189,7 +181,7 @@ export default function Settings() {
           onChange={(e)=>
             setProfile({...profile,businessName:e.target.value})
           }
-          className="w-full border p-3 rounded"
+          className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-red-400 outline-none"
         />
 
         <select
@@ -197,7 +189,7 @@ export default function Settings() {
           onChange={(e)=>
             setProfile({...profile,currency:e.target.value})
           }
-          className="w-full border p-3 rounded"
+          className="w-full border border-slate-300 rounded-lg p-3"
         >
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
@@ -208,20 +200,23 @@ export default function Settings() {
         <button
           onClick={saveProfile}
           disabled={loading}
-          className="bg-red-500 text-white px-6 py-3 rounded-xl"
+          className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg"
         >
-          Save Profile
+          {loading ? "Saving..." : "Save Profile"}
         </button>
 
       </div>
 
       {/* SECURITY */}
 
-      <div className="bg-white p-10 rounded-2xl border shadow-sm space-y-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
 
-        <h2 className="text-xl font-semibold">
-          Security
-        </h2>
+        <div>
+          <h2 className="text-xl font-semibold">Security</h2>
+          <p className="text-sm text-slate-500">
+            Update your password and secure your account.
+          </p>
+        </div>
 
         <input
           type="password"
@@ -230,7 +225,7 @@ export default function Settings() {
           onChange={(e)=>
             setPassword({...password,current:e.target.value})
           }
-          className="w-full border p-3 rounded"
+          className="w-full border border-slate-300 rounded-lg p-3"
         />
 
         <input
@@ -240,7 +235,7 @@ export default function Settings() {
           onChange={(e)=>
             setPassword({...password,new:e.target.value})
           }
-          className="w-full border p-3 rounded"
+          className="w-full border border-slate-300 rounded-lg p-3"
         />
 
         <input
@@ -250,22 +245,22 @@ export default function Settings() {
           onChange={(e)=>
             setPassword({...password,confirm:e.target.value})
           }
-          className="w-full border p-3 rounded"
+          className="w-full border border-slate-300 rounded-lg p-3"
         />
 
         <button
           onClick={updatePassword}
           disabled={loading}
-          className="bg-black text-white px-6 py-3 rounded-xl"
+          className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg"
         >
-          Update Password
+          {loading ? "Updating..." : "Update Password"}
         </button>
 
       </div>
 
       {/* ACCOUNT */}
 
-      <div className="bg-white p-10 rounded-2xl border shadow-sm">
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
 
         <h2 className="text-xl font-semibold mb-6">
           Account
@@ -273,7 +268,7 @@ export default function Settings() {
 
         <button
           onClick={logout}
-          className="bg-black text-white px-6 py-3 rounded-xl"
+          className="bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-lg"
         >
           Log Out
         </button>
@@ -282,19 +277,19 @@ export default function Settings() {
 
       {/* DANGER ZONE */}
 
-      <div className="bg-white p-10 rounded-2xl border border-red-200 shadow-sm">
+      <div className="bg-red-50 rounded-2xl border border-red-200 p-8 shadow-sm space-y-4">
 
-        <h2 className="text-xl font-semibold text-red-600 mb-4">
+        <h2 className="text-lg font-semibold text-red-600">
           Danger Zone
         </h2>
 
-        <p className="text-sm text-slate-500 mb-6">
-          Deleting your account will permanently remove all data.
+        <p className="text-sm text-red-500">
+          Deleting your account permanently removes all financial data.
         </p>
 
         <button
           onClick={deleteAccount}
-          className="bg-red-500 text-white px-6 py-3 rounded-xl"
+          className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg"
         >
           Delete Account
         </button>
@@ -302,5 +297,7 @@ export default function Settings() {
       </div>
 
     </div>
+
   )
+
 }
