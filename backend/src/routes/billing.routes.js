@@ -1,62 +1,39 @@
 import express from "express"
-import axios from "axios"
+import { Paddle } from "@paddle/paddle-node-sdk"
 
 const router = express.Router()
 
-router.post("/checkout", async (req, res) => {
+const paddle = new Paddle(process.env.PADDLE_API_KEY)
 
+router.post("/checkout", async (req, res) => {
   try {
 
     const { priceId } = req.body
 
-    if (!priceId) {
-      return res.status(400).json({ error: "Missing priceId" })
-    }
-
-    const response = await axios.post(
-      "https://api.paddle.com/transactions",
-      {
-        items: [
-          {
-            price_id: priceId,
-            quantity: 1
-          }
-        ],
-
-        checkout: {
-          success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
-          cancel_url: `${process.env.FRONTEND_URL}/dashboard?payment=cancel`
+    const checkout = await paddle.checkout.sessions.create({
+      items: [
+        {
+          priceId: priceId,
+          quantity: 1
         }
-
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PADDLE_API_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
-    )
-
-    const checkoutUrl = response.data?.data?.checkout?.url
-
-    if (!checkoutUrl) {
-      return res.status(500).json({ error: "Checkout URL missing" })
-    }
-
-    res.json({
-      url: checkoutUrl
+      ],
+      successUrl: `${process.env.FRONTEND_URL}/dashboard`,
+      cancelUrl: `${process.env.FRONTEND_URL}/billing`
     })
 
-  } catch (error) {
+    res.json({
+      url: checkout.url
+    })
 
-    console.error("Paddle checkout error:", error.response?.data || error)
+  } catch (err) {
+
+    console.error("Paddle checkout error:", err)
 
     res.status(500).json({
       error: "Checkout failed"
     })
 
   }
-
 })
 
 export default router
