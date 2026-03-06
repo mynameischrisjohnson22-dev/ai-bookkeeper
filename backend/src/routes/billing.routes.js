@@ -6,23 +6,22 @@ const router = express.Router()
 const paddle = new Paddle(process.env.PADDLE_API_KEY)
 
 router.post("/checkout", async (req, res) => {
+
   try {
 
     const { priceId } = req.body
 
-    const checkout = await paddle.checkout.sessions.create({
+    const transaction = await paddle.transactions.create({
       items: [
         {
-          priceId: priceId,
+          price_id: priceId,
           quantity: 1
         }
-      ],
-      successUrl: `${process.env.FRONTEND_URL}/dashboard`,
-      cancelUrl: `${process.env.FRONTEND_URL}/billing`
+      ]
     })
 
     res.json({
-      url: checkout.url
+      url: transaction.checkout.url
     })
 
   } catch (err) {
@@ -34,6 +33,7 @@ router.post("/checkout", async (req, res) => {
     })
 
   }
+
 })
 
 export default router
