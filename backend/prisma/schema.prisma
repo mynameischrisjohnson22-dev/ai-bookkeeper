@@ -12,31 +12,44 @@ datasource db {
 ///////////////////////////////////////////////////////
 
 model User {
-  id       String  @id @default(uuid())
-  email    String  @unique
-  password String?
-  googleId String? @unique
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?
+  googleId  String?  @unique
 
-  // profile
+  /////////////////////////////////////////////////////
+  // PROFILE
+  /////////////////////////////////////////////////////
+
   businessName String?
-  currency     String  @default("USD")
+  currency     String   @default("USD")
 
-  // plan
+  /////////////////////////////////////////////////////
+  // PLAN
+  /////////////////////////////////////////////////////
+
   plan String @default("basic")
 
-  // auth / verification
+  /////////////////////////////////////////////////////
+  // AUTH
+  /////////////////////////////////////////////////////
+
   emailVerified        Boolean   @default(false)
   verificationToken    String?   @unique
   resetPasswordToken   String?   @unique
   resetPasswordExpires DateTime?
 
+  /////////////////////////////////////////////////////
+  // TIMESTAMPS
+  /////////////////////////////////////////////////////
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  //////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////
   // RELATIONS
-  //////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////
 
   transactions  Transaction[]
   categories    Category[]
@@ -45,8 +58,12 @@ model User {
   invoices      Invoice[]
   usage         Usage[]
 
-  @@index([deletedAt])
+  /////////////////////////////////////////////////////
+  // INDEXES
+  /////////////////////////////////////////////////////
+
   @@index([email])
+  @@index([deletedAt])
 }
 
 ///////////////////////////////////////////////////////
@@ -63,14 +80,20 @@ model Category {
   isRevenue Boolean @default(false)
   isCOGS    Boolean @default(false)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  /////////////////////////////////////////////////////
 
   userId String?
   user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
+
+  /////////////////////////////////////////////////////
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  /////////////////////////////////////////////////////
 
   @@unique([userId, name])
   @@index([userId])
@@ -89,16 +112,23 @@ model Transaction {
   amount      Float
   categoryId  String?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  /////////////////////////////////////////////////////
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
+  /////////////////////////////////////////////////////
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  /////////////////////////////////////////////////////
+
   @@index([userId])
   @@index([categoryId])
   @@index([date])
+  @@index([deletedAt])
 }
 
 ///////////////////////////////////////////////////////
@@ -112,12 +142,14 @@ model AuditLog {
   entity    String
   entityId  String
   metadata  Json?
+
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([entity])
+  @@index([createdAt])
 }
 
 ///////////////////////////////////////////////////////
@@ -129,15 +161,19 @@ model Subscription {
   userId           String
   paddleCustomer   String?
   paddleSubId      String?
+
   plan             String
   status           String
+
   currentPeriodEnd DateTime?
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([paddleSubId])
 }
 
 ///////////////////////////////////////////////////////
@@ -145,7 +181,7 @@ model Subscription {
 ///////////////////////////////////////////////////////
 
 model Invoice {
-  id       String @id @default(uuid())
+  id       String  @id @default(uuid())
   userId   String
   amount   Float
   currency String
@@ -159,12 +195,13 @@ model Invoice {
 }
 
 ///////////////////////////////////////////////////////
-// USAGE
+// USAGE (Rate limiting / AI / feature limits)
 ///////////////////////////////////////////////////////
 
 model Usage {
   id     String @id @default(uuid())
   userId String
+
   type   String
   count  Int
 
@@ -173,4 +210,5 @@ model Usage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([type])
 }

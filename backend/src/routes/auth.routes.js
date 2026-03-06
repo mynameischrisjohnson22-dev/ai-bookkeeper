@@ -13,9 +13,9 @@ import {
 
 const router = express.Router()
 
-/* =========================
-   EMAIL AUTH
-========================= */
+////////////////////////////////////////////////////
+// EMAIL AUTH
+////////////////////////////////////////////////////
 
 router.post("/signup", signup)
 router.post("/login", login)
@@ -26,34 +26,36 @@ router.post("/resend-verification", resendVerification)
 router.post("/forgot-password", forgotPassword)
 router.post("/reset-password", resetPassword)
 
-/* =========================
-   GOOGLE AUTH
-========================= */
+////////////////////////////////////////////////////
+// GOOGLE AUTH
+////////////////////////////////////////////////////
 
 router.get(
   "/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-    session: false
+  passport.authenticate("google",{
+    scope:["profile","email"],
+    session:false
   })
 )
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: process.env.FRONTEND_URL + "/login"
+  passport.authenticate("google",{
+    session:false,
+    failureRedirect:`${process.env.FRONTEND_URL}/login`
   }),
-  (req, res) => {
+  (req,res)=>{
+
     const token = jwt.sign(
-      { id: req.user.id, email: req.user.email },
+      { id:req.user.id,email:req.user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn:"7d" }
     )
 
     res.redirect(
       `${process.env.FRONTEND_URL}/oauth-success?token=${token}`
     )
+
   }
 )
 
