@@ -33,13 +33,13 @@ export default function Settings() {
 
     try{
 
-      const res = await api.get("/api/user/profile")
+const res = await api.get("/api/user/profile")
 
-      setProfile({
-        email:res.data.email,
-        businessName:res.data.businessName || "",
-        currency:res.data.currency || "USD"
-      })
+setProfile({
+  email: res.data.user.email,
+  businessName: res.data.user.businessName || "",
+  currency: res.data.user.currency || "USD"
+})
 
     }catch(err){
       toast.error("Failed to load profile")
