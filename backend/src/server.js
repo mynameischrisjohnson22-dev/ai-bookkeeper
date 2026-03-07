@@ -10,7 +10,6 @@ import prisma from "./utils/prisma.js"
 /* ROUTES */
 
 import authRoutes from "./routes/auth.routes.js"
-import recurringRoutes from "./routes/recurring.routes.js"
 import userRoutes from "./routes/user.routes.js"
 import categoriesRoutes from "./routes/categories.routes.js"
 import billingRoutes from "./routes/billing.routes.js"
@@ -58,7 +57,6 @@ app.get("/", (req, res) => {
 ================================= */
 
 app.use("/api/auth", authRoutes)
-app.use("/api/recurring", recurringRoutes)
 app.use("/api/user", userRoutes)
 app.use("/api/categories", categoriesRoutes)
 app.use("/api/billing", billingRoutes)
