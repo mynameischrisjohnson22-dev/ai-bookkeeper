@@ -366,7 +366,7 @@ onChange={(e)=>setSearch(e.target.value)}
 className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border"
 />
 
-{selected.length>0 && (
+{selected.length > 0 && (
 
 <button
 onClick={deleteTransactions}
@@ -376,6 +376,59 @@ Delete
 </button>
 
 )}
+
+<div className="bg-white rounded-2xl shadow-sm divide-y">
+
+{filteredTransactions.map((tx)=>{
+
+const isSelected = selected.includes(tx.id)
+
+return(
+
+<div
+key={tx.id}
+className="flex justify-between items-center px-6 py-4 hover:bg-slate-50"
+>
+
+<div className="flex items-center gap-4">
+
+<input
+type="checkbox"
+checked={isSelected}
+onChange={()=>{
+if(isSelected){
+setSelected(prev=>prev.filter(id=>id!==tx.id))
+}else{
+setSelected(prev=>[...prev,tx.id])
+}
+}}
+/>
+
+<div>
+
+<div className="font-medium">
+{tx.description}
+</div>
+
+<div className="text-xs text-slate-400">
+{new Date(tx.date).toLocaleDateString()}
+</div>
+
+</div>
+
+</div>
+
+<div className={tx.amount>0 ? "text-green-600" : "text-red-500"}>
+{tx.amount>0?"+":"-"}${Math.abs(tx.amount).toFixed(2)}
+</div>
+
+</div>
+
+)
+
+})}
+
+</div>
 
 </div>
 
