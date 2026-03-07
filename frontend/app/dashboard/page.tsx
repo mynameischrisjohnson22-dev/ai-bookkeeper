@@ -52,16 +52,26 @@ export default function Dashboard() {
     useState<"Revenue" | "Expense">("Expense")
   const [selected, setSelected] = useState<string[]>([])
 
-  /* LOAD DATA */
+  /* LOAD */
 
   const loadData = async () => {
-    const [txRes, catRes] = await Promise.all([
-      api.get("/api/transactions"),
-      api.get("/api/categories"),
-    ])
+    try {
+      const [txRes, catRes] = await Promise.all([
+        api.get("/api/transactions"),
+        api.get("/api/categories"),
+      ])
 
-    setTransactions(txRes.data || [])
-    setCategories(catRes.data || [])
+      setTransactions(txRes.data || [])
+
+      const normalized = (catRes.data || []).map((c: any) => ({
+        ...c,
+        isRevenue: Boolean(c.isRevenue),
+      }))
+
+      setCategories(normalized)
+    } catch (err) {
+      console.error("Failed to load data", err)
+    }
   }
 
   useEffect(() => {
@@ -86,12 +96,12 @@ export default function Dashboard() {
     })
 
     setNewCategoryName("")
-    loadData()
+    await loadData()
   }
 
   const deleteCategory = async (id: string) => {
     await api.delete(`/api/categories/${id}`)
-    loadData()
+    await loadData()
   }
 
   /* SAVE BUSINESS */
@@ -121,11 +131,9 @@ export default function Dashboard() {
     )
 
     setValues({})
-    loadData()
+    await loadData()
     setActiveTab("transactions")
   }
-
-  /* DELETE TRANSACTIONS */
 
   const deleteTransactions = async () => {
     if (selected.length === 0) return
@@ -135,7 +143,7 @@ export default function Dashboard() {
     )
 
     setSelected([])
-    loadData()
+    await loadData()
   }
 
   /* FILTER */
@@ -148,11 +156,11 @@ export default function Dashboard() {
 
   const income = filteredTransactions
     .filter((t) => t.amount > 0)
-    .reduce((s, t) => s + t.amount, 0)
+    .reduce((sum, t) => sum + t.amount, 0)
 
   const expenses = filteredTransactions
     .filter((t) => t.amount < 0)
-    .reduce((s, t) => s + t.amount, 0)
+    .reduce((sum, t) => sum + t.amount, 0)
 
   const balance = income + expenses
 
@@ -169,18 +177,18 @@ export default function Dashboard() {
       grouped[date] += t.amount
     })
 
-    const dates = Object.keys(grouped).sort(
+    const sortedDates = Object.keys(grouped).sort(
       (a, b) => new Date(a).getTime() - new Date(b).getTime()
     )
 
-    let running = 0
+    let runningBalance = 0
 
-    return dates.map((d) => {
-      running += grouped[d]
+    return sortedDates.map((date) => {
+      runningBalance += grouped[date]
 
       return {
-        date: d,
-        balance: running,
+        date,
+        balance: runningBalance,
       }
     })
   }, [filteredTransactions])
@@ -192,25 +200,41 @@ export default function Dashboard() {
 
       {/* SIDEBAR */}
 
-      <aside className="w-64 bg-white border-r p-8">
-        <h2 className="text-red-500 font-bold text-xl mb-10">Albdy</h2>
+      <aside className="w-64 bg-white/80 backdrop-blur border-r border-slate-100 p-8">
+
+        <h2 className="text-red-500 font-bold text-xl mb-12">
+          Albdy
+        </h2>
 
         {["dashboard","transactions","business","billing","askai","settings"].map((tab)=>(
+
           <button
             key={tab}
             onClick={()=>{
-              if(tab==="settings") router.push("/settings")
-              else setActiveTab(tab as Tab)
+              if(tab==="settings"){
+                router.push("/settings")
+              }else{
+                setActiveTab(tab as Tab)
+              }
             }}
-            className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
+            className={`w-full text-left px-4 py-3 rounded-xl mb-2 transition-all ${
               activeTab===tab
-                ? "bg-red-500 text-white"
-                : "text-slate-600 hover:bg-indigo-50"
+                ? "bg-red-500 text-white shadow-md"
+                : "text-slate-600 hover:bg-indigo-50 hover:text-red-500"
             }`}
           >
-            {tab}
+
+            {tab==="dashboard" && "Overview"}
+            {tab==="transactions" && "Transactions"}
+            {tab==="business" && "Business"}
+            {tab==="billing" && "Billing"}
+            {tab==="askai" && "Ask AI"}
+            {tab==="settings" && "Settings"}
+
           </button>
+
         ))}
+
       </aside>
 
       {/* MAIN */}
@@ -219,37 +243,66 @@ export default function Dashboard() {
 
         {/* DASHBOARD */}
 
-        {activeTab==="dashboard" && (
-          <div className="space-y-10 max-w-3xl">
+        {activeTab === "dashboard" && (
 
-            <div className="bg-white p-10 rounded-3xl shadow">
-              <div className="text-sm text-slate-500">Current Balance</div>
-              <div className="text-4xl font-bold">${balance.toFixed(2)}</div>
+          <>
+
+            <div className="max-w-3xl">
+
+              <div className="bg-white p-10 rounded-3xl shadow-lg">
+
+                <div className="text-sm text-slate-500 mb-2">
+                  Current Balance
+                </div>
+
+                <div className="text-4xl font-bold">
+                  ${balance.toFixed(2)}
+                </div>
+
+              </div>
+
             </div>
 
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3"/>
-                <XAxis dataKey="date"/>
-                <YAxis/>
-                <Tooltip/>
-                <Line dataKey="balance" stroke="#dc2626" strokeWidth={3}/>
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="bg-white p-10 rounded-3xl shadow-lg">
 
-          </div>
+              <ResponsiveContainer width="100%" height={340}>
+
+                <LineChart data={chartData}>
+
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+
+                  <Line
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="#dc2626"
+                    strokeWidth={3}
+                    dot={false}
+                  />
+
+                </LineChart>
+
+              </ResponsiveContainer>
+
+            </div>
+
+          </>
+
         )}
 
         {/* TRANSACTIONS */}
 
-        {activeTab==="transactions" && (
+        {activeTab === "transactions" && (
+
           <div className="max-w-3xl space-y-6">
 
             <input
               placeholder="Search transactions..."
               value={search}
               onChange={(e)=>setSearch(e.target.value)}
-              className="w-full px-4 py-3 border rounded-xl"
+              className="w-full px-5 py-3 rounded-xl bg-white border border-slate-200"
             />
 
             {filteredTransactions.map((tx)=>{
@@ -257,47 +310,58 @@ export default function Dashboard() {
               const isSelected = selected.includes(tx.id)
 
               return (
+
                 <div
                   key={tx.id}
-                  className="flex justify-between px-6 py-4 bg-white rounded-xl shadow"
+                  className="flex justify-between items-center bg-white px-6 py-5 rounded-xl shadow"
                 >
 
-                  <div className="flex gap-3 items-center">
+                  <div className="flex items-center gap-4">
 
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={()=>{
-                        if(isSelected)
-                          setSelected((p)=>p.filter((id)=>id!==tx.id))
-                        else
-                          setSelected((p)=>[...p,tx.id])
+
+                        if(isSelected){
+                          setSelected(prev=>prev.filter(id=>id!==tx.id))
+                        }else{
+                          setSelected(prev=>[...prev,tx.id])
+                        }
+
                       }}
                     />
 
                     <div>
-                      <div>{tx.description}</div>
+
+                      <div className="font-medium">
+                        {tx.description}
+                      </div>
+
                       <div className="text-xs text-slate-400">
                         {new Date(tx.date).toLocaleDateString()}
                       </div>
+
                     </div>
 
                   </div>
 
-                  <div>
+                  <div className={tx.amount>0?"text-green-600":"text-red-500"}>
                     {tx.amount>0?"+":"-"}${Math.abs(tx.amount).toFixed(2)}
                   </div>
 
                 </div>
+
               )
+
             })}
 
           </div>
+
         )}
 
-        {/* BUSINESS */}
+        {activeTab === "business" && (
 
-        {activeTab==="business" && (
           <BusinessSection
             categories={categories}
             values={values}
@@ -310,17 +374,17 @@ export default function Dashboard() {
             createCategory={createCategory}
             saveBusiness={saveBusiness}
           />
+
         )}
 
-        {activeTab==="billing" && <Billing/>}
-        {activeTab==="askai" && <ChatBox/>}
+        {activeTab === "billing" && <Billing />}
+        {activeTab === "askai" && <ChatBox />}
 
       </main>
+
     </div>
   )
 }
-
-/* BUSINESS SECTION */
 
 function BusinessSection(props:any){
 
@@ -337,121 +401,49 @@ function BusinessSection(props:any){
     saveBusiness,
   } = props
 
-  const [editingCategory,setEditingCategory] = useState<any>(null)
-
   return (
-    <>
-      <div className="space-y-10 max-w-4xl">
+    <div className="space-y-14 max-w-4xl">
 
-        {["Revenue","Expenses"].map((section)=>{
+      <div className="bg-white p-10 rounded-2xl shadow-sm space-y-8">
 
-          const isRevenue = section==="Revenue"
+        <h3 className="text-xl font-semibold">
+          Create Category
+        </h3>
 
-          const filtered = categories.filter(
-            (c:any)=>c.isRevenue===isRevenue
-          )
+        <input
+          placeholder="Category name"
+          value={newCategoryName}
+          onChange={(e)=>setNewCategoryName(e.target.value)}
+          className="border px-4 py-2 rounded"
+        />
 
-          return (
-            <div key={section} className="bg-white p-10 rounded-xl shadow">
+        <select
+          value={newCategoryType}
+          onChange={(e)=>setNewCategoryType(e.target.value)}
+          className="border px-4 py-2 rounded"
+        >
 
-              <h2 className="text-xl font-semibold mb-6">{section}</h2>
+          <option value="Expense">Expense</option>
+          <option value="Revenue">Revenue</option>
 
-              {filtered.map((cat:any)=>(
-                <div key={cat.id} className="flex items-center gap-4 mb-4">
+        </select>
 
-                  <span className="w-40">{cat.name}</span>
+        <button
+          onClick={createCategory}
+          className="bg-red-500 text-white px-6 py-2 rounded"
+        >
+          Create
+        </button>
 
-                  <input
-                    type="number"
-                    value={values[cat.id] ?? ""}
-                    onChange={(e)=>
-                      setValues((prev:any)=>({
-                        ...prev,
-                        [cat.id]:e.target.value
-                      }))
-                    }
-                    className="border px-3 py-2 rounded"
-                  />
-
-                  <button
-                    onClick={()=>deleteCategory(cat.id)}
-                    className="text-red-500"
-                  >
-                    ×
-                  </button>
-
-                  <button
-                    onClick={()=>setEditingCategory(cat)}
-                    className="text-slate-400"
-                  >
-                    ⋯
-                  </button>
-
-                </div>
-              ))}
-
-            </div>
-          )
-        })}
-
-        {/* CREATE CATEGORY */}
-
-        <div className="bg-white p-8 rounded-xl shadow space-y-4">
-
-          <input
-            placeholder="Category name"
-            value={newCategoryName}
-            onChange={(e)=>setNewCategoryName(e.target.value)}
-            className="border px-3 py-2 rounded"
-          />
-
-          <select
-            value={newCategoryType}
-            onChange={(e)=>setNewCategoryType(e.target.value)}
-            className="border px-3 py-2 rounded"
-          >
-            <option value="Expense">Expense</option>
-            <option value="Revenue">Revenue</option>
-          </select>
-
-          <button
-            onClick={createCategory}
-            className="bg-red-500 text-white px-6 py-2 rounded"
-          >
-            Create
-          </button>
-
-          <button
-            onClick={saveBusiness}
-            className="bg-red-500 text-white px-8 py-3 rounded"
-          >
-            Save Configuration
-          </button>
-
-        </div>
+        <button
+          onClick={saveBusiness}
+          className="bg-red-500 text-white px-8 py-3 rounded"
+        >
+          Save Configuration
+        </button>
 
       </div>
 
-      {/* MODAL */}
-
-      {editingCategory && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
-
-          <div className="bg-white p-6 rounded-xl w-[400px]">
-
-            <h2 className="text-lg font-semibold mb-4">Category Settings</h2>
-
-            <button
-              onClick={()=>setEditingCategory(null)}
-              className="bg-red-500 text-white px-4 py-2 rounded"
-            >
-              Close
-            </button>
-
-          </div>
-
-        </div>
-      )}
-    </>
+    </div>
   )
 }
