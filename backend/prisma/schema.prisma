@@ -17,39 +17,19 @@ model User {
   password  String?
   googleId  String?  @unique
 
-  /////////////////////////////////////////////////////
-  // PROFILE
-  /////////////////////////////////////////////////////
-
   businessName String?
   currency     String   @default("USD")
 
-  /////////////////////////////////////////////////////
-  // PLAN
-  /////////////////////////////////////////////////////
-
   plan String @default("basic")
-
-  /////////////////////////////////////////////////////
-  // AUTH
-  /////////////////////////////////////////////////////
 
   emailVerified        Boolean   @default(false)
   verificationToken    String?   @unique
   resetPasswordToken   String?   @unique
   resetPasswordExpires DateTime?
 
-  /////////////////////////////////////////////////////
-  // TIMESTAMPS
-  /////////////////////////////////////////////////////
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-
-  /////////////////////////////////////////////////////
-  // RELATIONS
-  /////////////////////////////////////////////////////
 
   transactions  Transaction[]
   categories    Category[]
@@ -57,13 +37,26 @@ model User {
   subscriptions Subscription[]
   invoices      Invoice[]
   usage         Usage[]
-
-  /////////////////////////////////////////////////////
-  // INDEXES
-  /////////////////////////////////////////////////////
+  sessions      Session[]
 
   @@index([email])
   @@index([deletedAt])
+}
+
+///////////////////////////////////////////////////////
+// SESSION (future security feature)
+///////////////////////////////////////////////////////
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  device    String
+  location  String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields:[userId], references:[id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 ///////////////////////////////////////////////////////
@@ -80,20 +73,14 @@ model Category {
   isRevenue Boolean @default(false)
   isCOGS    Boolean @default(false)
 
-  /////////////////////////////////////////////////////
-
   userId String?
   user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
 
-  /////////////////////////////////////////////////////
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-
-  /////////////////////////////////////////////////////
 
   @@unique([userId, name])
   @@index([userId])
@@ -112,103 +99,15 @@ model Transaction {
   amount      Float
   categoryId  String?
 
-  /////////////////////////////////////////////////////
-
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
-  /////////////////////////////////////////////////////
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  /////////////////////////////////////////////////////
-
   @@index([userId])
   @@index([categoryId])
   @@index([date])
   @@index([deletedAt])
-}
-
-///////////////////////////////////////////////////////
-// AUDIT LOG
-///////////////////////////////////////////////////////
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String
-  action    String
-  entity    String
-  entityId  String
-  metadata  Json?
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([entity])
-  @@index([createdAt])
-}
-
-///////////////////////////////////////////////////////
-// SUBSCRIPTION
-///////////////////////////////////////////////////////
-
-model Subscription {
-  id               String    @id @default(uuid())
-  userId           String
-  paddleCustomer   String?
-  paddleSubId      String?
-
-  plan             String
-  status           String
-
-  currentPeriodEnd DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([paddleSubId])
-}
-
-///////////////////////////////////////////////////////
-// INVOICE
-///////////////////////////////////////////////////////
-
-model Invoice {
-  id       String  @id @default(uuid())
-  userId   String
-  amount   Float
-  currency String
-  status   String
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-///////////////////////////////////////////////////////
-// USAGE (Rate limiting / AI / feature limits)
-///////////////////////////////////////////////////////
-
-model Usage {
-  id     String @id @default(uuid())
-  userId String
-
-  type   String
-  count  Int
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([type])
 }

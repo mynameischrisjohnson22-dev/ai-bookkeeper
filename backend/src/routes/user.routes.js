@@ -8,18 +8,31 @@ const router = express.Router()
 // GET PROFILE
 /////////////////////////////////////////////////////
 
-router.get("/profile", auth, async (req,res)=>{
+router.get("/profile", auth, async (req, res) => {
 
-  const user = await prisma.user.findUnique({
-    where:{ id:req.user.id },
-    select:{
-      email:true,
-      businessName:true,
-      currency:true
+  try {
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        email: true,
+        businessName: true,
+        currency: true
+      }
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" })
     }
-  })
 
-  res.json(user)
+    res.json(user)
+
+  } catch (err) {
+
+    console.error("Profile fetch error:", err)
+    res.status(500).json({ error: "Failed to load profile" })
+
+  }
 
 })
 
@@ -27,31 +40,54 @@ router.get("/profile", auth, async (req,res)=>{
 // UPDATE PROFILE
 /////////////////////////////////////////////////////
 
-router.patch("/profile", auth, async (req,res)=>{
+router.patch("/profile", auth, async (req, res) => {
 
-  const { businessName,currency } = req.body
+  try {
 
-  const user = await prisma.user.update({
-    where:{ id:req.user.id },
-    data:{ businessName,currency }
-  })
+    const { businessName, currency } = req.body
 
-  res.json(user)
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { businessName, currency },
+      select: {
+        email: true,
+        businessName: true,
+        currency: true
+      }
+    })
+
+    res.json(user)
+
+  } catch (err) {
+
+    console.error("Profile update error:", err)
+    res.status(500).json({ error: "Failed to update profile" })
+
+  }
 
 })
 
 /////////////////////////////////////////////////////
-// DELETE ACCOUNT
+// DELETE ACCOUNT (soft delete)
 /////////////////////////////////////////////////////
 
-router.delete("/delete", auth, async (req,res)=>{
+router.delete("/account", auth, async (req, res) => {
 
-  await prisma.user.update({
-    where:{ id:req.user.id },
-    data:{ deletedAt:new Date() }
-  })
+  try {
 
-  res.json({ success:true })
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { deletedAt: new Date() }
+    })
+
+    res.json({ success: true })
+
+  } catch (err) {
+
+    console.error("Account delete error:", err)
+    res.status(500).json({ error: "Failed to delete account" })
+
+  }
 
 })
 
