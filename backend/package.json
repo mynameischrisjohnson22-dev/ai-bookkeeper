@@ -5,17 +5,14 @@
   "description": "AI Bookkeeper SaaS Backend",
   "type": "module",
   "main": "src/server.js",
-
   "engines": {
     "node": ">=18"
   },
-
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
     "build": "prisma generate"
   },
-
   "dependencies": {
     "@paddle/paddle-node-sdk": "^3.6.0",
     "@prisma/client": "^5.22.0",
@@ -37,7 +34,6 @@
     "passport-google-oauth20": "^2.0.0",
     "resend": "^6.9.3"
   },
-
   "devDependencies": {
     "prisma": "^5.22.0"
   }

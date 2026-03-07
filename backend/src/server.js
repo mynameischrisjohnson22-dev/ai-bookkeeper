@@ -3,7 +3,6 @@ dotenv.config()
 
 import http from "http"
 import express from "express"
-import cron from "node-cron"
 
 import app from "./app.js"
 import prisma from "./utils/prisma.js"
@@ -11,6 +10,7 @@ import prisma from "./utils/prisma.js"
 /* ROUTES */
 
 import authRoutes from "./routes/auth.routes.js"
+import recurringRoutes from "./routes/recurring.routes.js"
 import userRoutes from "./routes/user.routes.js"
 import categoriesRoutes from "./routes/categories.routes.js"
 import billingRoutes from "./routes/billing.routes.js"
@@ -22,6 +22,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js"
 
 import { seedDefaultCategories } from "./seed/categories.seed.js"
 import { runRecurringEngine } from "./jobs/recurring.engine.js"
+import { startRecurringRunner } from "./jobs/recurringRunner.job.js"
 
 /* CONFIG */
 
@@ -46,7 +47,7 @@ app.use(express.json({ limit: "2mb" }))
 
 app.get("/", (req, res) => {
   res.json({
-    status: "AI Bookkeeper Backend Running",
+    status: "Albdy Backend Running",
     environment: process.env.NODE_ENV || "production",
     timestamp: new Date().toISOString()
   })
@@ -57,6 +58,7 @@ app.get("/", (req, res) => {
 ================================= */
 
 app.use("/api/auth", authRoutes)
+app.use("/api/recurring", recurringRoutes)
 app.use("/api/user", userRoutes)
 app.use("/api/categories", categoriesRoutes)
 app.use("/api/billing", billingRoutes)
@@ -78,10 +80,11 @@ async function startServer() {
 
   try {
 
-    console.log("🔄 Starting backend...")
+    console.log("🔄 Starting Albdy backend...")
+
+    /* Connect database */
 
     await prisma.$connect()
-
     console.log("✅ Database connected")
 
     /* Seed categories */
@@ -89,7 +92,6 @@ async function startServer() {
     try {
 
       await seedDefaultCategories()
-
       console.log("✅ Default categories seeded")
 
     } catch (err) {
@@ -98,40 +100,29 @@ async function startServer() {
 
     }
 
-    /* Start HTTP server */
+    /* Start server */
 
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`)
     })
 
-    /* Cron jobs */
+    /* Start recurring system */
 
     if (ENABLE_CRON) {
 
-      console.log("⏰ Cron jobs enabled")
+      console.log("⏰ Background jobs enabled")
 
-      cron.schedule("*/5 * * * *", async () => {
+      startRecurringRunner()
 
-        try {
+      /* Run once on startup */
 
-          console.log("🔁 Running recurring engine")
-
-          await runRecurringEngine()
-
-        } catch (err) {
-
-          console.error("❌ Cron job error:", err)
-
-        }
-
-      })
+      await runRecurringEngine()
 
     }
 
   } catch (err) {
 
     console.error("❌ Server startup failed:", err)
-
     process.exit(1)
 
   }
