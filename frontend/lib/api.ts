@@ -1,8 +1,8 @@
 import axios from "axios"
 
-// ================================
-// BASE URL (NO LOCALHOST FALLBACK)
-// ================================
+// ===================================
+// BASE URL
+// ===================================
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL
 
@@ -12,26 +12,34 @@ if (!baseURL) {
   )
 }
 
+// ===================================
+// AXIOS INSTANCE
+// ===================================
+
 const api = axios.create({
-  baseURL: baseURL.replace(/\/$/, ""), // remove trailing slash safely
+  baseURL: baseURL.replace(/\/$/, ""),
   headers: {
     "Content-Type": "application/json",
   },
 })
 
-// ================================
+// ===================================
 // REQUEST INTERCEPTOR (JWT)
-// ================================
+// ===================================
 
 api.interceptors.request.use(
   (config) => {
+
+    // Only run in browser
     if (typeof window !== "undefined") {
+
       const token = localStorage.getItem("token")
 
       if (token) {
-        config.headers = config.headers ?? {}
+        config.headers = config.headers || {}
         config.headers.Authorization = `Bearer ${token}`
       }
+
     }
 
     return config
@@ -39,21 +47,25 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// ================================
+// ===================================
 // RESPONSE INTERCEPTOR
-// ================================
+// ===================================
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+
+    if (error?.response?.status === 401) {
+
       if (typeof window !== "undefined") {
         localStorage.removeItem("token")
         window.location.href = "/auth/login"
       }
+
     }
 
     return Promise.reject(error)
+
   }
 )
 
