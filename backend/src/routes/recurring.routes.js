@@ -7,54 +7,127 @@ const router = Router()
 router.use(authMiddleware)
 
 //////////////////////////////////////////////////////
-// GET RECURRING
+// GET RECURRING RULES
 //////////////////////////////////////////////////////
 
-router.get("/", async (req,res)=>{
+router.get("/", async (req, res) => {
 
-  const rules = await prisma.recurringTransaction.findMany({
-    where:{ userId:req.user.id },
-    orderBy:{ nextRun:"asc" }
-  })
+  try {
 
-  res.json(rules)
+    const rules = await prisma.recurringTransaction.findMany({
+      where: {
+        userId: req.user.id,
+        active: true
+      },
+      orderBy: {
+        nextRun: "asc"
+      }
+    })
+
+    res.json(rules)
+
+  } catch (err) {
+
+    console.error("Recurring fetch error:", err)
+
+    res.status(500).json({
+      error: "Failed to load recurring rules"
+    })
+
+  }
 
 })
 
 //////////////////////////////////////////////////////
-// CREATE RECURRING
+// CREATE RECURRING RULE
 //////////////////////////////////////////////////////
 
-router.post("/", async (req,res)=>{
+router.post("/", async (req, res) => {
 
-  const { name, amount, frequency, categoryId } = req.body
+  try {
 
-  const recurring = await prisma.recurringTransaction.create({
-    data:{
-      userId:req.user.id,
-      name,
-      amount:Number(amount),
-      frequency,
-      categoryId,
-      nextRun:new Date()
+    const { name, amount, frequency, categoryId } = req.body
+
+    if (!name || !amount || !frequency) {
+      return res.status(400).json({
+        error: "Name, amount, and frequency are required"
+      })
     }
-  })
 
-  res.json(recurring)
+    const validFrequencies = ["daily","weekly","monthly","yearly"]
+
+    if (!validFrequencies.includes(frequency)) {
+      return res.status(400).json({
+        error: "Invalid frequency"
+      })
+    }
+
+    const recurring = await prisma.recurringTransaction.create({
+      data: {
+        userId: req.user.id,
+        name: name.trim(),
+        amount: Number(amount),
+        frequency,
+        categoryId: categoryId || null,
+        nextRun: new Date(),
+        active: true
+      }
+    })
+
+    res.status(201).json(recurring)
+
+  } catch (err) {
+
+    console.error("Recurring create error:", err)
+
+    res.status(500).json({
+      error: "Failed to create recurring rule"
+    })
+
+  }
 
 })
 
 //////////////////////////////////////////////////////
-// DELETE RECURRING
+// DELETE RECURRING RULE
 //////////////////////////////////////////////////////
 
-router.delete("/:id", async (req,res)=>{
+router.delete("/:id", async (req, res) => {
 
-  await prisma.recurringTransaction.delete({
-    where:{ id:req.params.id }
-  })
+  try {
 
-  res.json({ success:true })
+    const rule = await prisma.recurringTransaction.findFirst({
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
+    })
+
+    if (!rule) {
+      return res.status(404).json({
+        error: "Recurring rule not found"
+      })
+    }
+
+    await prisma.recurringTransaction.delete({
+      where: {
+        id: rule.id
+      }
+    })
+
+    res.json({
+      success: true
+    })
+
+  } catch (err) {
+
+    console.error("Recurring delete error:", err)
+
+    res.status(500).json({
+      error: "Failed to delete recurring rule"
+    })
+
+  }
 
 })
 
