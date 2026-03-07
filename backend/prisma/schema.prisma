@@ -21,8 +21,7 @@ model User {
 
   businessName String?
   currency     String  @default("USD")
-
-  plan String @default("basic")
+  plan         String  @default("basic")
 
   emailVerified        Boolean   @default(false)
   verificationToken    String?   @unique
@@ -37,14 +36,13 @@ model User {
   // RELATIONS
   /////////////////////////////////////////////////////
 
-  transactions          Transaction[]
-  categories            Category[]
-  audits                AuditLog[]
-  subscriptions         Subscription[]
-  invoices              Invoice[]
-  usage                 Usage[]
-  sessions              Session[]
-  recurringTransactions RecurringTransaction[] // ✅ FIX
+  transactions  Transaction[]
+  categories    Category[]
+  audits        AuditLog[]
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  usage         Usage[]
+  sessions      Session[]
 
   @@index([email])
   @@index([deletedAt])
@@ -60,6 +58,7 @@ model Session {
   device     String
   browser    String
   location   String?
+
   createdAt  DateTime @default(now())
   lastActive DateTime @updatedAt
 
@@ -79,11 +78,26 @@ model Category {
   icon    String?
   builtIn Boolean @default(false)
 
+  ////////////////////////////////////////////////////
+  // CATEGORY TYPE
+  ////////////////////////////////////////////////////
+
   isRevenue Boolean @default(false)
   isCOGS    Boolean @default(false)
 
+  ////////////////////////////////////////////////////
+  // RECURRING SETTINGS
+  ////////////////////////////////////////////////////
+
+  isRecurring        Boolean  @default(false)
+  recurringFrequency String?
+  recurringAmount    Float?
+  nextRun            DateTime?
+
+  ////////////////////////////////////////////////////
+
   userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
 
@@ -207,24 +221,8 @@ model TransactionRule {
   userId    String
   merchant  String
   category  String
+
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-///////////////////////////////////////////////////////
-// RECURRING TRANSACTION
-///////////////////////////////////////////////////////
-
-model RecurringTransaction {
-  id        String   @id @default(uuid())
-  userId    String
-  name      String
-  amount    Float
-  frequency String
-  nextRun   DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }
