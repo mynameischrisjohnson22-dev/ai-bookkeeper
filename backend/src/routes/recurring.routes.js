@@ -42,46 +42,34 @@ router.get("/", async (req, res) => {
 // CREATE RECURRING RULE
 //////////////////////////////////////////////////////
 
-router.post("/", async (req, res) => {
+router.post("/", async (req,res)=>{
 
   try {
 
-    const { name, amount, frequency, categoryId } = req.body
+    const { name, amount, frequency } = req.body
 
-    if (!name || !amount || !frequency) {
-      return res.status(400).json({
-        error: "Name, amount, and frequency are required"
-      })
-    }
-
-    const validFrequencies = ["daily","weekly","monthly","yearly"]
-
-    if (!validFrequencies.includes(frequency)) {
-      return res.status(400).json({
-        error: "Invalid frequency"
-      })
+    if(!name || !amount || !frequency){
+      return res.status(400).json({ error:"Missing fields" })
     }
 
     const recurring = await prisma.recurringTransaction.create({
-      data: {
-        userId: req.user.id,
-        name: name.trim(),
-        amount: Number(amount),
+      data:{
+        userId:req.user.id,
+        name,
+        amount:Number(amount),
         frequency,
-        categoryId: categoryId || null,
-        nextRun: new Date(),
-        active: true
+        nextRun:new Date()
       }
     })
 
-    res.status(201).json(recurring)
+    res.json(recurring)
 
-  } catch (err) {
+  } catch(err){
 
     console.error("Recurring create error:", err)
 
     res.status(500).json({
-      error: "Failed to create recurring rule"
+      error:"Failed to create recurring transaction"
     })
 
   }
