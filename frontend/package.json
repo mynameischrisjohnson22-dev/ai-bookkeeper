@@ -2,7 +2,6 @@
   "name": "albdy-frontend",
   "version": "0.1.0",
   "private": true,
-
   "scripts": {
     "dev": "next dev",
     "build": "NEXT_TELEMETRY_DISABLED=1 next build",
@@ -11,17 +10,15 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "next telemetry disable"
   },
-
   "dependencies": {
     "axios": "^1.6.7",
     "boring-avatars": "^2.0.4",
-    "next": "14.1.0",
+    "next": "^16.1.6",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-hot-toast": "^2.6.0",
     "recharts": "^2.12.7"
   },
-
   "devDependencies": {
     "@types/node": "^20.11.30",
     "@types/react": "^18.2.55",
@@ -30,7 +27,6 @@
     "tailwindcss": "^3.4.3",
     "typescript": "^5.4.5"
   },
-
   "engines": {
     "node": "24.x"
   }
