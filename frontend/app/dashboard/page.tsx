@@ -33,6 +33,7 @@ type Tab =
   | "dashboard"
   | "transactions"
   | "business"
+  | "recurring"
   | "billing"
   | "askai"
   | "settings"
@@ -49,6 +50,40 @@ export default function Dashboard() {
   const [newCategoryType, setNewCategoryType] =
     useState<"Revenue" | "Expense">("Expense")
 const [selected, setSelected] = useState<string[]>([])
+
+/* ================= RECURRING ================= */
+
+const [recurring, setRecurring] = useState<any[]>([])
+const [newRecurringName, setNewRecurringName] = useState("")
+const [newRecurringAmount, setNewRecurringAmount] = useState("")
+const [newRecurringFrequency, setNewRecurringFrequency] = useState("monthly")
+
+const loadRecurring = async () => {
+  const res = await api.get("/api/recurring")
+  setRecurring(res.data)
+}
+
+/* ================= RECURRING ACTIONS ================= */
+
+const createRecurring = async () => {
+  if (!newRecurringName || !newRecurringAmount) return
+
+  await api.post("/api/recurring", {
+    name: newRecurringName,
+    amount: Number(newRecurringAmount),
+    frequency: newRecurringFrequency
+  })
+
+  setNewRecurringName("")
+  setNewRecurringAmount("")
+
+  await loadRecurring()
+}
+
+const deleteRecurring = async (id: string) => {
+  await api.delete(`/api/recurring/${id}`)
+  await loadRecurring()
+}
 
   /* ================= LOAD ================= */
 
@@ -204,30 +239,33 @@ const deleteTransactions = async () => {
           Albdy
         </h2>
 
-{["dashboard","transactions","business","billing","askai","settings"].map((tab) => (
+{["dashboard","transactions","business","recurring","billing","askai","settings"].map((tab)=>(
   <button
     key={tab}
-    onClick={() => {
-      if (tab === "settings") {
+    onClick={()=>{
+      if(tab==="settings"){
         router.push("/settings")
-      } else {
+      }else{
         setActiveTab(tab as Tab)
       }
     }}
-            className={`w-full text-left px-4 py-3 rounded-xl mb-2 transition-all ${
-              activeTab === tab
-                ? "bg-red-500 text-white shadow-md"
-                : "text-slate-600 hover:bg-indigo-50 hover:text-red-500"
-            }`}
-          >
-            {tab === "dashboard" && "Overview"}
-            {tab === "transactions" && "Transactions"}
-            {tab === "business" && "Business"}
-            {tab === "billing" && "Billing"}
-            {tab === "askai" && "Ask AI"}
-            {tab === "settings" && "Settings"}
-          </button>
-        ))}
+    className={`w-full text-left px-4 py-3 rounded-xl mb-2 transition-all ${
+      activeTab===tab
+        ? "bg-red-500 text-white shadow-md"
+        : "text-slate-600 hover:bg-indigo-50 hover:text-red-500"
+    }`}
+  >
+
+    {tab==="dashboard" && "Overview"}
+    {tab==="transactions" && "Transactions"}
+    {tab==="business" && "Business"}
+    {tab==="recurring" && "Recurring"}
+    {tab==="billing" && "Billing"}
+    {tab==="askai" && "Ask AI"}
+    {tab==="settings" && "Settings"}
+
+  </button>
+))}
       </aside>
 
       {/* MAIN */}

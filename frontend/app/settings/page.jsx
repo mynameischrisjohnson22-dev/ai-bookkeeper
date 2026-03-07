@@ -27,26 +27,30 @@ export default function Settings() {
 // LOAD PROFILE
 //////////////////////////////////////////////////////
 
-  const loadProfile = async () => {
+const loadProfile = async () => {
+  try {
 
-    try {
+    setLoading(true)
 
-      const { data } = await api.get("/api/user/profile")
+    const { data } = await api.get("/api/user/profile")
 
-      setProfile({
-        email: data.email,
-        businessName: data.businessName ?? "",
-        currency: data.currency ?? "USD"
-      })
+    setProfile({
+      email: data.email ?? "",
+      businessName: data.businessName ?? "",
+      currency: data.currency ?? "USD"
+    })
 
-    } catch (err) {
+  } catch (err) {
 
-      console.error(err)
-      toast.error("Failed to load profile")
+    console.error(err)
+    toast.error("Failed to load profile")
 
-    }
+  } finally {
+
+    setLoading(false)
 
   }
+}
 
   useEffect(()=>{
     loadProfile()
