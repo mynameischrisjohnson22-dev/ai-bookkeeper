@@ -4,15 +4,20 @@ import { authMiddleware } from "../middleware/auth.middleware.js"
 
 const router = Router()
 
-// 🔐 Protect ALL category routes
+///////////////////////////////////////////////////////
+// AUTH PROTECTION
+///////////////////////////////////////////////////////
+
 router.use(authMiddleware)
 
 ///////////////////////////////////////////////////////
-// GET categories
+// GET ALL CATEGORIES
 ///////////////////////////////////////////////////////
 
 router.get("/", async (req, res) => {
+
   try {
+
     const categories = await prisma.category.findMany({
       where: {
         OR: [
@@ -24,22 +29,33 @@ router.get("/", async (req, res) => {
     })
 
     res.json(categories)
+
   } catch (err) {
+
     console.error("GET categories error:", err)
-    res.status(500).json({ error: "Failed to fetch categories" })
+
+    res.status(500).json({
+      error: "Failed to fetch categories"
+    })
+
   }
+
 })
 
 ///////////////////////////////////////////////////////
-// CREATE category
+// CREATE CATEGORY
 ///////////////////////////////////////////////////////
 
 router.post("/", async (req, res) => {
+
   try {
+
     const { name, isRevenue } = req.body
 
     if (!name || !name.trim()) {
-      return res.status(400).json({ error: "Category name required" })
+      return res.status(400).json({
+        error: "Category name is required"
+      })
     }
 
     const category = await prisma.category.create({
@@ -53,17 +69,25 @@ router.post("/", async (req, res) => {
     res.status(201).json(category)
 
   } catch (err) {
+
     console.error("CREATE category error:", err)
-    res.status(500).json({ error: "Failed to create category" })
+
+    res.status(500).json({
+      error: "Failed to create category"
+    })
+
   }
+
 })
 
 ///////////////////////////////////////////////////////
-// DELETE category
+// DELETE CATEGORY
 ///////////////////////////////////////////////////////
 
 router.delete("/:id", async (req, res) => {
+
   try {
+
     await prisma.category.deleteMany({
       where: {
         id: req.params.id,
@@ -74,9 +98,15 @@ router.delete("/:id", async (req, res) => {
     res.json({ success: true })
 
   } catch (err) {
+
     console.error("DELETE category error:", err)
-    res.status(500).json({ error: "Failed to delete category" })
+
+    res.status(500).json({
+      error: "Failed to delete category"
+    })
+
   }
+
 })
 
 export default router

@@ -1,12 +1,12 @@
-import express from "express"
+import { Router } from "express"
 import prisma from "../utils/prisma.js"
-import { authMiddleware } from "../middleware/auth.js"
+import { authMiddleware } from "../middleware/auth.middleware.js"
 
-const router = express.Router()
+const router = Router()
 
-/////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
 // GET PROFILE
-/////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
 
 router.get("/profile", authMiddleware, async (req, res) => {
 
@@ -41,9 +41,9 @@ router.get("/profile", authMiddleware, async (req, res) => {
 
 })
 
-/////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
 // UPDATE PROFILE
-/////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
 
 router.patch("/profile", authMiddleware, async (req, res) => {
 
@@ -78,9 +78,9 @@ router.patch("/profile", authMiddleware, async (req, res) => {
 
 })
 
-/////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
 // DELETE ACCOUNT (SOFT DELETE)
-/////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
 
 router.delete("/account", authMiddleware, async (req, res) => {
 
@@ -88,14 +88,10 @@ router.delete("/account", authMiddleware, async (req, res) => {
 
     await prisma.user.update({
       where: { id: req.user.id },
-      data: {
-        deletedAt: new Date()
-      }
+      data: { deletedAt: new Date() }
     })
 
-    res.json({
-      success: true
-    })
+    res.json({ success: true })
 
   } catch (err) {
 
