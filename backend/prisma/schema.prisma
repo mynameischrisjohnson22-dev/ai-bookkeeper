@@ -18,7 +18,7 @@ model User {
   googleId  String?  @unique
 
   businessName String?
-  currency     String   @default("USD")
+  currency     String @default("USD")
 
   plan String @default("basic")
 
@@ -30,6 +30,10 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+
+  /////////////////////////////////////////////////////
+  // RELATIONS
+  /////////////////////////////////////////////////////
 
   transactions  Transaction[]
   categories    Category[]
@@ -44,7 +48,7 @@ model User {
 }
 
 ///////////////////////////////////////////////////////
-// SESSION (future security feature)
+// SESSION
 ///////////////////////////////////////////////////////
 
 model Session {
@@ -54,7 +58,7 @@ model Session {
   location  String?
   createdAt DateTime @default(now())
 
-  user User @relation(fields:[userId], references:[id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -110,4 +114,81 @@ model Transaction {
   @@index([categoryId])
   @@index([date])
   @@index([deletedAt])
+}
+
+///////////////////////////////////////////////////////
+// AUDIT LOG
+///////////////////////////////////////////////////////
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+///////////////////////////////////////////////////////
+// SUBSCRIPTION
+///////////////////////////////////////////////////////
+
+model Subscription {
+  id               String   @id @default(uuid())
+  userId           String
+  paddleCustomer   String?
+  paddleSubId      String?
+
+  plan             String
+  status           String
+
+  currentPeriodEnd DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+///////////////////////////////////////////////////////
+// INVOICE
+///////////////////////////////////////////////////////
+
+model Invoice {
+  id       String  @id @default(uuid())
+  userId   String
+  amount   Float
+  currency String
+  status   String
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+///////////////////////////////////////////////////////
+// USAGE
+///////////////////////////////////////////////////////
+
+model Usage {
+  id     String @id @default(uuid())
+  userId String
+  type   String
+  count  Int
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
