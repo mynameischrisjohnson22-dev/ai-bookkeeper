@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   description: "AI-powered business finance assistant",
   applicationName: "Albdy",
   keywords: ["finance", "bookkeeping", "AI", "business"],
-  viewport: "width=device-width, initial-scale=1",
 }
 
 export default function RootLayout({
@@ -19,20 +18,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">
 
-        {/* Page Wrapper */}
-        <div className="min-h-screen flex flex-col">
+        <main className="min-h-screen w-full max-w-7xl mx-auto px-6 py-10">
+          {children}
+        </main>
 
-          {/* Content */}
-          <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-10">
-            {children}
-          </main>
-
-        </div>
-
-        {/* Global Notifications */}
         <Toaster
           position="top-right"
           gutter={10}
@@ -40,7 +32,7 @@ export default function RootLayout({
             duration: 4000,
             style: {
               background: "#111827",
-              color: "#fff",
+              color: "#ffffff",
               borderRadius: "10px",
               padding: "12px 16px",
             },
