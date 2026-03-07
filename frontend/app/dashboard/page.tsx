@@ -467,6 +467,8 @@ saveBusiness={saveBusiness}
 
 function BusinessSection(props:any){
 
+const [editingCategory,setEditingCategory] = useState<any>(null)
+
 const{
 categories,
 values,
@@ -483,6 +485,8 @@ saveBusiness
 return(
 
 <div className="space-y-10 max-w-4xl">
+
+{/* ================= REVENUE + EXPENSES ================= */}
 
 {["Revenue","Expenses"].map(section=>{
 
@@ -506,9 +510,25 @@ return(
 
 <div key={cat.id} className="bg-slate-50 border rounded-xl px-6 py-5">
 
+{/* HEADER */}
+
+<div className="flex justify-between items-center">
+
 <span className="text-sm font-medium">
 {cat.name}
 </span>
+
+<button
+onClick={()=>setEditingCategory(cat)}
+className="text-slate-400 hover:text-slate-700 text-lg"
+
+>
+
+⋯ </button>
+
+</div>
+
+{/* INPUT */}
 
 <input
 type="number"
@@ -522,12 +542,15 @@ setValues((prev:any)=>({
 className="w-full border rounded px-3 py-2 mt-3"
 />
 
+{/* DELETE */}
+
 <button
 onClick={()=>deleteCategory(cat.id)}
 className="mt-3 text-red-500"
+
 >
-Delete
-</button>
+
+Delete </button>
 
 </div>
 
@@ -541,7 +564,11 @@ Delete
 
 })}
 
+{/* ================= CREATE CATEGORY ================= */}
+
 <div className="bg-white p-10 rounded-2xl shadow-sm space-y-6">
+
+<div className="flex gap-4 flex-wrap">
 
 <input
 placeholder="Category name"
@@ -556,6 +583,7 @@ onChange={(e)=>
 setNewCategoryType(e.target.value as "Revenue"|"Expense")
 }
 className="border px-4 py-2 rounded"
+
 >
 
 <option value="Expense">Expense</option>
@@ -566,18 +594,108 @@ className="border px-4 py-2 rounded"
 <button
 onClick={createCategory}
 className="bg-red-500 text-white px-6 py-2 rounded"
+
 >
-Create
-</button>
+
+Create </button>
 
 <button
 onClick={saveBusiness}
 className="bg-red-500 text-white px-8 py-3 rounded"
+
 >
-Save Configuration
-</button>
+
+Save Configuration </button>
 
 </div>
+
+</div>
+
+{/* ================= RECURRING MODAL ================= */}
+
+{editingCategory && (
+
+<div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+
+<div className="bg-white p-6 rounded-xl w-[400px] space-y-4">
+
+<h2 className="font-semibold text-lg">
+Category Settings
+</h2>
+
+<label className="flex items-center gap-2">
+
+<input
+type="checkbox"
+checked={editingCategory.isRecurring || false}
+onChange={(e)=>
+setEditingCategory({
+...editingCategory,
+isRecurring:e.target.checked
+})
+}
+/>
+
+Recurring
+
+</label>
+
+<input
+type="number"
+placeholder="Amount"
+value={editingCategory.recurringAmount || ""}
+onChange={(e)=>
+setEditingCategory({
+...editingCategory,
+recurringAmount:Number(e.target.value)
+})
+}
+className="border px-3 py-2 rounded w-full"
+/>
+
+<select
+value={editingCategory.recurringFrequency || "monthly"}
+onChange={(e)=>
+setEditingCategory({
+...editingCategory,
+recurringFrequency:e.target.value
+})
+}
+className="border px-3 py-2 rounded w-full"
+
+>
+
+<option value="weekly">Weekly</option>
+<option value="monthly">Monthly</option>
+<option value="yearly">Yearly</option>
+
+</select>
+
+<div className="flex justify-end gap-2">
+
+<button
+onClick={()=>setEditingCategory(null)}
+className="px-4 py-2 text-slate-500"
+
+>
+
+Cancel </button>
+
+<button
+onClick={()=>setEditingCategory(null)}
+className="bg-red-500 text-white px-4 py-2 rounded"
+
+>
+
+Save </button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
 
 </div>
 
