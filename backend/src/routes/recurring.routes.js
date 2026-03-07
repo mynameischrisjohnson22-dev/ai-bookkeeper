@@ -14,15 +14,14 @@ router.get("/", async (req, res) => {
 
   try {
 
-    const rules = await prisma.recurringTransaction.findMany({
-      where: {
-        userId: req.user.id,
-        active: true
-      },
-      orderBy: {
-        nextRun: "asc"
-      }
-    })
+const rules = await prisma.recurringTransaction.findMany({
+  where: {
+    userId: req.user.id
+  },
+  orderBy: {
+    nextRun: "asc"
+  }
+})
 
     res.json(rules)
 
