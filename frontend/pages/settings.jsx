@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import api from "@/lib/api"
 
@@ -23,50 +23,64 @@ export default function Settings() {
     confirm:""
   })
 
-  //////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+// LOAD PROFILE
+//////////////////////////////////////////////////////
+
+  const loadProfile = async () => {
+
+    try {
+
+      const { data } = await api.get("/api/user/profile")
+
+      setProfile({
+        email: data.email,
+        businessName: data.businessName ?? "",
+        currency: data.currency ?? "USD"
+      })
+
+    } catch (err) {
+
+      console.error(err)
+      toast.error("Failed to load profile")
+
+    }
+
+  }
 
   useEffect(()=>{
     loadProfile()
   },[])
 
-  const loadProfile = async () => {
-
-    try{
-
-const res = await api.get("/api/user/profile")
-
-setProfile({
-  email: res.data.user.email,
-  businessName: res.data.user.businessName || "",
-  currency: res.data.user.currency || "USD"
-})
-
-    }catch(err){
-      toast.error("Failed to load profile")
-    }
-
-  }
-
-  //////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+// SAVE PROFILE
+//////////////////////////////////////////////////////
 
   const saveProfile = async () => {
 
-    try{
+    try {
 
       setLoading(true)
 
-      await api.patch("/api/user/profile",{
-        businessName:profile.businessName,
-        currency:profile.currency
+      const { data } = await api.patch("/api/user/profile",{
+        businessName: profile.businessName,
+        currency: profile.currency
+      })
+
+      setProfile({
+        email: data.email,
+        businessName: data.businessName ?? "",
+        currency: data.currency ?? "USD"
       })
 
       toast.success("Profile updated")
 
-    }catch(err){
+    } catch (err) {
 
+      console.error(err)
       toast.error("Failed to update profile")
 
-    }finally{
+    } finally {
 
       setLoading(false)
 
@@ -74,7 +88,9 @@ setProfile({
 
   }
 
-  //////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+// UPDATE PASSWORD
+//////////////////////////////////////////////////////
 
   const updatePassword = async () => {
 
@@ -83,13 +99,13 @@ setProfile({
       return
     }
 
-    try{
+    try {
 
       setLoading(true)
 
       await api.patch("/api/user/password",{
-        currentPassword:password.current,
-        newPassword:password.new
+        currentPassword: password.current,
+        newPassword: password.new
       })
 
       setPassword({
@@ -100,11 +116,12 @@ setProfile({
 
       toast.success("Password updated")
 
-    }catch(err){
+    } catch (err) {
 
+      console.error(err)
       toast.error("Failed to update password")
 
-    }finally{
+    } finally {
 
       setLoading(false)
 
@@ -112,7 +129,9 @@ setProfile({
 
   }
 
-  //////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+// LOGOUT
+//////////////////////////////////////////////////////
 
   const logout = () => {
 
@@ -123,7 +142,9 @@ setProfile({
 
   }
 
-  //////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+// DELETE ACCOUNT
+//////////////////////////////////////////////////////
 
   const deleteAccount = async () => {
 
@@ -131,24 +152,25 @@ setProfile({
 
     if(confirmDelete !== "DELETE") return
 
-    try{
+    try {
 
-      await api.delete("/api/user/delete")
+      await api.delete("/api/user/account")
 
       localStorage.removeItem("token")
       localStorage.removeItem("userId")
 
       router.push("/auth/signup")
 
-    }catch(err){
+    } catch (err) {
 
+      console.error(err)
       toast.error("Failed to delete account")
 
     }
 
   }
 
-  //////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
 
   return (
 
@@ -158,9 +180,9 @@ setProfile({
         Settings
       </h1>
 
-      {/* PROFILE */}
+{/* PROFILE */}
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
+      <section className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm space-y-6">
 
         <div>
           <h2 className="text-xl font-semibold">Profile</h2>
@@ -178,17 +200,13 @@ setProfile({
         <input
           placeholder="Business Name"
           value={profile.businessName}
-          onChange={(e)=>
-            setProfile({...profile,businessName:e.target.value})
-          }
+          onChange={(e)=>setProfile({...profile,businessName:e.target.value})}
           className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-red-400 outline-none"
         />
 
         <select
           value={profile.currency}
-          onChange={(e)=>
-            setProfile({...profile,currency:e.target.value})
-          }
+          onChange={(e)=>setProfile({...profile,currency:e.target.value})}
           className="w-full border border-slate-300 rounded-lg p-3"
         >
           <option value="USD">USD</option>
@@ -205,11 +223,11 @@ setProfile({
           {loading ? "Saving..." : "Save Profile"}
         </button>
 
-      </div>
+      </section>
 
-      {/* SECURITY */}
+{/* SECURITY */}
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
+      <section className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm space-y-6">
 
         <div>
           <h2 className="text-xl font-semibold">Security</h2>
@@ -222,9 +240,7 @@ setProfile({
           type="password"
           placeholder="Current Password"
           value={password.current}
-          onChange={(e)=>
-            setPassword({...password,current:e.target.value})
-          }
+          onChange={(e)=>setPassword({...password,current:e.target.value})}
           className="w-full border border-slate-300 rounded-lg p-3"
         />
 
@@ -232,9 +248,7 @@ setProfile({
           type="password"
           placeholder="New Password"
           value={password.new}
-          onChange={(e)=>
-            setPassword({...password,new:e.target.value})
-          }
+          onChange={(e)=>setPassword({...password,new:e.target.value})}
           className="w-full border border-slate-300 rounded-lg p-3"
         />
 
@@ -242,9 +256,7 @@ setProfile({
           type="password"
           placeholder="Confirm Password"
           value={password.confirm}
-          onChange={(e)=>
-            setPassword({...password,confirm:e.target.value})
-          }
+          onChange={(e)=>setPassword({...password,confirm:e.target.value})}
           className="w-full border border-slate-300 rounded-lg p-3"
         />
 
@@ -256,11 +268,11 @@ setProfile({
           {loading ? "Updating..." : "Update Password"}
         </button>
 
-      </div>
+      </section>
 
-      {/* ACCOUNT */}
+{/* ACCOUNT */}
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+      <section className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
 
         <h2 className="text-xl font-semibold mb-6">
           Account
@@ -273,11 +285,11 @@ setProfile({
           Log Out
         </button>
 
-      </div>
+      </section>
 
-      {/* DANGER ZONE */}
+{/* DANGER ZONE */}
 
-      <div className="bg-red-50 rounded-2xl border border-red-200 p-8 shadow-sm space-y-4">
+      <section className="bg-red-50 border border-red-200 rounded-2xl p-8 shadow-sm space-y-4">
 
         <h2 className="text-lg font-semibold text-red-600">
           Danger Zone
@@ -294,7 +306,7 @@ setProfile({
           Delete Account
         </button>
 
-      </div>
+      </section>
 
     </div>
 
