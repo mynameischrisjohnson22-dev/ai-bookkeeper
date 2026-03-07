@@ -640,18 +640,6 @@ Recurring
 
 </label>
 
-<input
-type="number"
-placeholder="Amount"
-value={editingCategory.recurringAmount || ""}
-onChange={(e)=>
-setEditingCategory({
-...editingCategory,
-recurringAmount:Number(e.target.value)
-})
-}
-className="border px-3 py-2 rounded w-full"
-/>
 
 <select
 value={editingCategory.recurringFrequency || "monthly"}
@@ -682,12 +670,20 @@ className="px-4 py-2 text-slate-500"
 Cancel </button>
 
 <button
-onClick={()=>setEditingCategory(null)}
+onClick={async () => {
+
+await api.patch(`/api/categories/${editingCategory.id}`, {
+isRecurring: editingCategory.isRecurring,
+recurringFrequency: editingCategory.recurringFrequency
+})
+
+setEditingCategory(null)
+
+}}
 className="bg-red-500 text-white px-4 py-2 rounded"
-
 >
-
-Save </button>
+Save
+</button>
 
 </div>
 
