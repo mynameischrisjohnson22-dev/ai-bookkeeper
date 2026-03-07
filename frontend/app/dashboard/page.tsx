@@ -22,6 +22,8 @@ type Transaction = {
   date: string
   description: string
   amount: number
+  isRecurring?: boolean
+  recurringFrequency?: string
 }
 
 type Category = {
@@ -135,11 +137,13 @@ export default function Dashboard() {
         if(isNaN(value)) return null
 
         return {
-          date:today,
-          description:cat.name,
-          amount:cat.isRevenue ? value : -Math.abs(value),
-          categoryId:cat.id
-        }
+  date: today,
+  description: cat.name,
+  amount: cat.isRevenue ? value : -Math.abs(value),
+  categoryId: cat.id,
+  isRecurring: cat.isRecurring || false,
+  recurringFrequency: cat.recurringFrequency || null
+}
 
       })
       .filter(Boolean)
@@ -406,8 +410,33 @@ setSelected(prev=>[...prev,tx.id])
 
 <div>
 
+<div className="flex items-center gap-2">
+
+{tx.isRecurring && (
+<span className="w-2 h-2 rounded-full bg-green-500"></span>
+)}
+
+<div className="flex items-center gap-2">
+
+{tx.isRecurring && (
+<span
+className="w-2 h-2 rounded-full bg-green-500"
+title="Recurring"
+/>
+)}
+
 <div className="font-medium">
 {tx.description}
+</div>
+
+{tx.isRecurring && tx.recurringFrequency && (
+<span className="text-xs text-green-600 capitalize">
+{tx.recurringFrequency} recurring
+</span>
+)}
+
+</div>
+
 </div>
 
 <div className="text-xs text-slate-400">
@@ -514,9 +543,17 @@ return(
 
 <div className="flex justify-between items-center">
 
+<div className="flex items-center gap-2">
+
+{cat.isRecurring && (
+<span className="w-2 h-2 rounded-full bg-green-500"></span>
+)}
+
 <span className="text-sm font-medium">
 {cat.name}
 </span>
+
+</div>
 
 <button
 onClick={()=>setEditingCategory(cat)}
