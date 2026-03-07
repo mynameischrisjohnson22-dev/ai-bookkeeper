@@ -27,6 +27,8 @@ type Category = {
   id: string
   name: string
   isRevenue: boolean
+  isRecurring?: boolean
+  recurringFrequency?: string
 }
 
 type Tab =
@@ -48,45 +50,32 @@ export default function Dashboard() {
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryType, setNewCategoryType] =
     useState<"Revenue" | "Expense">("Expense")
-const [selected, setSelected] = useState<string[]>([])
+  const [selected, setSelected] = useState<string[]>([])
 
-  /* ================= LOAD ================= */
+  /* LOAD DATA */
 
   const loadData = async () => {
-    try {
-      const [txRes, catRes] = await Promise.all([
-        api.get("/api/transactions"),
-        api.get("/api/categories"),
-      ])
+    const [txRes, catRes] = await Promise.all([
+      api.get("/api/transactions"),
+      api.get("/api/categories"),
+    ])
 
-      setTransactions(txRes.data || [])
+    setTransactions(txRes.data || [])
+    setCategories(catRes.data || [])
+  }
 
-      const normalized = (catRes.data || []).map((c: any) => ({
-        ...c,
-        isRevenue: Boolean(c.isRevenue),
-      }))
+  useEffect(() => {
+    const token = localStorage.getItem("token")
 
-      setCategories(normalized)
-    } catch (err) {
-      console.error("Failed to load data", err)
+    if (!token) {
+      router.push("/auth/login")
+      return
     }
-  }
 
-useEffect(() => {
-  const token = localStorage.getItem("token")
+    loadData()
+  }, [])
 
-  if (!token) {
-    router.push("/auth/login")
-    return
-  }
-
-  loadData()
-
-
-}, [])
-
-
-  /* ================= CATEGORY ================= */
+  /* CATEGORY */
 
   const createCategory = async () => {
     if (!newCategoryName.trim()) return
@@ -97,15 +86,15 @@ useEffect(() => {
     })
 
     setNewCategoryName("")
-    await loadData()
+    loadData()
   }
 
   const deleteCategory = async (id: string) => {
     await api.delete(`/api/categories/${id}`)
-    await loadData()
+    loadData()
   }
 
-  /* ================= BUSINESS SAVE ================= */
+  /* SAVE BUSINESS */
 
   const saveBusiness = async () => {
     const today = new Date().toISOString()
@@ -132,24 +121,24 @@ useEffect(() => {
     )
 
     setValues({})
-    await loadData()
+    loadData()
     setActiveTab("transactions")
   }
 
-const deleteTransactions = async () => {
-  if (selected.length === 0) return
+  /* DELETE TRANSACTIONS */
 
-  await Promise.all(
-    selected.map((id) =>
-      api.delete(`/api/transactions/${id}`)
+  const deleteTransactions = async () => {
+    if (selected.length === 0) return
+
+    await Promise.all(
+      selected.map((id) => api.delete(`/api/transactions/${id}`))
     )
-  )
 
-  setSelected([])
-  await loadData()
-}
+    setSelected([])
+    loadData()
+  }
 
-  /* ================= FILTER + TOTALS ================= */
+  /* FILTER */
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) =>
@@ -159,15 +148,15 @@ const deleteTransactions = async () => {
 
   const income = filteredTransactions
     .filter((t) => t.amount > 0)
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((s, t) => s + t.amount, 0)
 
   const expenses = filteredTransactions
     .filter((t) => t.amount < 0)
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((s, t) => s + t.amount, 0)
 
   const balance = income + expenses
 
-  /* ================= CUMULATIVE BALANCE CHART ================= */
+  /* CHART */
 
   const chartData = useMemo(() => {
     const grouped: Record<string, number> = {}
@@ -175,278 +164,166 @@ const deleteTransactions = async () => {
     filteredTransactions.forEach((t) => {
       const date = new Date(t.date).toLocaleDateString()
 
-      if (!grouped[date]) {
-        grouped[date] = 0
-      }
+      if (!grouped[date]) grouped[date] = 0
 
       grouped[date] += t.amount
     })
 
-    const sortedDates = Object.keys(grouped).sort(
-      (a, b) =>
-        new Date(a).getTime() - new Date(b).getTime()
+    const dates = Object.keys(grouped).sort(
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
     )
 
-    let runningBalance = 0
+    let running = 0
 
-    return sortedDates.map((date) => {
-      runningBalance += grouped[date]
+    return dates.map((d) => {
+      running += grouped[d]
+
       return {
-        date,
-        balance: runningBalance,
+        date: d,
+        balance: running,
       }
     })
   }, [filteredTransactions])
 
-  /* ================= UI ================= */
+  /* UI */
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
 
       {/* SIDEBAR */}
-      <aside className="w-64 bg-white/80 backdrop-blur border-r border-slate-100 p-8">
-        <h2 className="text-red-500 font-bold text-xl mb-12">
-          Albdy
-        </h2>
 
-{["dashboard","transactions","business","billing","askai","settings"].map((tab)=>(
-  <button
-    key={tab}
-    onClick={()=>{
-      if(tab==="settings"){
-        router.push("/settings")
-      }else{
-        setActiveTab(tab as Tab)
-      }
-    }}
-    className={`w-full text-left px-4 py-3 rounded-xl mb-2 transition-all ${
-      activeTab===tab
-        ? "bg-red-500 text-white shadow-md"
-        : "text-slate-600 hover:bg-indigo-50 hover:text-red-500"
-    }`}
-  >
+      <aside className="w-64 bg-white border-r p-8">
+        <h2 className="text-red-500 font-bold text-xl mb-10">Albdy</h2>
 
-    {tab==="dashboard" && "Overview"}
-    {tab==="transactions" && "Transactions"}
-    {tab==="business" && "Business"}
-    {tab==="recurring" && "Recurring"}
-    {tab==="billing" && "Billing"}
-    {tab==="askai" && "Ask AI"}
-    {tab==="settings" && "Settings"}
-
-  </button>
-))}
+        {["dashboard","transactions","business","billing","askai","settings"].map((tab)=>(
+          <button
+            key={tab}
+            onClick={()=>{
+              if(tab==="settings") router.push("/settings")
+              else setActiveTab(tab as Tab)
+            }}
+            className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
+              activeTab===tab
+                ? "bg-red-500 text-white"
+                : "text-slate-600 hover:bg-indigo-50"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
       </aside>
 
       {/* MAIN */}
+
       <main className="flex-1 px-16 py-14 space-y-14">
 
-        {activeTab === "dashboard" && (
-          <>
-            {/* BALANCE */}
-            <div className="max-w-3xl">
-              <div className="bg-white p-10 rounded-3xl shadow-lg">
-                <div className="text-sm text-slate-500 mb-2">
-                  Current Balance
-                </div>
+        {/* DASHBOARD */}
 
-                <div
-                  className={`text-4xl font-bold ${
-                    balance > 0
-                      ? "text-green-600"
-                      : balance < 0
-                      ? "text-red-600"
-                      : "text-slate-800"
-                  }`}
-                >
-                  ${balance.toFixed(2)}
-                </div>
+        {activeTab==="dashboard" && (
+          <div className="space-y-10 max-w-3xl">
 
-                <div className="text-sm text-slate-400 mt-2">
-                  Income minus expenses
-                </div>
-              </div>
+            <div className="bg-white p-10 rounded-3xl shadow">
+              <div className="text-sm text-slate-500">Current Balance</div>
+              <div className="text-4xl font-bold">${balance.toFixed(2)}</div>
             </div>
 
-            {/* INCOME + EXPENSES */}
-            <div className="grid md:grid-cols-2 gap-8 max-w-3xl">
-              <div className="bg-white p-8 rounded-2xl shadow-sm">
-                <div className="text-sm text-slate-500">Income</div>
-                <div className="text-2xl font-semibold text-green-600">
-                  ${income.toFixed(2)}
-                </div>
-              </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3"/>
+                <XAxis dataKey="date"/>
+                <YAxis/>
+                <Tooltip/>
+                <Line dataKey="balance" stroke="#dc2626" strokeWidth={3}/>
+              </LineChart>
+            </ResponsiveContainer>
 
-              <div className="bg-white p-8 rounded-2xl shadow-sm">
-                <div className="text-sm text-slate-500">Expenses</div>
-                <div className="text-2xl font-semibold text-red-600">
-                  ${Math.abs(expenses).toFixed(2)}
-                </div>
-              </div>
-            </div>
-
-            {/* CHART */}
-            <div className="bg-white p-10 rounded-3xl shadow-lg">
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold">
-                  Financial Overview
-                </h2>
-                <p className="text-sm text-slate-400">
-                  Track balance growth over time
-                </p>
-              </div>
-
-              <ResponsiveContainer width="100%" height={340}>
-                <LineChart data={chartData}>
-                  <defs>
-                    <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#dc2626" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#dc2626" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-
-                  <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-
-                  <Line
-                    type="monotone"
-                    dataKey="balance"
-                    stroke="#dc2626"
-                    strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 6 }}
-                    isAnimationActive
-                    animationDuration={800}
-                  />
-
-                  <Area
-                    type="monotone"
-                    dataKey="balance"
-                    stroke="none"
-                    fill="url(#balanceGradient)"
-                    isAnimationActive
-                    animationDuration={800}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </>
+          </div>
         )}
 
-{activeTab === "transactions" && (
-  <div className="max-w-3xl space-y-6">
+        {/* TRANSACTIONS */}
 
-    <input
-      placeholder="Search transactions..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className="w-full px-5 py-3 rounded-xl bg-white shadow-sm border border-slate-200 focus:ring-2 focus:ring-red-400 outline-none transition-all duration-200"
-    />
+        {activeTab==="transactions" && (
+          <div className="max-w-3xl space-y-6">
 
-    {selected.length > 0 && (
-      <div className="flex justify-between items-center bg-white px-6 py-4 rounded-xl shadow-sm border border-slate-200 transition-all duration-200">
-        <span className="text-sm font-medium text-slate-700">
-          {selected.length} selected
-        </span>
-        <button
-          onClick={deleteTransactions}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-200 shadow-sm"
-        >
-          Delete
-        </button>
-      </div>
-    )}
+            <input
+              placeholder="Search transactions..."
+              value={search}
+              onChange={(e)=>setSearch(e.target.value)}
+              className="w-full px-4 py-3 border rounded-xl"
+            />
 
-    <div className="bg-white rounded-2xl shadow-sm divide-y divide-slate-100 transition-all duration-200">
+            {filteredTransactions.map((tx)=>{
 
-      {filteredTransactions.map((tx) => {
-        const isSelected = selected.includes(tx.id)
+              const isSelected = selected.includes(tx.id)
 
-        return (
-          <div
-            key={tx.id}
-            className={`
-              flex justify-between items-center
-              px-6 py-5
-              transition-all duration-200
-              cursor-pointer
-              ${isSelected
-                ? "bg-red-50 border-l-4 border-red-500"
-                : "hover:bg-slate-50"}
-            `}
-          >
-            <div className="flex items-center gap-4">
+              return (
+                <div
+                  key={tx.id}
+                  className="flex justify-between px-6 py-4 bg-white rounded-xl shadow"
+                >
 
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => {
-                  if (isSelected) {
-                    setSelected((prev) =>
-                      prev.filter((id) => id !== tx.id)
-                    )
-                  } else {
-                    setSelected((prev) => [...prev, tx.id])
-                  }
-                }}
-                className="w-4 h-4 accent-red-500"
-              />
+                  <div className="flex gap-3 items-center">
 
-              <div>
-                <div className="font-medium text-slate-900">
-                  {tx.description}
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={()=>{
+                        if(isSelected)
+                          setSelected((p)=>p.filter((id)=>id!==tx.id))
+                        else
+                          setSelected((p)=>[...p,tx.id])
+                      }}
+                    />
+
+                    <div>
+                      <div>{tx.description}</div>
+                      <div className="text-xs text-slate-400">
+                        {new Date(tx.date).toLocaleDateString()}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div>
+                    {tx.amount>0?"+":"-"}${Math.abs(tx.amount).toFixed(2)}
+                  </div>
+
                 </div>
-                <div className="text-xs text-slate-400">
-                  {new Date(tx.date).toLocaleDateString()}
-                </div>
-              </div>
-            </div>
+              )
+            })}
 
-            <div
-              className={`
-                text-sm font-semibold tabular-nums
-                ${tx.amount > 0
-                  ? "text-green-600"
-                  : "text-red-500"}
-              `}
-            >
-              {tx.amount > 0 ? "+" : "-"}$
-              {Math.abs(tx.amount).toFixed(2)}
-            </div>
           </div>
-        )
-      })}
-    </div>
-  </div>
-)}
+        )}
 
-        {activeTab === "business" && (
-  <BusinessSection
-    categories={categories}
-    values={values}
-    setValues={setValues}
-    deleteCategory={deleteCategory}
-    newCategoryName={newCategoryName}
-    setNewCategoryName={setNewCategoryName}
-    newCategoryType={newCategoryType}
-    setNewCategoryType={setNewCategoryType}
-    createCategory={createCategory}
-    saveBusiness={saveBusiness}
-  />
-)}
+        {/* BUSINESS */}
 
-{activeTab === "billing" && <Billing />}
-{activeTab === "askai" && <ChatBox />}
+        {activeTab==="business" && (
+          <BusinessSection
+            categories={categories}
+            values={values}
+            setValues={setValues}
+            deleteCategory={deleteCategory}
+            newCategoryName={newCategoryName}
+            setNewCategoryName={setNewCategoryName}
+            newCategoryType={newCategoryType}
+            setNewCategoryType={setNewCategoryType}
+            createCategory={createCategory}
+            saveBusiness={saveBusiness}
+          />
+        )}
+
+        {activeTab==="billing" && <Billing/>}
+        {activeTab==="askai" && <ChatBox/>}
 
       </main>
     </div>
   )
 }
-/* ================= BUSINESS SECTION ================= */
 
-function BusinessSection(props: any) {
+/* BUSINESS SECTION */
+
+function BusinessSection(props:any){
+
   const {
     categories,
     values,
@@ -460,165 +337,78 @@ function BusinessSection(props: any) {
     saveBusiness,
   } = props
 
+  const [editingCategory,setEditingCategory] = useState<any>(null)
+
   return (
-    <div className="space-y-14 max-w-4xl">
+    <>
+      <div className="space-y-10 max-w-4xl">
 
-      {/* REVENUE + EXPENSE SECTIONS */}
-      {["Revenue", "Expenses"].map((section) => {
-        const isRevenue = section === "Revenue"
+        {["Revenue","Expenses"].map((section)=>{
 
-        const filtered = categories.filter(
-          (c: any) => c.isRevenue === isRevenue
-        )
+          const isRevenue = section==="Revenue"
 
-        return (
-          <div
-            key={section}
-            className="bg-white p-10 rounded-2xl border border-slate-200 shadow-sm"
-          >
-            <h2 className="text-xl font-semibold mb-10 tracking-tight text-slate-800">
-              {section}
-            </h2>
+          const filtered = categories.filter(
+            (c:any)=>c.isRevenue===isRevenue
+          )
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filtered.map((cat: any) => (
-                <div
-                  key={cat.id}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-6 py-5 transition-all duration-200 hover:border-red-300 hover:bg-white"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-sm font-medium text-slate-700">
-                      {cat.name}
-                    </span>
-                  </div>
+          return (
+            <div key={section} className="bg-white p-10 rounded-xl shadow">
 
-                  {/* INPUT GROUP */}
-                  <div className="flex items-center">
-                    <div className="mt-3 flex items-center gap-3 text-sm">
+              <h2 className="text-xl font-semibold mb-6">{section}</h2>
 
-<label className="flex items-center gap-2">
+              {filtered.map((cat:any)=>(
+                <div key={cat.id} className="flex items-center gap-4 mb-4">
 
-<input
-type="checkbox"
-checked={cat.isRecurring || false}
-onChange={async (e)=>{
+                  <span className="w-40">{cat.name}</span>
 
-await api.patch(`/api/categories/${cat.id}`,{
-isRecurring:e.target.checked
-})
+                  <input
+                    type="number"
+                    value={values[cat.id] ?? ""}
+                    onChange={(e)=>
+                      setValues((prev:any)=>({
+                        ...prev,
+                        [cat.id]:e.target.value
+                      }))
+                    }
+                    className="border px-3 py-2 rounded"
+                  />
 
-}}
-/>
+                  <button
+                    onClick={()=>deleteCategory(cat.id)}
+                    className="text-red-500"
+                  >
+                    ×
+                  </button>
 
-Recurring
+                  <button
+                    onClick={()=>setEditingCategory(cat)}
+                    className="text-slate-400"
+                  >
+                    ⋯
+                  </button>
 
-</label>
-
-{cat.isRecurring && (
-
-<select
-value={cat.recurringFrequency || "monthly"}
-onChange={async(e)=>{
-
-await api.patch(`/api/categories/${cat.id}`,{
-recurringFrequency:e.target.value
-})
-
-}}
-className="border rounded px-2 py-1"
->
-
-<option value="weekly">Weekly</option>
-<option value="monthly">Monthly</option>
-<option value="yearly">Yearly</option>
-
-</select>
-
-)}
-
-</div>
-                    <input
-                      type="number"
-                      value={values[cat.id] ?? ""}
-                      onChange={(e) =>
-                        setValues((prev: any) => ({
-                          ...prev,
-                          [cat.id]: e.target.value,
-                        }))
-                      }
-                      className="
-                        w-full
-                        bg-white
-                        border border-slate-300
-                        rounded-l-lg
-                        px-4 py-2
-                        text-sm
-                        focus:ring-2 focus:ring-red-400
-                        focus:border-red-400
-                        outline-none
-                        transition-all duration-200
-                      "
-                    />
-
-                    <button
-                      onClick={() => deleteCategory(cat.id)}
-                      className="
-                        h-[40px]
-                        px-4
-                        bg-slate-100
-                        border border-l-0 border-slate-300
-                        rounded-r-lg
-                        text-slate-400
-                        hover:text-red-500
-                        hover:bg-red-50
-                        transition-all duration-200
-                      "
-                    >
-                      ×
-                    </button>
-                  </div>
                 </div>
               ))}
+
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
 
-      {/* CREATE CATEGORY */}
-      <div className="bg-white p-10 rounded-2xl border border-slate-200 shadow-sm space-y-8">
-        <h3 className="text-xl font-semibold tracking-tight text-slate-800">
-          Create Category
-        </h3>
+        {/* CREATE CATEGORY */}
 
-        <div className="flex flex-wrap gap-4">
+        <div className="bg-white p-8 rounded-xl shadow space-y-4">
+
           <input
             placeholder="Category name"
             value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            className="
-              px-4 py-2 rounded-xl
-              border border-slate-300
-              bg-white
-              focus:ring-2 focus:ring-red-400
-              focus:border-red-400
-              outline-none
-              transition-all duration-200
-            "
+            onChange={(e)=>setNewCategoryName(e.target.value)}
+            className="border px-3 py-2 rounded"
           />
 
           <select
             value={newCategoryType}
-            onChange={(e) =>
-              setNewCategoryType(e.target.value as "Revenue" | "Expense")
-            }
-            className="
-              px-4 py-2 rounded-xl
-              border border-slate-300
-              bg-white
-              focus:ring-2 focus:ring-red-400
-              outline-none
-              transition-all duration-200
-            "
+            onChange={(e)=>setNewCategoryType(e.target.value)}
+            className="border px-3 py-2 rounded"
           >
             <option value="Expense">Expense</option>
             <option value="Revenue">Revenue</option>
@@ -626,38 +416,42 @@ className="border rounded px-2 py-1"
 
           <button
             onClick={createCategory}
-            className="
-              bg-red-500 text-white
-              px-6 py-2
-              rounded-xl
-              shadow-sm
-              hover:shadow-md
-              hover:bg-red-600
-              transition-all duration-200
-            "
+            className="bg-red-500 text-white px-6 py-2 rounded"
           >
             Create
           </button>
-        </div>
 
-        <div>
           <button
             onClick={saveBusiness}
-            className="
-              bg-red-500 text-white
-              px-8 py-3
-              rounded-xl
-              shadow-md
-              hover:shadow-lg
-              hover:bg-red-600
-              transition-all duration-200
-            "
+            className="bg-red-500 text-white px-8 py-3 rounded"
           >
             Save Configuration
           </button>
+
         </div>
+
       </div>
 
-    </div>
+      {/* MODAL */}
+
+      {editingCategory && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
+
+          <div className="bg-white p-6 rounded-xl w-[400px]">
+
+            <h2 className="text-lg font-semibold mb-4">Category Settings</h2>
+
+            <button
+              onClick={()=>setEditingCategory(null)}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              Close
+            </button>
+
+          </div>
+
+        </div>
+      )}
+    </>
   )
 }
