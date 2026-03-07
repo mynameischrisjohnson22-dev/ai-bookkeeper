@@ -12,13 +12,15 @@ datasource db {
 ///////////////////////////////////////////////////////
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String?
-  googleId  String?  @unique
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String?
+  googleId String? @unique
+
+  transactionRules TransactionRule[]
 
   businessName String?
-  currency     String @default("USD")
+  currency     String  @default("USD")
 
   plan String @default("basic")
 
@@ -55,6 +57,7 @@ model Session {
   id        String   @id @default(uuid())
   userId    String
   device    String
+  browser   String
   location  String?
   createdAt DateTime @default(now())
 
@@ -78,7 +81,7 @@ model Category {
   isCOGS    Boolean @default(false)
 
   userId String?
-  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
 
@@ -121,12 +124,12 @@ model Transaction {
 ///////////////////////////////////////////////////////
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String
-  action    String
-  entity    String
-  entityId  String
-  metadata  Json?
+  id       String @id @default(uuid())
+  userId   String
+  action   String
+  entity   String
+  entityId String
+  metadata Json?
 
   createdAt DateTime @default(now())
 
@@ -140,13 +143,13 @@ model AuditLog {
 ///////////////////////////////////////////////////////
 
 model Subscription {
-  id               String   @id @default(uuid())
-  userId           String
-  paddleCustomer   String?
-  paddleSubId      String?
+  id             String  @id @default(uuid())
+  userId         String
+  paddleCustomer String?
+  paddleSubId    String?
 
-  plan             String
-  status           String
+  plan   String
+  status String
 
   currentPeriodEnd DateTime?
 
@@ -163,7 +166,7 @@ model Subscription {
 ///////////////////////////////////////////////////////
 
 model Invoice {
-  id       String  @id @default(uuid())
+  id       String @id @default(uuid())
   userId   String
   amount   Float
   currency String
@@ -191,4 +194,14 @@ model Usage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model TransactionRule {
+  id        String   @id @default(uuid())
+  userId    String
+  merchant  String
+  category  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -1,14 +1,17 @@
 import { Router } from "express"
 import prisma from "../utils/prisma.js"
+import bcrypt from "bcryptjs"
 import { authMiddleware } from "../middleware/auth.middleware.js"
 
 const router = Router()
 
-///////////////////////////////////////////////////////
-// GET PROFILE
-///////////////////////////////////////////////////////
+router.use(authMiddleware)
 
-router.get("/profile", authMiddleware, async (req, res) => {
+//////////////////////////////////////////////////////
+// GET PROFILE
+//////////////////////////////////////////////////////
+
+router.get("/profile", async (req, res) => {
 
   try {
 
@@ -22,30 +25,25 @@ router.get("/profile", authMiddleware, async (req, res) => {
     })
 
     if (!user) {
-      return res.status(404).json({
-        error: "User not found"
-      })
+      return res.status(404).json({ error: "User not found" })
     }
 
     res.json(user)
 
   } catch (err) {
 
-    console.error("Profile fetch error:", err)
-
-    res.status(500).json({
-      error: "Failed to load profile"
-    })
+    console.error(err)
+    res.status(500).json({ error: "Failed to load profile" })
 
   }
 
 })
 
-///////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
 // UPDATE PROFILE
-///////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
 
-router.patch("/profile", authMiddleware, async (req, res) => {
+router.patch("/profile", async (req, res) => {
 
   try {
 
@@ -53,10 +51,7 @@ router.patch("/profile", authMiddleware, async (req, res) => {
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: {
-        businessName,
-        currency
-      },
+      data: { businessName, currency },
       select: {
         email: true,
         businessName: true,
@@ -68,21 +63,60 @@ router.patch("/profile", authMiddleware, async (req, res) => {
 
   } catch (err) {
 
-    console.error("Profile update error:", err)
+    console.error(err)
+    res.status(500).json({ error: "Failed to update profile" })
 
+  }
+
+})
+
+//////////////////////////////////////////////////////
+// UPDATE PASSWORD
+//////////////////////////////////////////////////////
+
+router.patch("/password", async (req, res) => {
+
+  try {
+
+    const { currentPassword, newPassword } = req.body
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    })
+
+    const valid = await bcrypt.compare(currentPassword, user.password)
+
+    if (!valid) {
+      return res.status(401).json({
+        error: "Current password incorrect"
+      })
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 12)
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashed }
+    })
+
+    res.json({ success: true })
+
+  } catch (err) {
+
+    console.error(err)
     res.status(500).json({
-      error: "Failed to update profile"
+      error: "Failed to update password"
     })
 
   }
 
 })
 
-///////////////////////////////////////////////////////
-// DELETE ACCOUNT (SOFT DELETE)
-///////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+// DELETE ACCOUNT
+//////////////////////////////////////////////////////
 
-router.delete("/account", authMiddleware, async (req, res) => {
+router.delete("/account", async (req, res) => {
 
   try {
 
@@ -95,7 +129,7 @@ router.delete("/account", authMiddleware, async (req, res) => {
 
   } catch (err) {
 
-    console.error("Account delete error:", err)
+    console.error(err)
 
     res.status(500).json({
       error: "Failed to delete account"
