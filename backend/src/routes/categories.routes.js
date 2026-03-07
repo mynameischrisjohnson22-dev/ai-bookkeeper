@@ -80,6 +80,26 @@ router.post("/", async (req, res) => {
 
 })
 
+//////////////////////////////////////////////////////
+// UPDATE CATEGORY
+//////////////////////////////////////////////////////
+
+router.patch("/:id", async (req, res) => {
+  try {
+
+    const updated = await prisma.category.update({
+      where: { id: req.params.id },
+      data: req.body
+    })
+
+    res.json(updated)
+
+  } catch (err) {
+    console.error("PATCH category error:", err)
+    res.status(500).json({ error: "Failed to update category" })
+  }
+})
+
 ///////////////////////////////////////////////////////
 // DELETE CATEGORY
 ///////////////////////////////////////////////////////
