@@ -107,14 +107,24 @@ const deleteRecurring = async (id: string) => {
     }
   }
 
-  useEffect(() => {
-    const token = localStorage.getItem("token")
-    if (!token) {
-      router.push("/auth/login")
-      return
-    }
-    loadData()
-  }, [])
+useEffect(() => {
+  const token = localStorage.getItem("token")
+
+  if (!token) {
+    router.push("/auth/login")
+    return
+  }
+
+  loadData()
+  loadRecurring()
+
+}, [])
+
+useEffect(() => {
+  if (activeTab === "recurring") {
+    loadRecurring()
+  }
+}, [activeTab])
 
   /* ================= CATEGORY ================= */
 
@@ -466,6 +476,91 @@ const deleteTransactions = async () => {
             saveBusiness={saveBusiness}
           />
         )}
+
+        {activeTab === "recurring" && (
+
+<div className="max-w-3xl space-y-8">
+
+<h2 className="text-xl font-semibold">
+Recurring Bills
+</h2>
+
+{/* CREATE FORM */}
+
+<div className="flex gap-4">
+
+<input
+placeholder="Name"
+value={newRecurringName}
+onChange={(e)=>setNewRecurringName(e.target.value)}
+className="border rounded-lg px-4 py-2"
+/>
+
+<input
+type="number"
+placeholder="Amount"
+value={newRecurringAmount}
+onChange={(e)=>setNewRecurringAmount(e.target.value)}
+className="border rounded-lg px-4 py-2"
+/>
+
+<select
+value={newRecurringFrequency}
+onChange={(e)=>setNewRecurringFrequency(e.target.value)}
+className="border rounded-lg px-4 py-2"
+>
+<option value="weekly">Weekly</option>
+<option value="monthly">Monthly</option>
+<option value="yearly">Yearly</option>
+</select>
+
+<button
+onClick={createRecurring}
+className="bg-red-500 text-white px-4 py-2 rounded-lg"
+>
+Add
+</button>
+
+</div>
+
+{/* LIST */}
+
+<div className="space-y-4">
+
+{recurring.length === 0 && (
+  <p className="text-slate-400">
+    No recurring bills yet
+  </p>
+)}
+
+{recurring.map((rule)=>(
+<div
+key={rule.id}
+className="flex justify-between items-center border rounded-lg p-4"
+>
+
+<div>
+<p className="font-medium">{rule.name}</p>
+<p className="text-sm text-slate-500">
+${Math.abs(rule.amount)} / {rule.frequency}
+</p>
+</div>
+
+<button
+onClick={()=>deleteRecurring(rule.id)}
+className="text-red-500"
+>
+Delete
+</button>
+
+</div>
+))}
+
+</div>
+
+</div>
+
+)}
 
 {activeTab === "billing" && <Billing />}
 {activeTab === "askai" && <ChatBox />}
