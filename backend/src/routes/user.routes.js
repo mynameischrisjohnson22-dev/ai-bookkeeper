@@ -1,6 +1,6 @@
 import express from "express"
 import prisma from "../utils/prisma.js"
-import auth from "../middleware/auth.js"
+import { authMiddleware } from "../middleware/auth.js"
 
 const router = express.Router()
 
@@ -8,7 +8,7 @@ const router = express.Router()
 // GET PROFILE
 /////////////////////////////////////////////////////
 
-router.get("/profile", auth, async (req, res) => {
+router.get("/profile", authMiddleware, async (req, res) => {
 
   try {
 
@@ -22,7 +22,9 @@ router.get("/profile", auth, async (req, res) => {
     })
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" })
+      return res.status(404).json({
+        error: "User not found"
+      })
     }
 
     res.json(user)
@@ -30,7 +32,10 @@ router.get("/profile", auth, async (req, res) => {
   } catch (err) {
 
     console.error("Profile fetch error:", err)
-    res.status(500).json({ error: "Failed to load profile" })
+
+    res.status(500).json({
+      error: "Failed to load profile"
+    })
 
   }
 
@@ -40,7 +45,7 @@ router.get("/profile", auth, async (req, res) => {
 // UPDATE PROFILE
 /////////////////////////////////////////////////////
 
-router.patch("/profile", auth, async (req, res) => {
+router.patch("/profile", authMiddleware, async (req, res) => {
 
   try {
 
@@ -48,7 +53,10 @@ router.patch("/profile", auth, async (req, res) => {
 
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { businessName, currency },
+      data: {
+        businessName,
+        currency
+      },
       select: {
         email: true,
         businessName: true,
@@ -61,31 +69,41 @@ router.patch("/profile", auth, async (req, res) => {
   } catch (err) {
 
     console.error("Profile update error:", err)
-    res.status(500).json({ error: "Failed to update profile" })
+
+    res.status(500).json({
+      error: "Failed to update profile"
+    })
 
   }
 
 })
 
 /////////////////////////////////////////////////////
-// DELETE ACCOUNT (soft delete)
+// DELETE ACCOUNT (SOFT DELETE)
 /////////////////////////////////////////////////////
 
-router.delete("/account", auth, async (req, res) => {
+router.delete("/account", authMiddleware, async (req, res) => {
 
   try {
 
     await prisma.user.update({
       where: { id: req.user.id },
-      data: { deletedAt: new Date() }
+      data: {
+        deletedAt: new Date()
+      }
     })
 
-    res.json({ success: true })
+    res.json({
+      success: true
+    })
 
   } catch (err) {
 
     console.error("Account delete error:", err)
-    res.status(500).json({ error: "Failed to delete account" })
+
+    res.status(500).json({
+      error: "Failed to delete account"
+    })
 
   }
 

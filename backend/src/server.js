@@ -11,12 +11,12 @@ import prisma from "./utils/prisma.js"
 /* ROUTES */
 
 import authRoutes from "./routes/auth.routes.js"
+import userRoutes from "./routes/user.routes.js"
 import categoriesRoutes from "./routes/categories.routes.js"
 import billingRoutes from "./routes/billing.routes.js"
 import paddleRoutes from "./routes/paddle.routes.js"
 import transactionRoutes from "./routes/transactions.routes.js"
 import dashboardRoutes from "./routes/dashboard.routes.js"
-import userRoutes from "./routes/user.routes.js"
 
 /* JOBS */
 
@@ -47,7 +47,8 @@ app.use(express.json({ limit: "2mb" }))
 app.get("/", (req, res) => {
   res.json({
     status: "AI Bookkeeper Backend Running",
-    environment: process.env.NODE_ENV || "production"
+    environment: process.env.NODE_ENV || "production",
+    timestamp: new Date().toISOString()
   })
 })
 
@@ -64,7 +65,7 @@ app.use("/api/transactions", transactionRoutes)
 app.use("/api/dashboard", dashboardRoutes)
 
 /* =================================
-   SERVER
+   CREATE SERVER
 ================================= */
 
 const server = http.createServer(app)
@@ -93,15 +94,17 @@ async function startServer() {
 
     } catch (err) {
 
-      console.log("⚠️ Seed skipped:", err.message)
+      console.warn("⚠️ Category seed skipped:", err.message)
 
     }
+
+    /* Start HTTP server */
 
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`)
     })
 
-    /* CRON JOBS */
+    /* Cron jobs */
 
     if (ENABLE_CRON) {
 
@@ -117,7 +120,7 @@ async function startServer() {
 
         } catch (err) {
 
-          console.error("❌ Cron error:", err)
+          console.error("❌ Cron job error:", err)
 
         }
 
@@ -127,7 +130,7 @@ async function startServer() {
 
   } catch (err) {
 
-    console.error("❌ Startup failure:", err)
+    console.error("❌ Server startup failed:", err)
 
     process.exit(1)
 
@@ -140,11 +143,11 @@ async function startServer() {
 ================================= */
 
 process.on("unhandledRejection", (err) => {
-  console.error("🔥 Unhandled rejection:", err)
+  console.error("🔥 Unhandled Promise Rejection:", err)
 })
 
 process.on("uncaughtException", (err) => {
-  console.error("🔥 Uncaught exception:", err)
+  console.error("🔥 Uncaught Exception:", err)
 })
 
 /* =================================
@@ -153,24 +156,20 @@ process.on("uncaughtException", (err) => {
 
 async function shutdown(signal) {
 
-  console.log(`🛑 ${signal} received`)
+  console.log(`🛑 ${signal} received. Shutting down...`)
 
   try {
 
     await prisma.$disconnect()
 
     server.close(() => {
-
-      console.log("✅ Server stopped")
-
+      console.log("✅ Server closed")
       process.exit(0)
-
     })
 
   } catch (err) {
 
     console.error("Shutdown error:", err)
-
     process.exit(1)
 
   }
