@@ -33,7 +33,6 @@ type Tab =
   | "dashboard"
   | "transactions"
   | "business"
-  | "recurring"
   | "billing"
   | "askai"
   | "settings"
@@ -50,40 +49,6 @@ export default function Dashboard() {
   const [newCategoryType, setNewCategoryType] =
     useState<"Revenue" | "Expense">("Expense")
 const [selected, setSelected] = useState<string[]>([])
-
-/* ================= RECURRING ================= */
-
-const [recurring, setRecurring] = useState<any[]>([])
-const [newRecurringName, setNewRecurringName] = useState("")
-const [newRecurringAmount, setNewRecurringAmount] = useState("")
-const [newRecurringFrequency, setNewRecurringFrequency] = useState("monthly")
-
-const loadRecurring = async () => {
-  const res = await api.get("/api/recurring")
-  setRecurring(res.data)
-}
-
-/* ================= RECURRING ACTIONS ================= */
-
-const createRecurring = async () => {
-  if (!newRecurringName || !newRecurringAmount) return
-
-  await api.post("/api/recurring", {
-    name: newRecurringName,
-    amount: Number(newRecurringAmount),
-    frequency: newRecurringFrequency
-  })
-
-  setNewRecurringName("")
-  setNewRecurringAmount("")
-
-  await loadRecurring()
-}
-
-const deleteRecurring = async (id: string) => {
-  await api.delete(`/api/recurring/${id}`)
-  await loadRecurring()
-}
 
   /* ================= LOAD ================= */
 
@@ -116,15 +81,10 @@ useEffect(() => {
   }
 
   loadData()
-  loadRecurring()
+
 
 }, [])
 
-useEffect(() => {
-  if (activeTab === "recurring") {
-    loadRecurring()
-  }
-}, [activeTab])
 
   /* ================= CATEGORY ================= */
 
@@ -249,7 +209,7 @@ const deleteTransactions = async () => {
           Albdy
         </h2>
 
-{["dashboard","transactions","business","recurring","billing","askai","settings"].map((tab)=>(
+{["dashboard","transactions","business","billing","askai","settings"].map((tab)=>(
   <button
     key={tab}
     onClick={()=>{
@@ -463,112 +423,27 @@ const deleteTransactions = async () => {
 )}
 
         {activeTab === "business" && (
-          <BusinessSection
-            categories={categories}
-            values={values}
-            setValues={setValues}
-            deleteCategory={deleteCategory}
-            newCategoryName={newCategoryName}
-            setNewCategoryName={setNewCategoryName}
-            newCategoryType={newCategoryType}
-            setNewCategoryType={setNewCategoryType}
-            createCategory={createCategory}
-            saveBusiness={saveBusiness}
-          />
-        )}
-
-        {activeTab === "recurring" && (
-
-<div className="max-w-3xl space-y-8">
-
-<h2 className="text-xl font-semibold">
-Recurring Bills
-</h2>
-
-{/* CREATE FORM */}
-
-<div className="flex gap-4">
-
-<input
-placeholder="Name"
-value={newRecurringName}
-onChange={(e)=>setNewRecurringName(e.target.value)}
-className="border rounded-lg px-4 py-2"
-/>
-
-<input
-type="number"
-placeholder="Amount"
-value={newRecurringAmount}
-onChange={(e)=>setNewRecurringAmount(e.target.value)}
-className="border rounded-lg px-4 py-2"
-/>
-
-<select
-value={newRecurringFrequency}
-onChange={(e)=>setNewRecurringFrequency(e.target.value)}
-className="border rounded-lg px-4 py-2"
->
-<option value="weekly">Weekly</option>
-<option value="monthly">Monthly</option>
-<option value="yearly">Yearly</option>
-</select>
-
-<button
-onClick={createRecurring}
-className="bg-red-500 text-white px-4 py-2 rounded-lg"
->
-Add
-</button>
-
-</div>
-
-{/* LIST */}
-
-<div className="space-y-4">
-
-{recurring.length === 0 && (
-  <p className="text-slate-400">
-    No recurring bills yet
-  </p>
-)}
-
-{recurring.map((rule)=>(
-<div
-key={rule.id}
-className="flex justify-between items-center border rounded-lg p-4"
->
-
-<div>
-<p className="font-medium">{rule.name}</p>
-<p className="text-sm text-slate-500">
-${Math.abs(rule.amount)} / {rule.frequency}
-</p>
-</div>
-
-<button
-onClick={()=>deleteRecurring(rule.id)}
-className="text-red-500"
->
-Delete
-</button>
-
-</div>
-))}
-
-</div>
-
-</div>
-
+  <BusinessSection
+    categories={categories}
+    values={values}
+    setValues={setValues}
+    deleteCategory={deleteCategory}
+    newCategoryName={newCategoryName}
+    setNewCategoryName={setNewCategoryName}
+    newCategoryType={newCategoryType}
+    setNewCategoryType={setNewCategoryType}
+    createCategory={createCategory}
+    saveBusiness={saveBusiness}
+  />
 )}
 
 {activeTab === "billing" && <Billing />}
 {activeTab === "askai" && <ChatBox />}
+
       </main>
     </div>
   )
 }
-
 /* ================= BUSINESS SECTION ================= */
 
 function BusinessSection(props: any) {
@@ -619,6 +494,49 @@ function BusinessSection(props: any) {
 
                   {/* INPUT GROUP */}
                   <div className="flex items-center">
+                    <div className="mt-3 flex items-center gap-3 text-sm">
+
+<label className="flex items-center gap-2">
+
+<input
+type="checkbox"
+checked={cat.isRecurring || false}
+onChange={async (e)=>{
+
+await api.patch(`/api/categories/${cat.id}`,{
+isRecurring:e.target.checked
+})
+
+}}
+/>
+
+Recurring
+
+</label>
+
+{cat.isRecurring && (
+
+<select
+value={cat.recurringFrequency || "monthly"}
+onChange={async(e)=>{
+
+await api.patch(`/api/categories/${cat.id}`,{
+recurringFrequency:e.target.value
+})
+
+}}
+className="border rounded px-2 py-1"
+>
+
+<option value="weekly">Weekly</option>
+<option value="monthly">Monthly</option>
+<option value="yearly">Yearly</option>
+
+</select>
+
+)}
+
+</div>
                     <input
                       type="number"
                       value={values[cat.id] ?? ""}
