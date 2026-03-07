@@ -313,3 +313,24 @@ export default function Settings() {
   )
 
 }
+<section className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+
+  <h2 className="text-xl font-semibold mb-6">
+    Active Sessions
+  </h2>
+
+  <div className="space-y-4">
+
+    <div className="border rounded-lg p-4">
+      <p className="font-medium">Windows • Chrome</p>
+      <p className="text-sm text-slate-500">Last active: 2 minutes ago</p>
+    </div>
+
+    <div className="border rounded-lg p-4">
+      <p className="font-medium">iPhone • Safari</p>
+      <p className="text-sm text-slate-500">Last active: Yesterday</p>
+    </div>
+
+  </div>
+
+</section>
