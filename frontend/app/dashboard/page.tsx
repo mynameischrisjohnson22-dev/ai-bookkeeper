@@ -204,10 +204,16 @@ const deleteTransactions = async () => {
           Albdy
         </h2>
 
-        {["dashboard","transactions","business","billing","askai","settings"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab as Tab)}
+{["dashboard","transactions","business","billing","askai","settings"].map((tab) => (
+  <button
+    key={tab}
+    onClick={() => {
+      if (tab === "settings") {
+        router.push("/settings")
+      } else {
+        setActiveTab(tab as Tab)
+      }
+    }}
             className={`w-full text-left px-4 py-3 rounded-xl mb-2 transition-all ${
               activeTab === tab
                 ? "bg-red-500 text-white shadow-md"
