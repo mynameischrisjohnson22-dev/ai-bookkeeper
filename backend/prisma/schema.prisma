@@ -37,13 +37,14 @@ model User {
   // RELATIONS
   /////////////////////////////////////////////////////
 
-  transactions  Transaction[]
-  categories    Category[]
-  audits        AuditLog[]
-  subscriptions Subscription[]
-  invoices      Invoice[]
-  usage         Usage[]
-  sessions      Session[]
+  transactions          Transaction[]
+  categories            Category[]
+  audits                AuditLog[]
+  subscriptions         Subscription[]
+  invoices              Invoice[]
+  usage                 Usage[]
+  sessions              Session[]
+  recurringTransactions RecurringTransaction[] // ✅ FIX
 
   @@index([email])
   @@index([deletedAt])
@@ -54,16 +55,16 @@ model User {
 ///////////////////////////////////////////////////////
 
 model Session {
-  id        String   @id @default(uuid())
-  userId    String
-  device    String
-  browser   String
-  location  String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String
+  device     String
+  browser    String
+  location   String?
+  createdAt  DateTime @default(now())
   lastActive DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId])
 }
 
@@ -197,6 +198,10 @@ model Usage {
   @@index([userId])
 }
 
+///////////////////////////////////////////////////////
+// TRANSACTION RULE
+///////////////////////////////////////////////////////
+
 model TransactionRule {
   id        String   @id @default(uuid())
   userId    String
@@ -206,15 +211,20 @@ model TransactionRule {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+///////////////////////////////////////////////////////
+// RECURRING TRANSACTION
+///////////////////////////////////////////////////////
+
 model RecurringTransaction {
-  id         String   @id @default(uuid())
-  userId     String
-  name       String
-  amount     Float
-  frequency  String
-  nextRun    DateTime
-  categoryId String?
-  active     Boolean  @default(true)
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  amount    Float
+  frequency String
+  nextRun   DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
