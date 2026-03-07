@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,17 +12,15 @@
     "clean": "rm -rf .next node_modules",
     "postinstall": "next telemetry disable"
   },
-
   "dependencies": {
     "axios": "^1.6.7",
     "boring-avatars": "^2.0.4",
-    "next": "14.1.0",
+    "next": "^16.1.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.6.0",
     "recharts": "^3.7.0"
   },
-
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@types/jsonwebtoken": "^9.0.10",
@@ -34,7 +31,6 @@
     "tailwindcss": "^4.1.18",
     "typescript": "^5.4.5"
   },
-
   "engines": {
     "node": ">=18"
   }
