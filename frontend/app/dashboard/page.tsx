@@ -2,11 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-
 import api from "@/lib/api"
+
 import ChatBox from "@/components/ChatBox"
 import Billing from "@/components/Billing"
-import SettingsModal from "@/components/SettingsModal"
 
 import {
   LineChart,
@@ -16,8 +15,48 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid,
+  CartesianGrid
 } from "recharts"
+
+function SettingsContent() {
+  return (
+    <div className="space-y-10">
+
+      <div className="bg-white p-8 rounded-xl border">
+        <h3 className="text-lg font-semibold mb-4">Profile</h3>
+
+        <input
+          placeholder="Business name"
+          className="w-full border rounded px-3 py-2 mb-4"
+        />
+
+        <select className="w-full border rounded px-3 py-2">
+          <option>USD</option>
+          <option>EUR</option>
+        </select>
+      </div>
+
+      <div className="bg-white p-8 rounded-xl border">
+        <h3 className="text-lg font-semibold mb-4">Security</h3>
+
+        <input
+          type="password"
+          placeholder="New password"
+          className="w-full border rounded px-3 py-2 mb-4"
+        />
+
+        <input
+          type="password"
+          placeholder="Confirm password"
+          className="w-full border rounded px-3 py-2"
+        />
+      </div>
+
+    </div>
+  )
+}
+
+/* ================= TYPES ================= */
 
 type Transaction = {
   id: string
@@ -43,25 +82,30 @@ type Tab =
   | "business"
   | "billing"
   | "askai"
-  | "settings"
+
+/* ================= DASHBOARD ================= */
 
 export default function Dashboard() {
 
   const router = useRouter()
 
-  const [transactions,setTransactions] = useState<Transaction[]>([])
-  const [categories,setCategories] = useState<Category[]>([])
-  const [values,setValues] = useState<Record<string,string>>({})
+  /* ================= STATE ================= */
 
-  const [activeTab,setActiveTab] = useState<Tab>("dashboard")
-  const [search,setSearch] = useState("")
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [values, setValues] = useState<Record<string, string>>({})
 
-  const [newCategoryName,setNewCategoryName] = useState("")
-  const [newCategoryType,setNewCategoryType] = useState<"Revenue"|"Expense">("Expense")
+  const [activeTab, setActiveTab] = useState<Tab>("dashboard")
+  const [search, setSearch] = useState("")
 
-  const [settingsOpen,setSettingsOpen] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [newCategoryType, setNewCategoryType] =
+    useState<"Revenue" | "Expense">("Expense")
 
-  const [selected,setSelected] = useState<string[]>([])
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  const [selected, setSelected] = useState<string[]>([])
+
   /* ================= LOAD ================= */
 
   const loadData = async () => {
@@ -73,9 +117,7 @@ export default function Dashboard() {
         api.get("/api/categories")
       ])
 
-    setTransactions(txRes.data || [])
-
-console.log("Transactions from API:", txRes.data)
+      setTransactions(txRes.data || [])
 
       const normalized = (catRes.data || []).map((c:any)=>({
         ...c,
@@ -142,13 +184,13 @@ console.log("Transactions from API:", txRes.data)
         if(isNaN(value)) return null
 
         return {
-  date: today,
-  description: cat.name,
-  amount: cat.isRevenue ? value : -Math.abs(value),
-  categoryId: cat.id,
-  isRecurring: cat.isRecurring || false,
-  recurringFrequency: cat.recurringFrequency || null
-}
+          date: today,
+          description: cat.name,
+          amount: cat.isRevenue ? value : -Math.abs(value),
+          categoryId: cat.id,
+          isRecurring: cat.isRecurring || false,
+          recurringFrequency: cat.recurringFrequency || null
+        }
 
       })
       .filter(Boolean)
@@ -176,7 +218,7 @@ console.log("Transactions from API:", txRes.data)
 
   }
 
-  /* ================= FILTER + TOTALS ================= */
+  /* ================= FILTER ================= */
 
   const filteredTransactions = useMemo(()=>{
 
@@ -418,24 +460,9 @@ setSelected(prev=>[...prev,tx.id])
 <div className="flex items-center gap-2">
 
 {tx.isRecurring && (
-<span className="w-2 h-2 rounded-full bg-green-500"></span>
-)}
-
-<div className="flex items-center gap-2">
-
-{tx.isRecurring && (
 <span
 className="w-2 h-2 rounded-full bg-green-500"
 title="Recurring"
-/>
-)}
-
-<div className="flex items-center gap-2">
-
-{tx.isRecurring && (
-<span
-className="w-2 h-2 rounded-full bg-green-500"
-title="Recurring transaction"
 />
 )}
 
@@ -448,16 +475,6 @@ title="Recurring transaction"
 {tx.recurringFrequency} recurring
 </span>
 )}
-
-</div>
-
-{tx.isRecurring && tx.recurringFrequency && (
-<span className="text-xs text-green-600 capitalize">
-{tx.recurringFrequency} recurring
-</span>
-)}
-
-</div>
 
 </div>
 
@@ -502,15 +519,48 @@ saveBusiness={saveBusiness}
 
 )}
 
-{activeTab==="billing" && <Billing/>}
-
-{activeTab==="askai" && <ChatBox/>}
+{activeTab === "billing" && <Billing />}
+{activeTab === "askai" && <ChatBox />}
 
 </main>
 
+{/* SETTINGS MODAL */}
+
+{settingsOpen && (
+<div className="fixed inset-0 z-50 flex items-center justify-center">
+
+<div
+className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+onClick={()=>setSettingsOpen(false)}
+/>
+
+<div className="relative bg-white w-[720px] max-h-[85vh] overflow-y-auto rounded-2xl p-8 shadow-xl">
+
+<div className="flex justify-between items-center mb-6">
+
+<h2 className="text-xl font-semibold">
+Settings
+</h2>
+
+<button
+onClick={()=>setSettingsOpen(false)}
+className="text-slate-400 hover:text-slate-700 text-lg"
+>
+✕
+</button>
+
 </div>
 
-  )
+<SettingsContent/>
+
+</div>
+
+</div>
+)}
+
+</div>
+
+)
 
 }
 
@@ -518,242 +568,138 @@ saveBusiness={saveBusiness}
 
 function BusinessSection(props:any){
 
-const [editingCategory,setEditingCategory] = useState<any>(null)
+  const [editingCategory,setEditingCategory] = useState<any | null>(null)
 
-const{
-categories,
-values,
-setValues,
-deleteCategory,
-newCategoryName,
-setNewCategoryName,
-newCategoryType,
-setNewCategoryType,
-createCategory,
-saveBusiness
-}=props
+  const{
+    categories,
+    values,
+    setValues,
+    deleteCategory,
+    newCategoryName,
+    setNewCategoryName,
+    newCategoryType,
+    setNewCategoryType,
+    createCategory,
+    saveBusiness
+  } = props
 
-return(
+  return(
 
-<div className="space-y-10 max-w-4xl">
+    <div className="space-y-10 max-w-4xl">
+
+      {["Revenue","Expenses"].map(section=>{
 
-{/* ================= REVENUE + EXPENSES ================= */}
+        const isRevenue = section === "Revenue"
+
+        const filtered = categories.filter(
+          (c:any)=>c.isRevenue === isRevenue
+        )
+
+        return(
 
-{["Revenue","Expenses"].map(section=>{
+          <div key={section} className="bg-white p-10 rounded-2xl shadow-sm">
 
-const isRevenue = section==="Revenue"
+            <h2 className="text-xl font-semibold mb-10">
+              {section}
+            </h2>
 
-const filtered = categories.filter(
-(c:any)=>c.isRevenue===isRevenue
-)
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-return(
+              {filtered.map((cat:any)=>(
 
-<div key={section} className="bg-white p-10 rounded-2xl shadow-sm">
+                <div
+                  key={cat.id}
+                  className="bg-slate-50 border rounded-xl px-6 py-5"
+                >
 
-<h2 className="text-xl font-semibold mb-10">
-{section}
-</h2>
+                  <div className="flex justify-between items-center">
 
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <span className="text-sm font-medium">
+                      {cat.name}
+                    </span>
 
-{filtered.map((cat:any)=>(
+                    <button
+                      onClick={()=>setEditingCategory(cat)}
+                      className="text-slate-400 hover:text-slate-700 text-lg"
+                    >
+                      ⋯
+                    </button>
 
-<div key={cat.id} className="bg-slate-50 border rounded-xl px-6 py-5">
+                  </div>
 
-{/* HEADER */}
+                  <input
+                    type="number"
+                    value={values[cat.id] ?? ""}
+                    onChange={(e)=>
+                      setValues((prev:any)=>({
+                        ...prev,
+                        [cat.id]:e.target.value
+                      }))
+                    }
+                    className="w-full border rounded px-3 py-2 mt-3"
+                  />
 
-<div className="flex justify-between items-center">
+                  <button
+                    onClick={()=>deleteCategory(cat.id)}
+                    className="mt-3 text-red-500"
+                  >
+                    Delete
+                  </button>
 
-<div className="flex items-center gap-2">
+                </div>
 
-{cat.isRecurring && (
-<span className="w-2 h-2 rounded-full bg-green-500"></span>
-)}
+              ))}
 
-<span className="text-sm font-medium">
-{cat.name}
-</span>
+            </div>
 
-</div>
+          </div>
 
-<button
-onClick={()=>setEditingCategory(cat)}
-className="text-slate-400 hover:text-slate-700 text-lg"
+        )
 
->
+      })}
 
-⋯ </button>
+      <div className="bg-white p-10 rounded-2xl shadow-sm space-y-6">
 
-</div>
+        <div className="flex gap-4 flex-wrap">
 
-{/* INPUT */}
+          <input
+            placeholder="Category name"
+            value={newCategoryName}
+            onChange={(e)=>setNewCategoryName(e.target.value)}
+            className="border px-4 py-2 rounded"
+          />
 
-<input
-type="number"
-value={values[cat.id] ?? ""}
-onChange={(e)=>
-setValues((prev:any)=>({
-...prev,
-[cat.id]:e.target.value
-}))
-}
-className="w-full border rounded px-3 py-2 mt-3"
-/>
-
-{/* DELETE */}
-
-<button
-onClick={()=>deleteCategory(cat.id)}
-className="mt-3 text-red-500"
-
->
-
-Delete </button>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-)
-
-})}
-
-{/* ================= CREATE CATEGORY ================= */}
-
-<div className="bg-white p-10 rounded-2xl shadow-sm space-y-6">
-
-<div className="flex gap-4 flex-wrap">
-
-<input
-placeholder="Category name"
-value={newCategoryName}
-onChange={(e)=>setNewCategoryName(e.target.value)}
-className="border px-4 py-2 rounded"
-/>
-
-<select
-value={newCategoryType}
-onChange={(e)=>
-setNewCategoryType(e.target.value as "Revenue"|"Expense")
-}
-className="border px-4 py-2 rounded"
-
->
-
-<option value="Expense">Expense</option>
-<option value="Revenue">Revenue</option>
-
-</select>
-
-<button
-onClick={createCategory}
-className="bg-red-500 text-white px-6 py-2 rounded"
-
->
-
-Create </button>
-
-<button
-onClick={saveBusiness}
-className="bg-red-500 text-white px-8 py-3 rounded"
-
->
-
-Save Configuration </button>
-
-</div>
-
-</div>
-
-{/* ================= RECURRING MODAL ================= */}
-
-{editingCategory && (
-
-<div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-
-<div className="bg-white p-6 rounded-xl w-[400px] space-y-4">
-
-<h2 className="font-semibold text-lg">
-Category Settings
-</h2>
-
-<label className="flex items-center gap-2">
-
-<input
-type="checkbox"
-checked={editingCategory.isRecurring || false}
-onChange={(e)=>
-setEditingCategory({
-...editingCategory,
-isRecurring:e.target.checked
-})
-}
-/>
-
-Recurring
-
-</label>
-
-
-<select
-value={editingCategory.recurringFrequency || "monthly"}
-onChange={(e)=>
-setEditingCategory({
-...editingCategory,
-recurringFrequency:e.target.value
-})
-}
-className="border px-3 py-2 rounded w-full"
-
->
-
-<option value="weekly">Weekly</option>
-<option value="monthly">Monthly</option>
-<option value="yearly">Yearly</option>
-
-</select>
-
-<div className="flex justify-end gap-2">
-
-<button
-onClick={()=>setEditingCategory(null)}
-className="px-4 py-2 text-slate-500"
-
->
-
-Cancel </button>
-
-<button
-onClick={async () => {
-
-await api.patch(`/api/categories/${editingCategory.id}`, {
-isRecurring: editingCategory.isRecurring,
-recurringFrequency: editingCategory.recurringFrequency
-})
-
-setEditingCategory(null)
-
-}}
-className="bg-red-500 text-white px-4 py-2 rounded"
->
-Save
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-)}
-
-</div>
-
-)
+          <select
+            value={newCategoryType}
+            onChange={(e)=>
+              setNewCategoryType(e.target.value as "Revenue"|"Expense")
+            }
+            className="border px-4 py-2 rounded"
+          >
+            <option value="Expense">Expense</option>
+            <option value="Revenue">Revenue</option>
+          </select>
+
+          <button
+            onClick={createCategory}
+            className="bg-red-500 text-white px-6 py-2 rounded"
+          >
+            Create
+          </button>
+
+          <button
+            onClick={saveBusiness}
+            className="bg-red-500 text-white px-8 py-3 rounded"
+          >
+            Save Configuration
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
 
 }
