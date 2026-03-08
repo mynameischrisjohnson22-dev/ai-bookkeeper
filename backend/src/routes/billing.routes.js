@@ -6,9 +6,13 @@ const router = express.Router()
 const paddle = new Paddle(process.env.PADDLE_API_KEY)
 
 /*
+<<<<<<< HEAD
 ========================================
 PLAN PRICE IDS
 ========================================
+=======
+PLAN PRICE IDS
+>>>>>>> 05d666d (fix prisma auto push)
 */
 
 const PRICES = {
@@ -25,16 +29,21 @@ const PRICES = {
 }
 
 /*
+<<<<<<< HEAD
 ========================================
 CREATE CHECKOUT
 POST /api/billing/checkout
 ========================================
+=======
+CREATE CHECKOUT
+>>>>>>> 05d666d (fix prisma auto push)
 */
 
 router.post("/checkout", async (req, res) => {
 
   try {
 
+<<<<<<< HEAD
     const { plan, billing, userId } = req.body
 
     if (!plan || !billing || !userId) {
@@ -42,13 +51,20 @@ router.post("/checkout", async (req, res) => {
         error: "Missing plan, billing, or userId"
       })
     }
+=======
+    const { plan, billing } = req.body
+>>>>>>> 05d666d (fix prisma auto push)
 
     const priceId = PRICES?.[plan]?.[billing]
 
     if (!priceId) {
+<<<<<<< HEAD
       return res.status(400).json({
         error: "Invalid plan selection"
       })
+=======
+      return res.status(400).json({ error: "Invalid plan selection" })
+>>>>>>> 05d666d (fix prisma auto push)
     }
 
     const transaction = await paddle.transactions.create({
@@ -58,11 +74,15 @@ router.post("/checkout", async (req, res) => {
           price_id: priceId,
           quantity: 1
         }
+<<<<<<< HEAD
       ],
 
       custom_data: {
         userId
       }
+=======
+      ]
+>>>>>>> 05d666d (fix prisma auto push)
 
     })
 
