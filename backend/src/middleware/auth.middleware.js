@@ -14,25 +14,18 @@ export const authMiddleware = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    // Extract device + IP safely
     const userAgent = req.headers["user-agent"] || "Unknown"
-    const ipAddress =
-      req.headers["x-forwarded-for"] ||
-      req.socket?.remoteAddress ||
-      null
 
     req.user = {
       id: decoded.id,
       email: decoded.email
     }
 
-    // Update user's last active time
     await prisma.user.update({
       where: { id: decoded.id },
       data: { lastActive: new Date() }
     })
 
-    // Store session
     await prisma.session.create({
       data: {
         userId: decoded.id,
