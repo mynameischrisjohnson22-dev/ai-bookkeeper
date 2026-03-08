@@ -60,7 +60,7 @@ model Session {
   device    String?
   browser   String?
   location  String?
-
+  ipAddress String?
   createdAt  DateTime @default(now())
   lastActive DateTime @updatedAt
 
