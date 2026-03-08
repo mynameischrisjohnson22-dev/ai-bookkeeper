@@ -12,24 +12,24 @@ datasource db {
 ///////////////////////////////////////////////////////
 
 model User {
-  id       String  @id @default(uuid())
-  email    String  @unique
-  password String?
-  googleId String? @unique
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?
+  googleId  String?  @unique
 
-  transactionRules TransactionRule[]
+  lastActive DateTime @default(now())
 
   businessName String?
   currency     String  @default("USD")
   plan         String  @default("basic")
 
-  emailVerified        Boolean   @default(false)
-  verificationToken    String?   @unique
-  resetPasswordToken   String?   @unique
+  emailVerified       Boolean  @default(false)
+  verificationToken   String?  @unique
+  resetPasswordToken  String?  @unique
   resetPasswordExpires DateTime?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
   /////////////////////////////////////////////////////
@@ -43,6 +43,7 @@ model User {
   invoices      Invoice[]
   usage         Usage[]
   sessions      Session[]
+  transactionRules TransactionRule[]
 
   @@index([email])
   @@index([deletedAt])
@@ -53,11 +54,12 @@ model User {
 ///////////////////////////////////////////////////////
 
 model Session {
-  id         String   @id @default(uuid())
-  userId     String
-  device     String
-  browser    String
-  location   String?
+  id        String   @id @default(uuid())
+  userId    String
+
+  device    String?
+  browser   String?
+  location  String?
 
   createdAt  DateTime @default(now())
   lastActive DateTime @updatedAt
@@ -121,6 +123,10 @@ model Transaction {
   description String
   amount      Float
   categoryId  String?
+
+  // recurring support
+  isRecurring        Boolean @default(false)
+  recurringFrequency String?
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)

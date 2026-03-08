@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken"
+import prisma from "../utils/prisma.js"
 
-export const authMiddleware = (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
 
   try {
 
@@ -14,14 +15,38 @@ export const authMiddleware = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
+    const userAgent = req.headers["user-agent"] || null
+    const ipAddress =
+      req.headers["x-forwarded-for"] ||
+      req.socket.remoteAddress ||
+      null
+
     req.user = {
       id: decoded.id,
       email: decoded.email
     }
 
+    // update user last active
+    await prisma.user.update({
+      where: { id: decoded.id },
+      data: { lastActive: new Date() }
+    })
+
+    // create/update session
+    await prisma.session.create({
+      data: {
+        userId: decoded.id,
+        device: userAgent,
+        ipAddress,
+        userAgent
+      }
+    })
+
     next()
 
   } catch (err) {
+
+    console.error("Auth middleware error:", err)
 
     return res.status(401).json({
       error: "Invalid or expired token"
