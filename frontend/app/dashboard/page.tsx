@@ -56,7 +56,7 @@ export default function Dashboard() {
 
   const [newCategoryName,setNewCategoryName] = useState("")
   const [newCategoryType,setNewCategoryType] = useState<"Revenue"|"Expense">("Expense")
-
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [selected,setSelected] = useState<string[]>([])
 
   /* ================= LOAD ================= */
@@ -247,7 +247,7 @@ Albdy
 key={tab}
 onClick={()=>{
 if(tab==="settings"){
-router.push("/settings")
+setSettingsOpen(true)
 }else{
 setActiveTab(tab as Tab)
 }
