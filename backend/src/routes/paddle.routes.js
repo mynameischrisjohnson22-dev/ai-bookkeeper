@@ -11,6 +11,7 @@ POST /api/paddle/webhook
 */
 
 router.post("/webhook", async (req, res) => {
+
   try {
 
     const event = req.body
@@ -22,26 +23,29 @@ router.post("/webhook", async (req, res) => {
       return res.status(400).send("Invalid webhook payload")
     }
 
-    console.log("📩 Paddle event received:", eventType)
+    console.log("📩 Paddle event:", eventType)
 
-    /* ========================================
-       SUBSCRIPTION CREATED
-    ======================================== */
+    /*
+    ========================================
+    SUBSCRIPTION CREATED
+    ========================================
+    */
 
     if (eventType === "subscription.created") {
 
-      const userId = data.custom_data?.userId
+      const userId = data?.custom_data?.userId
 
       if (!userId) {
-        console.warn("⚠️ Missing userId in custom_data")
+        console.warn("⚠️ Missing userId in Paddle custom_data")
         return res.sendStatus(200)
       }
 
-      const existing = await prisma.subscription.findUnique({
+      const existing = await prisma.subscription.findFirst({
         where: { paddleSubId: data.id }
       })
 
       if (!existing) {
+
         await prisma.subscription.create({
           data: {
             userId,
@@ -58,9 +62,11 @@ router.post("/webhook", async (req, res) => {
       }
     }
 
-    /* ========================================
-       SUBSCRIPTION UPDATED
-    ======================================== */
+    /*
+    ========================================
+    SUBSCRIPTION UPDATED
+    ========================================
+    */
 
     if (eventType === "subscription.updated") {
 
@@ -77,9 +83,11 @@ router.post("/webhook", async (req, res) => {
       console.log("🔄 Subscription updated:", data.id)
     }
 
-    /* ========================================
-       SUBSCRIPTION CANCELED
-    ======================================== */
+    /*
+    ========================================
+    SUBSCRIPTION CANCELED
+    ========================================
+    */
 
     if (eventType === "subscription.canceled") {
 
@@ -93,18 +101,6 @@ router.post("/webhook", async (req, res) => {
       console.log("❌ Subscription canceled:", data.id)
     }
 
-    /* ========================================
-       UNKNOWN EVENT
-    ======================================== */
-
-    if (
-      eventType !== "subscription.created" &&
-      eventType !== "subscription.updated" &&
-      eventType !== "subscription.canceled"
-    ) {
-      console.log("ℹ️ Unhandled Paddle event:", eventType)
-    }
-
     return res.sendStatus(200)
 
   } catch (error) {
@@ -113,6 +109,7 @@ router.post("/webhook", async (req, res) => {
     return res.sendStatus(500)
 
   }
+
 })
 
 export default router
