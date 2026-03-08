@@ -27,12 +27,12 @@ export const authMiddleware = async (req, res, next) => {
     })
 
     // ONLY store fields that exist in DB
-    await prisma.session.create({
-      data: {
-        userId: decoded.id,
-        device: userAgent
-      }
-    })
+await prisma.session.create({
+  data: {
+    userId: decoded.id,
+    device: userAgent
+  }
+})
 
     next()
 
