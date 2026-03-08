@@ -14,9 +14,7 @@ export const authMiddleware = async (req, res, next) => {
     const token = authHeader.split(" ")[1]
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-
-    const userAgent = req.headers["user-agent"] || null
-    const ipAddress =
+    
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress ||
       null
