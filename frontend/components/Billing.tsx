@@ -7,22 +7,30 @@ export default function Billing() {
 
   const [loading,setLoading] = useState(false)
 
-  const checkout = async (priceId:string) => {
+  const checkout = async (plan:string, billing:string) => {
+
     try{
 
       setLoading(true)
 
       const res = await api.post("/api/billing/checkout",{
-        priceId
+        plan,
+        billing
       })
 
       window.location.href = res.data.url
 
     }catch(err){
+
       console.error(err)
+      alert("Checkout failed")
+
     }finally{
+
       setLoading(false)
+
     }
+
   }
 
   return (
@@ -38,16 +46,14 @@ export default function Billing() {
         </p>
       </div>
 
-      {/* PLAN CARDS */}
-
       <div className="grid md:grid-cols-2 gap-8">
 
-        {/* MONTHLY */}
+        {/* ESSENTIAL MONTHLY */}
 
         <div className="bg-white p-10 rounded-2xl border shadow-sm">
 
           <h3 className="text-lg font-semibold mb-2">
-            Monthly
+            Essential
           </h3>
 
           <div className="text-3xl font-bold mb-4">
@@ -68,7 +74,7 @@ export default function Billing() {
           </ul>
 
           <button
-            onClick={()=>checkout("pri_01kjtcazh9v64m557f0zsbdvwg")}
+            onClick={()=>checkout("essential","monthly")}
             disabled={loading}
             className="w-full bg-red-500 text-white py-3 rounded-xl"
           >
@@ -78,7 +84,7 @@ export default function Billing() {
         </div>
 
 
-        {/* LIFETIME */}
+        {/* ESSENTIAL LIFETIME */}
 
         <div className="bg-white p-10 rounded-2xl border shadow-sm">
 
@@ -101,7 +107,7 @@ export default function Billing() {
           </ul>
 
           <button
-            onClick={()=>checkout("pri_01kjtcazmqj9b8rvgmpd3j8kb")}
+            onClick={()=>checkout("essential","lifetime")}
             disabled={loading}
             className="w-full bg-black text-white py-3 rounded-xl"
           >
