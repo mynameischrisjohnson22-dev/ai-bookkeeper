@@ -10,8 +10,9 @@
   },
   "scripts": {
     "dev": "node src/server.js",
-    "start": "node src/server.js",
-    "build": "prisma generate"
+    "build": "prisma generate",
+    "db:push": "prisma db push",
+    "start": "prisma generate && prisma db push && node src/server.js"
   },
   "dependencies": {
     "@paddle/paddle-node-sdk": "^3.6.0",
