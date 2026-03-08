@@ -70,7 +70,9 @@ export default function Dashboard() {
         api.get("/api/categories")
       ])
 
-      setTransactions(txRes.data || [])
+    setTransactions(txRes.data || [])
+
+console.log("Transactions from API:", txRes.data)
 
       const normalized = (catRes.data || []).map((c:any)=>({
         ...c,
