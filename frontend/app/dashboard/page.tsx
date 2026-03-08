@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+
 import api from "@/lib/api"
 import ChatBox from "@/components/ChatBox"
 import Billing from "@/components/Billing"
+import SettingsModal from "@/components/SettingsModal"
 
 import {
   LineChart,
@@ -56,9 +58,10 @@ export default function Dashboard() {
 
   const [newCategoryName,setNewCategoryName] = useState("")
   const [newCategoryType,setNewCategoryType] = useState<"Revenue"|"Expense">("Expense")
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [selected,setSelected] = useState<string[]>([])
 
+  const [settingsOpen,setSettingsOpen] = useState(false)
+
+  const [selected,setSelected] = useState<string[]>([])
   /* ================= LOAD ================= */
 
   const loadData = async () => {
