@@ -26,6 +26,7 @@ export const authMiddleware = async (req, res, next) => {
       data: { lastActive: new Date() }
     })
 
+    // ONLY store fields that exist in DB
     await prisma.session.create({
       data: {
         userId: decoded.id,
@@ -42,5 +43,6 @@ export const authMiddleware = async (req, res, next) => {
     return res.status(401).json({
       error: "Invalid or expired token"
     })
+
   }
 }
