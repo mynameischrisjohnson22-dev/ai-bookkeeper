@@ -425,8 +425,25 @@ title="Recurring"
 />
 )}
 
+<div className="flex items-center gap-2">
+
+{tx.isRecurring && (
+<span
+className="w-2 h-2 rounded-full bg-green-500"
+title="Recurring transaction"
+/>
+)}
+
 <div className="font-medium">
 {tx.description}
+</div>
+
+{tx.isRecurring && tx.recurringFrequency && (
+<span className="text-xs text-green-600 capitalize">
+{tx.recurringFrequency} recurring
+</span>
+)}
+
 </div>
 
 {tx.isRecurring && tx.recurringFrequency && (
