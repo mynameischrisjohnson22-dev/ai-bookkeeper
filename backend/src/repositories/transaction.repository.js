@@ -3,17 +3,19 @@ import prisma from "../utils/prisma.js"
 /* ================= CREATE ================= */
 
 export const create = async (userId, data) => {
-  const { date, description, amount, categoryId } = data
+const { date, description, amount, categoryId, isRecurring, recurringFrequency } = data
 
   return prisma.transaction.create({
-    data: {
-      userId,
-      date: new Date(date),
-      description: description?.trim() || "",
-      amount: Number(amount),
-      categoryId: categoryId || null,
-    },
-  })
+  data: {
+    userId,
+    date: new Date(date),
+    description: description?.trim() || "",
+    amount: Number(amount),
+    categoryId: categoryId || null,
+    isRecurring: isRecurring || false,
+    recurringFrequency: recurringFrequency || null
+  },
+})
 }
 
 
