@@ -18,6 +18,10 @@ import paddleRoutes from "./routes/paddle.routes.js"
 import transactionRoutes from "./routes/transactions.routes.js"
 import dashboardRoutes from "./routes/dashboard.routes.js"
 
+/* MIDDLEWARE */
+
+import authMiddleware from "./middleware/auth.middleware.js"
+
 /* JOBS */
 
 import { seedDefaultCategories } from "./seed/categories.seed.js"
@@ -61,7 +65,9 @@ app.use("/api/auth", authRoutes)
 app.use("/api", sessionRoutes)
 app.use("/api/user", userRoutes)
 app.use("/api/categories", categoriesRoutes)
+
 app.use("/api/billing", authMiddleware, billingRoutes)
+
 app.use("/api/paddle", paddleRoutes)
 app.use("/api/transactions", transactionRoutes)
 app.use("/api/dashboard", dashboardRoutes)
