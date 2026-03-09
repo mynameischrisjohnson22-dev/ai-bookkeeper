@@ -3,42 +3,47 @@
 import { useState } from "react"
 import api from "@/lib/api"
 
+type Plan = "essential" | "plus"
+
 export default function BillingButton() {
 
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState<Plan | null>(null)
 
-  const upgrade = async (plan:"essential"|"plus") => {
+  const upgrade = async (plan: Plan) => {
 
-    try{
+    try {
 
-      setLoading(true)
+      setLoading(plan)
 
-      const res = await api.post("/api/billing/checkout",{
+      const res = await api.post("/api/billing/checkout", {
         plan,
-        billing:"monthly"
+        billing: "monthly"
       })
 
-      const checkoutUrl =
-        res.data.url ||
-        res.data.checkoutUrl ||
-        res.data.checkout_url
+      console.log("Checkout response:", res.data)
 
-      if(!checkoutUrl){
-        console.error("Checkout URL missing:",res.data)
+      const checkoutUrl: string | undefined =
+        res.data?.url ??
+        res.data?.checkoutUrl ??
+        res.data?.checkout_url ??
+        Object.values(res.data || {})[0]
+
+      if (!checkoutUrl) {
+        console.error("Checkout URL missing:", res.data)
         alert("Checkout failed. Please try again.")
         return
       }
 
       window.location.href = checkoutUrl
 
-    }catch(err){
+    } catch (err) {
 
-      console.error("Upgrade error:",err)
+      console.error("Upgrade error:", err)
       alert("Something went wrong starting checkout.")
 
-    }finally{
+    } finally {
 
-      setLoading(false)
+      setLoading(null)
 
     }
 
@@ -46,27 +51,31 @@ export default function BillingButton() {
 
   return (
 
-    <div className="mt-6 p-4 border rounded-lg">
+    <div className="mt-6 p-6 border rounded-xl bg-white shadow-sm max-w-md">
 
       <h3 className="text-lg font-semibold mb-4">
         Upgrade Plan
       </h3>
 
-      <button
-        disabled={loading}
-        onClick={()=>upgrade("essential")}
-        className="bg-red-500 text-white px-4 py-2 rounded-lg"
-      >
-        {loading ? "Loading..." : "Essential Plan"}
-      </button>
+      <div className="flex gap-3">
 
-      <button
-        disabled={loading}
-        onClick={()=>upgrade("plus")}
-        className="bg-black text-white px-4 py-2 rounded-lg ml-3"
-      >
-        {loading ? "Loading..." : "Plus Plan"}
-      </button>
+        <button
+          disabled={loading !== null}
+          onClick={() => upgrade("essential")}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+        >
+          {loading === "essential" ? "Loading..." : "Essential Plan"}
+        </button>
+
+        <button
+          disabled={loading !== null}
+          onClick={() => upgrade("plus")}
+          className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition"
+        >
+          {loading === "plus" ? "Loading..." : "Plus Plan"}
+        </button>
+
+      </div>
 
     </div>
 
