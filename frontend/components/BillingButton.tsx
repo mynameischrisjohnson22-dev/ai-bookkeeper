@@ -22,11 +22,14 @@ export default function BillingButton() {
 
       console.log("Checkout response:", res.data)
 
+      // Extract checkout URL safely
       const checkoutUrl: string | undefined =
-        res.data?.url ??
-        res.data?.checkoutUrl ??
-        res.data?.checkout_url ??
-        Object.values(res.data || {})[0]
+        res?.data?.url ??
+        res?.data?.checkoutUrl ??
+        res?.data?.checkout_url ??
+        res?.data?.checkout?.url ??
+        res?.data?.data?.checkout?.url ??
+        (Object.values(res.data || {}).find(v => typeof v === "string") as string)
 
       if (!checkoutUrl) {
         console.error("Checkout URL missing:", res.data)
@@ -34,12 +37,13 @@ export default function BillingButton() {
         return
       }
 
+      // Redirect to Paddle checkout
       window.location.href = checkoutUrl
 
-    } catch (err) {
+    } catch (error) {
 
-      console.error("Upgrade error:", err)
-      alert("Something went wrong starting checkout.")
+      console.error("Upgrade error:", error)
+      alert("Unable to start checkout. Please try again.")
 
     } finally {
 
@@ -60,17 +64,17 @@ export default function BillingButton() {
       <div className="flex gap-3">
 
         <button
-          disabled={loading !== null}
           onClick={() => upgrade("essential")}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+          disabled={loading !== null}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition disabled:opacity-60"
         >
           {loading === "essential" ? "Loading..." : "Essential Plan"}
         </button>
 
         <button
-          disabled={loading !== null}
           onClick={() => upgrade("plus")}
-          className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition"
+          disabled={loading !== null}
+          className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition disabled:opacity-60"
         >
           {loading === "plus" ? "Loading..." : "Plus Plan"}
         </button>
