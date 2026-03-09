@@ -18,8 +18,6 @@ import {
   CartesianGrid
 } from "recharts"
 
-/* ================= TYPES ================= */
-
 type Transaction = {
   id: string
   date: string
@@ -43,30 +41,19 @@ type Tab =
   | "billing"
   | "askai"
 
-/* ================= DASHBOARD ================= */
-
 export default function Dashboard() {
 
   const router = useRouter()
 
-  /* ================= AUTH STATE ================= */
-
   const [tokenReady,setTokenReady] = useState(false)
-
-  /* ================= DATA ================= */
-
   const [transactions,setTransactions] = useState<Transaction[]>([])
   const [categories,setCategories] = useState<Category[]>([])
-
   const [values,setValues] = useState<Record<string,string>>({})
-
-  /* ================= UI ================= */
-
   const [activeTab,setActiveTab] = useState<Tab>("dashboard")
   const [search,setSearch] = useState("")
   const [settingsOpen,setSettingsOpen] = useState(false)
-
   const [selected,setSelected] = useState<string[]>([])
+
 
   const [newCategoryName,setNewCategoryName] = useState("")
   const [newCategoryType,setNewCategoryType] =
