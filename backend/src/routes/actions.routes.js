@@ -53,5 +53,9 @@ router.get("/", async (req, res) => {
 
   res.json(suggestions)
 })
+import { Router } from "express"
+import { authMiddleware } from "../middleware/auth.middleware.js"
+import { getActionSuggestionsController } from "../controllers/actions.controller.js"
 
 export default router
+
