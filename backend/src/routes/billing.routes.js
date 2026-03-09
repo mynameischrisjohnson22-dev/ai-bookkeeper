@@ -40,7 +40,7 @@ router.post("/checkout", async (req, res) => {
 
     const { plan, billing } = req.body
 
-    // Validate user session
+    // Ensure user exists
     if (!req.user) {
       return res.status(401).json({
         error: "Unauthorized"
@@ -59,6 +59,7 @@ router.post("/checkout", async (req, res) => {
       })
     }
 
+    // Create Paddle transaction
     const transaction = await paddle.transactions.create({
 
       items: [
@@ -79,14 +80,17 @@ router.post("/checkout", async (req, res) => {
       },
 
       checkout: {
-  success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
-  cancel_url: `${process.env.FRONTEND_URL}/dashboard`
-}
+        success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
+        cancel_url: `${process.env.FRONTEND_URL}/dashboard`
+      }
 
     })
 
+    // Debug log (helps confirm checkout url)
+    console.log("PADDLE TRANSACTION:", transaction)
+
     return res.json({
-      url: transaction.checkout.url
+      url: transaction.data.checkout.url
     })
 
   } catch (error) {
