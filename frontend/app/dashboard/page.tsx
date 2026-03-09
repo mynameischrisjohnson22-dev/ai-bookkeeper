@@ -18,44 +18,6 @@ import {
   CartesianGrid
 } from "recharts"
 
-function SettingsContent() {
-  return (
-    <div className="space-y-10">
-
-      <div className="bg-white p-8 rounded-xl border">
-        <h3 className="text-lg font-semibold mb-4">Profile</h3>
-
-        <input
-          placeholder="Business name"
-          className="w-full border rounded px-3 py-2 mb-4"
-        />
-
-        <select className="w-full border rounded px-3 py-2">
-          <option>USD</option>
-          <option>EUR</option>
-        </select>
-      </div>
-
-      <div className="bg-white p-8 rounded-xl border">
-        <h3 className="text-lg font-semibold mb-4">Security</h3>
-
-        <input
-          type="password"
-          placeholder="New password"
-          className="w-full border rounded px-3 py-2 mb-4"
-        />
-
-        <input
-          type="password"
-          placeholder="Confirm password"
-          className="w-full border rounded px-3 py-2"
-        />
-      </div>
-
-    </div>
-  )
-}
-
 /* ================= TYPES ================= */
 
 type Transaction = {
@@ -88,6 +50,33 @@ type Tab =
 export default function Dashboard() {
 
   const router = useRouter()
+
+  const [tokenReady,setTokenReady] = useState(false)
+
+  useEffect(()=>{
+
+    const params = new URLSearchParams(window.location.search)
+    const tokenFromUrl = params.get("token")
+
+    if(tokenFromUrl){
+      localStorage.setItem("token",tokenFromUrl)
+      window.history.replaceState({}, "", "/dashboard")
+    }
+
+    const token = localStorage.getItem("token")
+
+    if(!token){
+      router.push("/auth/login")
+      return
+    }
+
+    setTokenReady(true)
+
+  },[])
+
+  if(!tokenReady){
+    return null
+  }
 
   /* ================= STATE ================= */
 
@@ -702,4 +691,56 @@ function BusinessSection(props:any){
 
   )
 
+}
+function SettingsContent() {
+  return (
+
+    <div className="space-y-10">
+
+      {/* PROFILE */}
+
+      <div className="bg-white p-8 rounded-xl border">
+
+        <h3 className="text-lg font-semibold mb-4">
+          Profile
+        </h3>
+
+        <input
+          placeholder="Business name"
+          className="w-full border rounded px-3 py-2 mb-4"
+        />
+
+        <select className="w-full border rounded px-3 py-2">
+          <option>USD</option>
+          <option>EUR</option>
+        </select>
+
+      </div>
+
+
+      {/* SECURITY */}
+
+      <div className="bg-white p-8 rounded-xl border">
+
+        <h3 className="text-lg font-semibold mb-4">
+          Security
+        </h3>
+
+        <input
+          type="password"
+          placeholder="New password"
+          className="w-full border rounded px-3 py-2 mb-4"
+        />
+
+        <input
+          type="password"
+          placeholder="Confirm password"
+          className="w-full border rounded px-3 py-2"
+        />
+
+      </div>
+
+    </div>
+
+  )
 }

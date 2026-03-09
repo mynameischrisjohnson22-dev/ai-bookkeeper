@@ -3,7 +3,7 @@
 import { useState } from "react"
 import api from "@/lib/api"
 
-export default function Billing() {
+export default function Billing(){
 
   const [billing,setBilling] = useState<"monthly"|"yearly"|"lifetime">("monthly")
   const [loading,setLoading] = useState(false)
@@ -14,6 +14,13 @@ export default function Billing() {
 
       setLoading(true)
 
+      const token = localStorage.getItem("token")
+
+      if(!token){
+        window.location.href="/auth/login"
+        return
+      }
+
       const res = await api.post("/api/billing/checkout",{
         plan,
         billing
@@ -22,27 +29,23 @@ export default function Billing() {
       window.location.href = res.data.url
 
     }catch(err){
-      console.error(err)
+
+      console.error("Checkout error:",err)
+
     }finally{
+
       setLoading(false)
+
     }
 
   }
 
-  const prices = {
-    essential:{
-      monthly:5,
-      yearly:47,
-      lifetime:79
-    },
-    plus:{
-      monthly:7.99,
-      yearly:55,
-      lifetime:100
-    }
+  const prices={
+    essential:{monthly:5,yearly:47,lifetime:79},
+    plus:{monthly:7.99,yearly:55,lifetime:100}
   }
 
-  return (
+  return(
 
 <div className="max-w-5xl space-y-10">
 
@@ -53,8 +56,6 @@ Billing
 <p className="text-slate-500">
 Upgrade your Albdy plan
 </p>
-
-{/* BILLING SWITCH */}
 
 <div className="flex gap-3 bg-white border rounded-xl p-2 w-fit">
 
@@ -76,11 +77,7 @@ billing===type
 
 </div>
 
-{/* PLANS */}
-
 <div className="grid md:grid-cols-2 gap-8">
-
-{/* ESSENTIAL */}
 
 <div className="bg-white p-10 rounded-2xl border shadow-sm">
 
@@ -90,18 +87,11 @@ Essential
 
 <div className="text-3xl font-bold mb-4">
 ${prices.essential[billing]}
-{billing!=="lifetime" && (
+{billing!=="lifetime" &&
 <span className="text-sm text-slate-500">
 /{billing==="monthly"?"month":"year"}
-</span>
-)}
+</span>}
 </div>
-
-<ul className="space-y-2 text-sm mb-8">
-<li>✔ Unlimited transactions</li>
-<li>✔ AI bookkeeping assistant</li>
-<li>✔ Financial dashboard</li>
-</ul>
 
 <button
 onClick={()=>checkout("essential")}
@@ -113,9 +103,6 @@ Choose Essential
 
 </div>
 
-
-{/* PLUS */}
-
 <div className="bg-white p-10 rounded-2xl border shadow-sm">
 
 <h3 className="text-lg font-semibold mb-2">
@@ -124,18 +111,11 @@ Plus+
 
 <div className="text-3xl font-bold mb-4">
 ${prices.plus[billing]}
-{billing!=="lifetime" && (
+{billing!=="lifetime" &&
 <span className="text-sm text-slate-500">
 /{billing==="monthly"?"month":"year"}
-</span>
-)}
+</span>}
 </div>
-
-<ul className="space-y-2 text-sm mb-8">
-<li>✔ Everything in Essential</li>
-<li>✔ Advanced analytics</li>
-<li>✔ Priority AI processing</li>
-</ul>
 
 <button
 onClick={()=>checkout("plus")}
