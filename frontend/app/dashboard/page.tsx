@@ -40,8 +40,6 @@ type Tab =
 | "business"
 | "billing"
 | "askai"
-| "settings"
-
 /* ================= DASHBOARD ================= */
 
 export default function Dashboard(){
@@ -269,8 +267,8 @@ Albdy
 ["transactions","Transactions"],
 ["business","Business"],
 ["billing","Billing"],
-["askai","Ask AI"],
-["settings","Settings"]
+["askai","Ask AI"]
+
 ].map(([id,label])=>(
 
 <button
@@ -473,29 +471,6 @@ Save Configuration
 
 {/* SETTINGS */}
 
-{activeTab==="settings" && (
-
-<div className="bg-white p-10 rounded-3xl shadow-lg max-w-md">
-
-<h2 className="text-lg font-semibold mb-6">
-Settings
-</h2>
-
-<button
-onClick={()=>{
-localStorage.removeItem("token")
-router.push("/auth/login")
-}}
-className="bg-red-500 text-white px-4 py-2 rounded-lg"
->
-
-Logout
-
-</button>
-
-</div>
-
-)}
 
 </main>
 {settingsOpen && (
@@ -521,10 +496,10 @@ Logout
 </button>
 
 <button
-onClick={()=>setSettingsOpen(false)}
-className="w-full border py-2 rounded-lg"
+onClick={()=>setSettingsOpen(true)}
+className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
 >
-Close
+Settings
 </button>
 
 </div>
