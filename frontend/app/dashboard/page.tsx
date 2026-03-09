@@ -268,21 +268,30 @@ Albdy
 ["business","Business"],
 ["billing","Billing"],
 ["askai","Ask AI"]
-
-].map(([id,label])=>(
+].map(([id,label]) => (
 
 <button
 key={id}
-onClick={()=>setActiveTab(id as Tab)}
+onClick={() => setActiveTab(id as Tab)}
 className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
-activeTab===id
+activeTab === id
 ? "bg-red-500 text-white"
 : "text-slate-600 hover:bg-slate-100"
 }`}
 >
 {label}
 </button>
+
 ))}
+
+{/* SETTINGS BUTTON */}
+
+<button
+onClick={() => setSettingsOpen(true)}
+className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
+>
+Settings
+</button>
 
 </aside>
 
@@ -294,39 +303,83 @@ activeTab===id
 
 {activeTab === "dashboard" && (
 
-<div className="w-full max-w-4xl bg-white p-10 rounded-3xl shadow-lg">
+<div className="space-y-8 max-w-5xl">
 
-<h2 className="text-lg font-semibold text-slate-700 mb-2">
+{/* BALANCE CARD */}
+
+<div className="bg-white p-8 rounded-3xl shadow-lg">
+
+<p className="text-sm text-slate-500">
+Current Balance
+</p>
+
+<h2 className="text-4xl font-bold text-green-600 mt-1">
+${balance.toFixed(2)}
+</h2>
+
+<p className="text-slate-400 text-sm mt-1">
+Income minus expenses
+</p>
+
+</div>
+
+
+{/* INCOME / EXPENSE CARDS */}
+
+<div className="grid grid-cols-2 gap-6">
+
+<div className="bg-white p-6 rounded-2xl shadow">
+
+<p className="text-slate-500 text-sm">
+Income
+</p>
+
+<p className="text-2xl font-bold text-green-600">
+${income.toFixed(2)}
+</p>
+
+</div>
+
+
+<div className="bg-white p-6 rounded-2xl shadow">
+
+<p className="text-slate-500 text-sm">
+Expenses
+</p>
+
+<p className="text-2xl font-bold text-red-500">
+${Math.abs(expenses).toFixed(2)}
+</p>
+
+</div>
+
+</div>
+
+
+{/* CHART */}
+
+<div className="bg-white p-10 rounded-3xl shadow-lg">
+
+<h2 className="text-lg font-semibold mb-6">
 Financial Overview
 </h2>
 
-<div className="text-4xl font-bold text-slate-900 mb-8">
-${balance.toFixed(2)}
-</div>
-
-<div className="w-full h-[320px]">
-
-<ResponsiveContainer width="100%" height="100%">
+<ResponsiveContainer width="100%" height={320}>
 
 <LineChart data={chartData}>
 
-<CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+<CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3"/>
 
-<XAxis
-dataKey="date"
-tick={{ fontSize: 12 }}
-stroke="#94a3b8"
-/>
+<XAxis dataKey="date"/>
 
-<YAxis stroke="#94a3b8" />
+<YAxis/>
 
-<Tooltip />
+<Tooltip/>
 
-<Area
+<Line
 type="monotone"
 dataKey="balance"
 stroke="#dc2626"
-fill="#fecaca"
 strokeWidth={3}
 />
 
@@ -344,94 +397,122 @@ strokeWidth={3}
 
 {activeTab === "transactions" && (
 
-<div className="w-full max-w-4xl bg-white p-10 rounded-3xl shadow-lg">
-
-<div className="flex gap-4 mb-8">
+<div className="max-w-4xl space-y-6">
 
 <input
 placeholder="Search transactions..."
 value={search}
 onChange={(e)=>setSearch(e.target.value)}
-className="flex-1 border border-slate-200 px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-red-400"
+className="w-full border border-slate-200 px-4 py-3 rounded-xl"
 />
 
-<button
-onClick={deleteTransactions}
-className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
->
-Delete Selected
-</button>
 
-</div>
+<div className="bg-white rounded-3xl shadow divide-y">
 
-<div className="space-y-2">
+{filteredTransactions.map(tx => {
 
-{filteredTransactions.map(tx => (
+const positive = tx.amount > 0
+
+return (
 
 <div
 key={tx.id}
-className="flex items-center justify-between border-b py-4"
+className="flex items-center justify-between px-6 py-5"
 >
 
-<div className="flex items-center gap-3">
+<div className="flex items-start gap-3">
 
 <input
 type="checkbox"
 checked={selected.includes(tx.id)}
 onChange={()=>{
+
 if(selected.includes(tx.id)){
 setSelected(prev => prev.filter(id => id !== tx.id))
 }else{
 setSelected(prev => [...prev, tx.id])
 }
+
 }}
 />
 
-<span className="text-slate-700">
+<div>
+
+<p className="font-medium text-slate-800">
 {tx.description}
-</span>
+</p>
+
+<p className="text-xs text-slate-400">
+{new Date(tx.date).toLocaleDateString()}
+</p>
 
 </div>
 
-<div className="font-medium text-slate-800">
-${Math.abs(tx.amount).toFixed(2)}
 </div>
+
+
+<div className={`font-semibold ${
+positive ? "text-green-600" : "text-red-500"
+}`}>
+
+{positive ? "+" : "-"}${Math.abs(tx.amount).toFixed(2)}
 
 </div>
 
-))}
+</div>
+
+)
+
+})}
 
 </div>
 
 </div>
 
 )}
+
 {/* BUSINESS */}
 
 {activeTab === "business" && (
 
-<div className="w-full max-w-4xl bg-white p-10 rounded-3xl shadow-lg">
+<div className="space-y-10 max-w-5xl">
 
-<h2 className="text-lg font-semibold mb-8 text-slate-700">
-Business Configuration
+{/* REVENUE */}
+
+<div className="bg-white p-8 rounded-3xl shadow">
+
+<h2 className="text-lg font-semibold mb-6">
+Revenue
 </h2>
 
-<div className="space-y-3">
+<div className="grid grid-cols-2 gap-6">
 
-{categories.map(cat => (
+{categories.filter(c=>c.isRevenue).map(cat => (
 
 <div
 key={cat.id}
-className="flex items-center justify-between border-b py-3"
+className="border rounded-xl p-4"
 >
 
-<span className="text-slate-700">
+<div className="flex justify-between mb-2">
+
+<p className="text-sm font-medium">
 {cat.name}
+</p>
+
+<span className="text-slate-400">
+•••
 </span>
+
+</div>
+
+<input
+className="w-full border rounded-md px-3 py-2 mb-2"
+/>
 
 <button
 onClick={()=>deleteCategory(cat.id)}
-className="text-red-500 hover:text-red-600 text-sm"
+className="text-red-500 text-sm"
 >
 Delete
 </button>
@@ -442,38 +523,88 @@ Delete
 
 </div>
 
-<div className="flex gap-3 mt-8">
+</div>
+
+
+{/* EXPENSES */}
+
+<div className="bg-white p-8 rounded-3xl shadow">
+
+<h2 className="text-lg font-semibold mb-6">
+Expenses
+</h2>
+
+<div className="grid grid-cols-2 gap-6">
+
+{categories.filter(c=>!c.isRevenue).map(cat => (
+
+<div
+key={cat.id}
+className="border rounded-xl p-4"
+>
+
+<div className="flex justify-between mb-2">
+
+<p className="text-sm font-medium">
+{cat.name}
+</p>
+
+<span className="text-slate-400">
+•••
+</span>
+
+</div>
+
+<input
+className="w-full border rounded-md px-3 py-2 mb-2"
+/>
+
+<button
+onClick={()=>deleteCategory(cat.id)}
+className="text-red-500 text-sm"
+>
+Delete
+</button>
+
+</div>
+
+))}
+
+</div>
+
+</div>
+
+
+{/* CREATE CATEGORY */}
+
+<div className="bg-white p-6 rounded-2xl shadow flex gap-3">
 
 <input
 placeholder="Category name"
 value={newCategoryName}
 onChange={(e)=>setNewCategoryName(e.target.value)}
-className="flex-1 border border-slate-200 px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-red-400"
+className="border px-3 py-2 rounded-lg flex-1"
 />
 
 <select
 value={newCategoryType}
 onChange={(e)=>setNewCategoryType(e.target.value as any)}
-className="border border-slate-200 px-3 py-2 rounded-lg"
+className="border px-3 py-2 rounded-lg"
 >
 <option value="Expense">Expense</option>
 <option value="Revenue">Revenue</option>
 </select>
 
-</div>
-
-<div className="flex gap-3 mt-6">
-
 <button
 onClick={createCategory}
-className="bg-slate-900 hover:bg-black text-white px-4 py-2 rounded-lg"
+className="bg-red-500 text-white px-4 py-2 rounded-lg"
 >
 Create
 </button>
 
 <button
 onClick={saveBusiness}
-className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
+className="bg-red-500 text-white px-4 py-2 rounded-lg"
 >
 Save Configuration
 </button>
@@ -511,7 +642,7 @@ Logout
 </button>
 
 <button
-onClick={()=>setSettingsOpen(true)}
+onClick={()=>setSettingsOpen(false)}
 className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
 >
 Settings
