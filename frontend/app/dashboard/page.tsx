@@ -121,19 +121,27 @@ export default function Dashboard() {
 
   }
 
-  useEffect(()=>{
+useEffect(()=>{
 
-    const token = localStorage.getItem("token")
+  if(typeof window === "undefined") return
 
-    if(!token){
-      router.push("/auth/login")
-      return
-    }
+  const token = localStorage.getItem("token")
 
-    loadData()
+  const urlParams = new URLSearchParams(window.location.search)
+  const paymentSuccess = urlParams.get("payment")
 
-  },[])
+  if(!token && paymentSuccess !== "success"){
+    router.push("/auth/login")
+    return
+  }
 
+  loadData()
+
+  if(paymentSuccess === "success"){
+    window.history.replaceState({}, "", "/dashboard")
+  }
+
+},[])
   /* ================= CATEGORY ================= */
 
   const createCategory = async ()=>{
