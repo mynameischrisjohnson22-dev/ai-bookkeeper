@@ -26,8 +26,6 @@ date: string
 description: string
 amount: number
 categoryId?: string
-isRecurring?: boolean
-recurringFrequency?: string
 }
 
 type Category = {
@@ -42,14 +40,13 @@ type Tab =
 | "business"
 | "billing"
 | "askai"
+| "settings"
 
 /* ================= DASHBOARD ================= */
 
-export default function Dashboard() {
+export default function Dashboard(){
 
 const router = useRouter()
-
-/* ================= STATE ================= */
 
 const [tokenReady,setTokenReady] = useState(false)
 
@@ -59,8 +56,6 @@ const [values,setValues] = useState<Record<string,string>>({})
 
 const [activeTab,setActiveTab] = useState<Tab>("dashboard")
 const [search,setSearch] = useState("")
-const [settingsOpen,setSettingsOpen] = useState(false)
-
 const [selected,setSelected] = useState<string[]>([])
 
 const [newCategoryName,setNewCategoryName] = useState("")
@@ -70,8 +65,6 @@ useState<"Revenue"|"Expense">("Expense")
 /* ================= AUTH ================= */
 
 useEffect(()=>{
-
-if(typeof window==="undefined") return
 
 const params = new URLSearchParams(window.location.search)
 const tokenFromUrl = params.get("token")
@@ -96,8 +89,6 @@ setTokenReady(true)
 
 const loadData = async ()=>{
 
-try{
-
 const [txRes,catRes] = await Promise.all([
 api.get("/api/transactions"),
 api.get("/api/categories")
@@ -105,23 +96,17 @@ api.get("/api/categories")
 
 setTransactions(txRes.data || [])
 
-const normalized = (catRes.data || []).map((c:any)=>({
+setCategories(
+(catRes.data || []).map((c:any)=>({
 ...c,
 isRevenue:Boolean(c.isRevenue)
 }))
-
-setCategories(normalized)
-
-}catch(err){
-console.error("Failed to load data",err)
-}
+)
 
 }
 
 useEffect(()=>{
-if(tokenReady){
-loadData()
-}
+if(tokenReady) loadData()
 },[tokenReady])
 
 /* ================= FILTER ================= */
@@ -161,19 +146,19 @@ grouped[date]+=t.amount
 
 })
 
-const sortedDates = Object.keys(grouped).sort(
+const sorted = Object.keys(grouped).sort(
 (a,b)=>new Date(a).getTime()-new Date(b).getTime()
 )
 
-let runningBalance = 0
+let running = 0
 
-return sortedDates.map(date=>{
+return sorted.map(date=>{
 
-runningBalance += grouped[date]
+running += grouped[date]
 
 return{
 date,
-balance:runningBalance
+balance:running
 }
 
 })
@@ -192,18 +177,18 @@ isRevenue:newCategoryType==="Revenue"
 })
 
 setNewCategoryName("")
-await loadData()
+loadData()
 
 }
 
 const deleteCategory = async(id:string)=>{
 
 await api.delete(`/api/categories/${id}`)
-await loadData()
+loadData()
 
 }
 
-/* ================= BUSINESS SAVE ================= */
+/* ================= SAVE BUSINESS ================= */
 
 const saveBusiness = async ()=>{
 
@@ -212,7 +197,6 @@ const today = new Date().toISOString()
 const entries = categories.map(cat=>{
 
 const raw = values[cat.id]
-
 if(!raw) return null
 
 const value = Number(raw)
@@ -232,7 +216,7 @@ entries.map(entry=>api.post("/api/transactions",entry))
 )
 
 setValues({})
-await loadData()
+loadData()
 setActiveTab("transactions")
 
 }
@@ -248,53 +232,56 @@ selected.map(id=>api.delete(`/api/transactions/${id}`))
 )
 
 setSelected([])
-await loadData()
+loadData()
 
 }
 
 /* ================= LOADING ================= */
 
 if(!tokenReady){
-return (
 
+return(
 <div className="h-screen flex items-center justify-center">
 Loading...
 </div>
 )
+
 }
 
 /* ================= UI ================= */
 
-return (
+return(
 
 <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
 
 {/* SIDEBAR */}
 
-<aside className="w-64 bg-white/80 backdrop-blur border-r border-slate-100 p-8">
+<aside className="w-64 bg-white border-r p-8">
 
-<h2 className="text-red-500 font-bold text-xl mb-12">
+<h2 className="text-red-500 font-bold text-xl mb-10">
 Albdy
 </h2>
 
-{["dashboard","transactions","business","billing","askai"].map(tab=>(
+{[
+["dashboard","Overview"],
+["transactions","Transactions"],
+["business","Business"],
+["billing","Billing"],
+["askai","Ask AI"],
+["settings","Settings"]
+].map(([id,label])=>(
 
 <button
-key={tab}
-onClick={()=>setActiveTab(tab as Tab)}
+key={id}
+onClick={()=>setActiveTab(id as Tab)}
 className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
-activeTab===tab
+activeTab===id
 ? "bg-red-500 text-white"
-: "text-slate-600 hover:bg-indigo-50"
+: "text-slate-600 hover:bg-slate-100"
 }`}
-
 >
 
-{tab==="dashboard" && "Overview"}
-{tab==="transactions" && "Transactions"}
-{tab==="business" && "Business"}
-{tab==="billing" && "Billing"}
-{tab==="askai" && "Ask AI"}
+{label}
 
 </button>
 
@@ -304,13 +291,15 @@ activeTab===tab
 
 {/* MAIN */}
 
-<main className="flex-1 px-16 py-14 space-y-14">
+<main className="flex-1 p-14 space-y-12">
+
+{/* OVERVIEW */}
 
 {activeTab==="dashboard" && (
 
 <div className="bg-white p-10 rounded-3xl shadow-lg">
 
-<h2 className="text-lg font-semibold mb-6">
+<h2 className="text-lg font-semibold mb-4">
 Financial Overview
 </h2>
 
@@ -349,24 +338,31 @@ fill="#fecaca"
 
 )}
 
+{/* TRANSACTIONS */}
+
 {activeTab==="transactions" && (
 
-<div>
+<div className="bg-white p-10 rounded-3xl shadow-lg">
+
+<div className="flex gap-4 mb-6">
 
 <input
 placeholder="Search..."
 value={search}
 onChange={(e)=>setSearch(e.target.value)}
-className="border px-4 py-2 mb-4"
+className="border px-4 py-2 rounded-lg flex-1"
 />
 
 <button
 onClick={deleteTransactions}
-className="bg-red-500 text-white px-4 py-2 mb-4"
-
+className="bg-red-500 text-white px-4 py-2 rounded-lg"
 >
 
-Delete Selected </button>
+Delete Selected
+
+</button>
+
+</div>
 
 {filteredTransactions.map(tx=>(
 
@@ -378,11 +374,13 @@ Delete Selected </button>
 type="checkbox"
 checked={selected.includes(tx.id)}
 onChange={()=>{
+
 if(selected.includes(tx.id)){
 setSelected(prev=>prev.filter(id=>id!==tx.id))
 }else{
 setSelected(prev=>[...prev,tx.id])
 }
+
 }}
 />
 
@@ -390,9 +388,7 @@ setSelected(prev=>[...prev,tx.id])
 
 </div>
 
-<div>
-${Math.abs(tx.amount).toFixed(2)}
-</div>
+<div>${Math.abs(tx.amount).toFixed(2)}</div>
 
 </div>
 
@@ -402,104 +398,107 @@ ${Math.abs(tx.amount).toFixed(2)}
 
 )}
 
+{/* BUSINESS */}
+
 {activeTab==="business" && (
 
-<BusinessSection
-categories={categories}
-values={values}
-setValues={setValues}
-deleteCategory={deleteCategory}
-newCategoryName={newCategoryName}
-setNewCategoryName={setNewCategoryName}
-newCategoryType={newCategoryType}
-setNewCategoryType={setNewCategoryType}
-createCategory={createCategory}
-saveBusiness={saveBusiness}
+<div className="bg-white p-10 rounded-3xl shadow-lg max-w-xl">
+
+<h2 className="text-lg font-semibold mb-6">
+Business Configuration
+</h2>
+
+{categories.map(cat=>(
+
+<div key={cat.id} className="flex justify-between mb-4">
+
+<span>{cat.name}</span>
+
+<button
+onClick={()=>deleteCategory(cat.id)}
+className="text-red-500"
+>
+Delete
+</button>
+
+</div>
+
+))}
+
+<div className="flex gap-3 mt-6">
+
+<input
+placeholder="Category name"
+value={newCategoryName}
+onChange={(e)=>setNewCategoryName(e.target.value)}
+className="border px-3 py-2 rounded-lg flex-1"
 />
+
+<select
+value={newCategoryType}
+onChange={(e)=>setNewCategoryType(e.target.value as any)}
+className="border px-3 py-2 rounded-lg"
+>
+
+<option value="Expense">Expense</option>
+<option value="Revenue">Revenue</option>
+
+</select>
+
+</div>
+
+<div className="flex gap-3 mt-4">
+
+<button
+onClick={createCategory}
+className="bg-slate-900 text-white px-4 py-2 rounded-lg"
+>
+Create
+</button>
+
+<button
+onClick={saveBusiness}
+className="bg-red-500 text-white px-4 py-2 rounded-lg"
+>
+Save Configuration
+</button>
+
+</div>
+
+</div>
 
 )}
 
 {activeTab==="billing" && <Billing/>}
 {activeTab==="askai" && <ChatBox/>}
 
-</main>
+{/* SETTINGS */}
 
-</div>
+{activeTab==="settings" && (
 
-)
+<div className="bg-white p-10 rounded-3xl shadow-lg max-w-md">
 
-}
-
-/* ================= BUSINESS SECTION ================= */
-
-function BusinessSection(props:any){
-
-const{
-categories,
-values,
-setValues,
-deleteCategory,
-newCategoryName,
-setNewCategoryName,
-newCategoryType,
-setNewCategoryType,
-createCategory,
-saveBusiness
-} = props
-
-return(
-
-<div>
-
-<h2 className="text-xl font-semibold mb-6">
-Business Configuration
+<h2 className="text-lg font-semibold mb-6">
+Settings
 </h2>
 
-{categories.map((cat:any)=>(
+<button
+onClick={()=>{
+localStorage.removeItem("token")
+router.push("/auth/login")
+}}
+className="bg-red-500 text-white px-4 py-2 rounded-lg"
+>
 
-<div key={cat.id} className="mb-4">
+Logout
 
-<label>{cat.name}</label>
-
-<input
-type="number"
-value={values[cat.id] ?? ""}
-onChange={(e)=>setValues((prev:any)=>({
-...prev,
-[cat.id]:e.target.value
-}))}
-/>
-
-<button onClick={()=>deleteCategory(cat.id)}>
-Delete </button>
+</button>
 
 </div>
 
-))}
+)}
 
-<input
-placeholder="Category name"
-value={newCategoryName}
-onChange={(e)=>setNewCategoryName(e.target.value)}
-/>
-
-<select
-value={newCategoryType}
-onChange={(e)=>setNewCategoryType(e.target.value as any)}
-
->
-
-<option value="Expense">Expense</option>
-<option value="Revenue">Revenue</option>
-</select>
-
-<button onClick={createCategory}>
-Create
-</button>
-
-<button onClick={saveBusiness}>
-Save Configuration
-</button>
+</main>
 
 </div>
 
