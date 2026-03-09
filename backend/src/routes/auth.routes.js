@@ -4,8 +4,7 @@ import jwt from "jsonwebtoken"
 
 import {
   signup,
-  login,
-  logout
+  login
 } from "../controllers/auth.controller.js"
 
 const router = express.Router()
