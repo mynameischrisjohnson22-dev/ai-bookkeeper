@@ -12,6 +12,7 @@ PRICE IDS
 */
 
 const PRICES = {
+
   essential: {
     monthly: "pri_01kk5sntb3tgm3w3jn14ntj3rt",
     yearly: "pri_01kk5syvsq7tt2kf9y2m6903rr",
@@ -23,12 +24,13 @@ const PRICES = {
     yearly: "pri_01kk7m8zkbnhbnd0p5pa0smqf4",
     lifetime: "pri_01kk7mbczfnqty1m6fxnd7d5kq"
   }
+
 }
 
 /*
 ========================================
-CREATE CHECKOUT
 POST /api/billing/checkout
+CREATE PADDLE CHECKOUT
 ========================================
 */
 
@@ -37,14 +39,23 @@ router.post("/checkout", async (req, res) => {
   try {
 
     const { plan, billing } = req.body
-    const userId = req.user?.id
-    const email = req.user?.email
 
+    // Validate user session
+    if (!req.user) {
+      return res.status(401).json({
+        error: "Unauthorized"
+      })
+    }
+
+    const userId = req.user.id
+    const email = req.user.email
+
+    // Validate plan
     const priceId = PRICES?.[plan]?.[billing]
 
     if (!priceId) {
       return res.status(400).json({
-        error: "Invalid plan selection"
+        error: "Invalid plan or billing option"
       })
     }
 
@@ -58,7 +69,7 @@ router.post("/checkout", async (req, res) => {
       ],
 
       customer: {
-        email: email
+        email
       },
 
       custom_data: {
@@ -68,8 +79,11 @@ router.post("/checkout", async (req, res) => {
       },
 
       checkout: {
+
         success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
-        cancel_url: `${process.env.FRONTEND_URL}/dashboard/billing`
+
+        cancel_url: `${process.env.FRONTEND_URL}/dashboard`
+
       }
 
     })
