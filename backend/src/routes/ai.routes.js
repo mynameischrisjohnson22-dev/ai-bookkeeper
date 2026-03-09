@@ -1,6 +1,6 @@
 import { Router } from "express"
 import OpenAI from "openai"
-import { authMiddleware } from "../middleware/auth.middleware.js"
+import authMiddleware from "../middleware/auth.middleware.js"
 import prisma from "../utils/prisma.js"
 
 const router = Router()
