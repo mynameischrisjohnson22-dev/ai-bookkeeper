@@ -58,6 +58,8 @@ const [activeTab,setActiveTab] = useState<Tab>("dashboard")
 const [search,setSearch] = useState("")
 const [selected,setSelected] = useState<string[]>([])
 
+const [settingsOpen, setSettingsOpen] = useState(false)
+
 const [newCategoryName,setNewCategoryName] = useState("")
 const [newCategoryType,setNewCategoryType] =
 useState<"Revenue"|"Expense">("Expense")
@@ -280,11 +282,8 @@ activeTab===id
 : "text-slate-600 hover:bg-slate-100"
 }`}
 >
-
 {label}
-
 </button>
-
 ))}
 
 </aside>
@@ -402,7 +401,7 @@ setSelected(prev=>[...prev,tx.id])
 
 {activeTab==="business" && (
 
-<div className="bg-white p-10 rounded-3xl shadow-lg max-w-xl">
+<div className="bg-white p-10 rounded-3xl shadow-lg max-w-3xl">
 
 <h2 className="text-lg font-semibold mb-6">
 Business Configuration
@@ -499,6 +498,42 @@ Logout
 )}
 
 </main>
+{settingsOpen && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+<div className="bg-white w-[420px] rounded-2xl p-8 shadow-xl">
+
+<h2 className="text-lg font-semibold mb-6">
+Settings
+</h2>
+
+<div className="space-y-4">
+
+<button
+onClick={()=>{
+localStorage.removeItem("token")
+router.push("/auth/login")
+}}
+className="w-full bg-red-500 text-white py-2 rounded-lg"
+>
+Logout
+</button>
+
+<button
+onClick={()=>setSettingsOpen(false)}
+className="w-full border py-2 rounded-lg"
+>
+Close
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
 
 </div>
 
