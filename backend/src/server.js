@@ -82,39 +82,25 @@ async function startServer() {
 
     console.log("🔄 Starting Albdy backend...")
 
-    /* Connect database */
-
     await prisma.$connect()
     console.log("✅ Database connected")
 
-    /* Seed categories */
-
     try {
-
       await seedDefaultCategories()
       console.log("✅ Default categories seeded")
-
     } catch (err) {
-
       console.warn("⚠️ Category seed skipped:", err.message)
-
     }
-
-    /* Start server */
 
     server.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`)
     })
-
-    /* Start recurring system */
 
     if (ENABLE_CRON) {
 
       console.log("⏰ Background jobs enabled")
 
       startRecurringRunner()
-
-      /* Run once on startup */
 
       await runRecurringEngine()
 

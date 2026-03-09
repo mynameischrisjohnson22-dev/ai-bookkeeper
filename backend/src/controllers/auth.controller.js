@@ -8,46 +8,40 @@ const JWT_SECRET = process.env.JWT_SECRET
 const TOKEN_EXPIRES_IN = "7d"
 
 if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined in environment variables")
+  throw new Error("JWT_SECRET is missing")
 }
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/* =========================
-   SIGNUP
-========================= */
+//////////////////////////////////////////////////////
+// SIGNUP
+//////////////////////////////////////////////////////
+
 export const signup = async (req, res) => {
   try {
+
     let { email, password } = req.body
 
     if (!email || !password) {
-      return res.status(400).json({
-        error: "Email and password are required"
-      })
+      return res.status(400).json({ error: "Email and password required" })
     }
 
     email = email.toLowerCase().trim()
 
     if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        error: "Invalid email format"
-      })
+      return res.status(400).json({ error: "Invalid email format" })
     }
 
     if (password.length < 6) {
-      return res.status(400).json({
-        error: "Password must be at least 6 characters"
-      })
+      return res.status(400).json({ error: "Password must be at least 6 characters" })
     }
 
-    const existingUser = await prisma.user.findUnique({
+    const existing = await prisma.user.findUnique({
       where: { email }
     })
 
-    if (existingUser) {
-      return res.status(409).json({
-        error: "User already exists"
-      })
+    if (existing) {
+      return res.status(409).json({ error: "User already exists" })
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
@@ -67,59 +61,43 @@ export const signup = async (req, res) => {
 
     await sendVerificationEmail(email, verificationToken)
 
-    return res.status(201).json({
-      message: "Signup successful. Please verify your email."
+    res.status(201).json({
+      message: "Signup successful. Verify your email."
     })
 
-  } catch (error) {
-    console.error("Signup error:", error)
-    return res.status(500).json({
-      error: "Signup failed"
-    })
+  } catch (err) {
+    console.error("Signup error:", err)
+    res.status(500).json({ error: "Signup failed" })
   }
 }
 
+//////////////////////////////////////////////////////
+// LOGIN
+//////////////////////////////////////////////////////
 
-/* =========================
-   LOGIN
-========================= */
 export const login = async (req, res) => {
   try {
+
     let { email, password } = req.body
 
     if (!email || !password) {
-      return res.status(400).json({
-        error: "Email and password are required"
-      })
+      return res.status(400).json({ error: "Email and password required" })
     }
 
     email = email.toLowerCase().trim()
-
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        error: "Invalid email format"
-      })
-    }
 
     const user = await prisma.user.findUnique({
       where: { email }
     })
 
     if (!user || !user.password) {
-      return res.status(401).json({
-        error: "Invalid email or password"
-      })
+      return res.status(401).json({ error: "Invalid email or password" })
     }
 
-    const passwordMatch = await bcrypt.compare(
-      password,
-      user.password
-    )
+    const valid = await bcrypt.compare(password, user.password)
 
-    if (!passwordMatch) {
-      return res.status(401).json({
-        error: "Invalid email or password"
-      })
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid email or password" })
     }
 
     if (!user.emailVerified) {
@@ -129,15 +107,12 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email
-      },
+      { id: user.id, email: user.email },
       JWT_SECRET,
       { expiresIn: TOKEN_EXPIRES_IN }
     )
 
-    return res.status(200).json({
+    res.json({
       token,
       user: {
         id: user.id,
@@ -147,25 +122,20 @@ export const login = async (req, res) => {
       }
     })
 
-  } catch (error) {
-    console.error("Login error:", error)
-    return res.status(500).json({
-      error: "Login failed"
-    })
+  } catch (err) {
+    console.error("Login error:", err)
+    res.status(500).json({ error: "Login failed" })
   }
 }
-/* =========================
-   VERIFY EMAIL
-========================= */
+
+//////////////////////////////////////////////////////
+// VERIFY EMAIL
+//////////////////////////////////////////////////////
+
 export const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.query
 
-    if (!token) {
-      return res.status(400).json({
-        error: "Invalid verification token"
-      })
-    }
+    const { token } = req.query
 
     const user = await prisma.user.findUnique({
       where: { verificationToken: token }
@@ -173,7 +143,7 @@ export const verifyEmail = async (req, res) => {
 
     if (!user) {
       return res.status(400).json({
-        error: "Invalid or expired token"
+        error: "Invalid or expired verification token"
       })
     }
 
@@ -185,160 +155,10 @@ export const verifyEmail = async (req, res) => {
       }
     })
 
-    return res.status(200).json({
-      message: "Email verified successfully"
-    })
+    res.json({ message: "Email verified successfully" })
 
   } catch (err) {
-    console.error("Verify email error:", err)
-    return res.status(500).json({
-      error: "Verification failed"
-    })
-  }
-}
-/* =========================
-   RESEND VERIFICATION
-========================= */
-export const resendVerification = async (req, res) => {
-  try {
-    const { email } = req.body
-
-    if (!email) {
-      return res.status(400).json({
-        error: "Email is required"
-      })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() }
-    })
-
-    if (!user) {
-      return res.status(400).json({
-        error: "User not found"
-      })
-    }
-
-    if (user.emailVerified) {
-      return res.status(400).json({
-        error: "Email already verified"
-      })
-    }
-
-    const newToken = crypto.randomBytes(32).toString("hex")
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { verificationToken: newToken }
-    })
-
-    await sendVerificationEmail(user.email, newToken)
-
-    return res.status(200).json({
-      message: "Verification email resent"
-    })
-
-  } catch (err) {
-    console.error("Resend verification error:", err)
-    return res.status(500).json({
-      error: "Failed to resend verification"
-    })
-  }
-}
-/* =========================
-   FORGOT PASSWORD
-========================= */
-export const forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body
-
-    if (!email) {
-      return res.status(400).json({
-        error: "Email is required"
-      })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() }
-    })
-
-    if (!user) {
-      return res.status(200).json({
-        message: "If that email exists, a reset link was sent"
-      })
-    }
-
-    const resetToken = crypto.randomBytes(32).toString("hex")
-    const resetExpires = new Date(Date.now() + 1000 * 60 * 60) // 1 hour
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        resetPasswordToken: resetToken,
-        resetPasswordExpires: resetExpires
-      }
-    })
-
-    await sendResetPasswordEmail(user.email, resetToken)
-
-    return res.status(200).json({
-      message: "If that email exists, a reset link was sent"
-    })
-
-  } catch (err) {
-    console.error("Forgot password error:", err)
-    return res.status(500).json({
-      error: "Failed to process request"
-    })
-  }
-}
-/* =========================
-   RESET PASSWORD
-========================= */
-export const resetPassword = async (req, res) => {
-  try {
-    const { token, password } = req.body
-
-    if (!token || !password) {
-      return res.status(400).json({
-        error: "Token and new password required"
-      })
-    }
-
-    const user = await prisma.user.findFirst({
-      where: {
-        resetPasswordToken: token,
-        resetPasswordExpires: {
-          gt: new Date()
-        }
-      }
-    })
-
-    if (!user) {
-      return res.status(400).json({
-        error: "Invalid or expired token"
-      })
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 12)
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        resetPasswordToken: null,
-        resetPasswordExpires: null
-      }
-    })
-
-    return res.status(200).json({
-      message: "Password reset successful"
-    })
-
-  } catch (err) {
-    console.error("Reset password error:", err)
-    return res.status(500).json({
-      error: "Password reset failed"
-    })
+    console.error("Verify error:", err)
+    res.status(500).json({ error: "Verification failed" })
   }
 }
