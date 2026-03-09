@@ -615,6 +615,15 @@ Save Configuration
 
 )}
 
+{/* BILLING */}
+{activeTab === "billing" && (
+  <div className="max-w-4xl">
+    <Billing />
+  </div>
+)}
+
+
+
 {/* SETTINGS */}
 
 
