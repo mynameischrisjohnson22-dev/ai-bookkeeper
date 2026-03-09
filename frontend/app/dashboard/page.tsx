@@ -40,6 +40,7 @@ type Tab =
 | "business"
 | "billing"
 | "askai"
+| "settings"
 /* ================= DASHBOARD ================= */
 
 export default function Dashboard(){
@@ -287,7 +288,7 @@ activeTab === id
 {/* SETTINGS BUTTON */}
 
 <button
-onClick={() => setSettingsOpen(true)}
+onClick={() => setActiveTab("settings")}
 className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
 >
 Settings
@@ -298,6 +299,7 @@ Settings
 {/* MAIN */}
 
 <main className="flex-1 p-14 space-y-12">
+
 
 {/* OVERVIEW */}
 
@@ -637,7 +639,7 @@ Settings
 
 {/* PROFILE */}
 
-<div className="bg-white rounded-2xl shadow p-8 space-y-4">
+<section className="bg-white rounded-2xl shadow p-8 space-y-5">
 
 <h2 className="text-lg font-semibold">
 Profile
@@ -649,32 +651,31 @@ Manage your account information and preferences.
 
 <input
 value="albdyfinancial@gmail.com"
-className="w-full border rounded-lg px-4 py-3"
+readOnly
+className="w-full border border-slate-200 rounded-lg px-4 py-3"
 />
 
 <input
 placeholder="Business Name"
-className="w-full border rounded-lg px-4 py-3"
+className="w-full border border-slate-200 rounded-lg px-4 py-3"
 />
 
-<select className="w-full border rounded-lg px-4 py-3">
-
-<option>USD</option>
-<option>EUR</option>
-<option>GBP</option>
-
+<select className="w-full border border-slate-200 rounded-lg px-4 py-3">
+<option value="USD">USD</option>
+<option value="EUR">EUR</option>
+<option value="GBP">GBP</option>
 </select>
 
 <button className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg">
 Save Profile
 </button>
 
-</div>
+</section>
 
 
 {/* SECURITY */}
 
-<div className="bg-white rounded-2xl shadow p-8 space-y-4">
+<section className="bg-white rounded-2xl shadow p-8 space-y-5">
 
 <h2 className="text-lg font-semibold">
 Security
@@ -686,32 +687,32 @@ Update your password and secure your account.
 
 <input
 type="password"
-value="*************"
-className="w-full border rounded-lg px-4 py-3"
+placeholder="Current Password"
+className="w-full border border-slate-200 rounded-lg px-4 py-3"
 />
 
 <input
+type="password"
 placeholder="New Password"
-type="password"
-className="w-full border rounded-lg px-4 py-3"
+className="w-full border border-slate-200 rounded-lg px-4 py-3"
 />
 
 <input
-placeholder="Confirm Password"
 type="password"
-className="w-full border rounded-lg px-4 py-3"
+placeholder="Confirm Password"
+className="w-full border border-slate-200 rounded-lg px-4 py-3"
 />
 
 <button className="bg-black text-white px-5 py-2 rounded-lg">
 Update Password
 </button>
 
-</div>
+</section>
 
 
 {/* ACCOUNT */}
 
-<div className="bg-white rounded-2xl shadow p-8 space-y-4">
+<section className="bg-white rounded-2xl shadow p-8 space-y-4">
 
 <h2 className="text-lg font-semibold">
 Account
@@ -724,17 +725,15 @@ router.push("/auth/login")
 }}
 className="bg-black text-white px-5 py-2 rounded-lg"
 >
-
 Log Out
-
 </button>
 
-</div>
+</section>
 
 
 {/* DANGER ZONE */}
 
-<div className="bg-red-50 border border-red-200 rounded-2xl shadow p-8 space-y-4">
+<section className="bg-red-50 border border-red-200 rounded-2xl shadow p-8 space-y-4">
 
 <h2 className="text-lg font-semibold text-red-600">
 Danger Zone
@@ -744,12 +743,19 @@ Danger Zone
 Deleting your account permanently removes all financial data.
 </p>
 
-<button className="bg-red-600 text-white px-5 py-2 rounded-lg">
+<button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg">
 Delete Account
 </button>
 
-</div>
+</section>
 
 </div>
 
 )}
+
+</main>
+
+</div>
+
+)
+}
