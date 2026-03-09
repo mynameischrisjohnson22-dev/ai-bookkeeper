@@ -626,47 +626,130 @@ Save Configuration
 
 {/* SETTINGS */}
 
+{activeTab === "settings" && (
 
-</main>
-{settingsOpen && (
+<div className="max-w-3xl space-y-8">
 
-<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-<div className="bg-white w-[420px] rounded-2xl p-8 shadow-xl">
-
-<h2 className="text-lg font-semibold mb-6">
+<h1 className="text-2xl font-semibold text-slate-800">
 Settings
+</h1>
+
+
+{/* PROFILE */}
+
+<div className="bg-white rounded-2xl shadow p-8 space-y-4">
+
+<h2 className="text-lg font-semibold">
+Profile
 </h2>
 
-<div className="space-y-4">
+<p className="text-sm text-slate-500">
+Manage your account information and preferences.
+</p>
+
+<input
+value="albdyfinancial@gmail.com"
+className="w-full border rounded-lg px-4 py-3"
+/>
+
+<input
+placeholder="Business Name"
+className="w-full border rounded-lg px-4 py-3"
+/>
+
+<select className="w-full border rounded-lg px-4 py-3">
+
+<option>USD</option>
+<option>EUR</option>
+<option>GBP</option>
+
+</select>
+
+<button className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg">
+Save Profile
+</button>
+
+</div>
+
+
+{/* SECURITY */}
+
+<div className="bg-white rounded-2xl shadow p-8 space-y-4">
+
+<h2 className="text-lg font-semibold">
+Security
+</h2>
+
+<p className="text-sm text-slate-500">
+Update your password and secure your account.
+</p>
+
+<input
+type="password"
+value="*************"
+className="w-full border rounded-lg px-4 py-3"
+/>
+
+<input
+placeholder="New Password"
+type="password"
+className="w-full border rounded-lg px-4 py-3"
+/>
+
+<input
+placeholder="Confirm Password"
+type="password"
+className="w-full border rounded-lg px-4 py-3"
+/>
+
+<button className="bg-black text-white px-5 py-2 rounded-lg">
+Update Password
+</button>
+
+</div>
+
+
+{/* ACCOUNT */}
+
+<div className="bg-white rounded-2xl shadow p-8 space-y-4">
+
+<h2 className="text-lg font-semibold">
+Account
+</h2>
 
 <button
 onClick={()=>{
 localStorage.removeItem("token")
 router.push("/auth/login")
 }}
-className="w-full bg-red-500 text-white py-2 rounded-lg"
+className="bg-black text-white px-5 py-2 rounded-lg"
 >
-Logout
-</button>
 
-<button
-onClick={()=>setSettingsOpen(false)}
-className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
->
-Settings
+Log Out
+
 </button>
 
 </div>
+
+
+{/* DANGER ZONE */}
+
+<div className="bg-red-50 border border-red-200 rounded-2xl shadow p-8 space-y-4">
+
+<h2 className="text-lg font-semibold text-red-600">
+Danger Zone
+</h2>
+
+<p className="text-sm text-red-500">
+Deleting your account permanently removes all financial data.
+</p>
+
+<button className="bg-red-600 text-white px-5 py-2 rounded-lg">
+Delete Account
+</button>
 
 </div>
 
 </div>
 
 )}
-
-</div>
-
-)
-
-}
