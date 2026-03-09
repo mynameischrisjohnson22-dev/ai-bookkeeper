@@ -26,8 +26,8 @@ export default function Billing(){
         billing
       })
 
-      window.location.href = res.data.url
-
+    window.location.href = res.data.checkoutUrl
+    
     }catch(err){
 
       console.error("Checkout error:",err)
