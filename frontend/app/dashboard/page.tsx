@@ -8,250 +8,264 @@ import ChatBox from "@/components/ChatBox"
 import Billing from "@/components/Billing"
 
 import {
-  LineChart,
-  Line,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid
+LineChart,
+Line,
+Area,
+XAxis,
+YAxis,
+Tooltip,
+ResponsiveContainer,
+CartesianGrid
 } from "recharts"
 
+/* ================= TYPES ================= */
+
 type Transaction = {
-  id: string
-  date: string
-  description: string
-  amount: number
-  categoryId?: string
-  isRecurring?: boolean
-  recurringFrequency?: string
+id: string
+date: string
+description: string
+amount: number
+categoryId?: string
+isRecurring?: boolean
+recurringFrequency?: string
 }
 
 type Category = {
-  id: string
-  name: string
-  isRevenue: boolean
+id: string
+name: string
+isRevenue: boolean
 }
 
 type Tab =
-  | "dashboard"
-  | "transactions"
-  | "business"
-  | "billing"
-  | "askai"
+| "dashboard"
+| "transactions"
+| "business"
+| "billing"
+| "askai"
+
+/* ================= DASHBOARD ================= */
 
 export default function Dashboard() {
 
-  const router = useRouter()
+const router = useRouter()
 
-  const [tokenReady,setTokenReady] = useState(false)
-  const [transactions,setTransactions] = useState<Transaction[]>([])
-  const [categories,setCategories] = useState<Category[]>([])
-  const [values,setValues] = useState<Record<string,string>>({})
-  const [activeTab,setActiveTab] = useState<Tab>("dashboard")
-  const [search,setSearch] = useState("")
-  const [settingsOpen,setSettingsOpen] = useState(false)
-  const [selected,setSelected] = useState<string[]>([])
+/* ================= STATE ================= */
 
+const [tokenReady,setTokenReady] = useState(false)
 
-  const [newCategoryName,setNewCategoryName] = useState("")
-  const [newCategoryType,setNewCategoryType] =
-    useState<"Revenue"|"Expense">("Expense")
+const [transactions,setTransactions] = useState<Transaction[]>([])
+const [categories,setCategories] = useState<Category[]>([])
+const [values,setValues] = useState<Record<string,string>>({})
 
-  /* ================= AUTH ================= */
+const [activeTab,setActiveTab] = useState<Tab>("dashboard")
+const [search,setSearch] = useState("")
+const [settingsOpen,setSettingsOpen] = useState(false)
 
-  useEffect(()=>{
+const [selected,setSelected] = useState<string[]>([])
 
-    if(typeof window==="undefined") return
+const [newCategoryName,setNewCategoryName] = useState("")
+const [newCategoryType,setNewCategoryType] =
+useState<"Revenue"|"Expense">("Expense")
 
-    const params = new URLSearchParams(window.location.search)
-    const tokenFromUrl = params.get("token")
+/* ================= AUTH ================= */
 
-    if(tokenFromUrl){
-      localStorage.setItem("token",tokenFromUrl)
-      window.history.replaceState({}, "", "/dashboard")
-    }
+useEffect(()=>{
 
-    const token = localStorage.getItem("token")
+if(typeof window==="undefined") return
 
-    if(!token){
-      router.push("/auth/login")
-      return
-    }
+const params = new URLSearchParams(window.location.search)
+const tokenFromUrl = params.get("token")
 
-    setTokenReady(true)
+if(tokenFromUrl){
+localStorage.setItem("token",tokenFromUrl)
+window.history.replaceState({}, "", "/dashboard")
+}
 
-  },[router])
+const token = localStorage.getItem("token")
 
-  /* ================= LOAD ================= */
+if(!token){
+router.push("/auth/login")
+return
+}
 
-  const loadData = async ()=>{
+setTokenReady(true)
 
-    try{
+},[router])
 
-      const [txRes,catRes] = await Promise.all([
-        api.get("/api/transactions"),
-        api.get("/api/categories")
-      ])
+/* ================= LOAD ================= */
 
-      setTransactions(txRes.data || [])
+const loadData = async ()=>{
 
-      const normalized = (catRes.data || []).map((c:any)=>({
-        ...c,
-        isRevenue:Boolean(c.isRevenue)
-      }))
+try{
 
-      setCategories(normalized)
+const [txRes,catRes] = await Promise.all([
+api.get("/api/transactions"),
+api.get("/api/categories")
+])
 
-    }catch(err){
-      console.error("Failed to load data",err)
-    }
+setTransactions(txRes.data || [])
 
-  }
+const normalized = (catRes.data || []).map((c:any)=>({
+...c,
+isRevenue:Boolean(c.isRevenue)
+}))
 
-  useEffect(()=>{
-    if(tokenReady){
-      loadData()
-    }
-  },[tokenReady])
+setCategories(normalized)
 
-  if(!tokenReady){
-    return null
-  }
+}catch(err){
+console.error("Failed to load data",err)
+}
 
-  /* ================= FILTER ================= */
+}
 
-  const filteredTransactions = useMemo(()=>{
+useEffect(()=>{
+if(tokenReady){
+loadData()
+}
+},[tokenReady])
 
-    return transactions.filter(t=>
-      t.description.toLowerCase().includes(search.toLowerCase())
-    )
+/* ================= FILTER ================= */
 
-  },[transactions,search])
+const filteredTransactions = useMemo(()=>{
 
-  /* ================= TOTALS ================= */
+return transactions.filter(t=>
+t.description.toLowerCase().includes(search.toLowerCase())
+)
 
-  const income = filteredTransactions
-    .filter(t=>t.amount>0)
-    .reduce((sum,t)=>sum+t.amount,0)
+},[transactions,search])
 
-  const expenses = filteredTransactions
-    .filter(t=>t.amount<0)
-    .reduce((sum,t)=>sum+t.amount,0)
+/* ================= TOTALS ================= */
 
-  const balance = income + expenses
+const income = filteredTransactions
+.filter(t=>t.amount>0)
+.reduce((sum,t)=>sum+t.amount,0)
 
-  /* ================= CHART ================= */
+const expenses = filteredTransactions
+.filter(t=>t.amount<0)
+.reduce((sum,t)=>sum+t.amount,0)
 
-  const chartData = useMemo(()=>{
+const balance = income + expenses
 
-    const grouped:Record<string,number> = {}
+/* ================= CHART ================= */
 
-    filteredTransactions.forEach(t=>{
+const chartData = useMemo(()=>{
 
-      const date = new Date(t.date).toLocaleDateString()
+const grouped:Record<string,number> = {}
 
-      if(!grouped[date]) grouped[date]=0
-      grouped[date]+=t.amount
+filteredTransactions.forEach(t=>{
 
-    })
+const date = new Date(t.date).toLocaleDateString()
 
-    const sortedDates = Object.keys(grouped).sort(
-      (a,b)=>new Date(a).getTime()-new Date(b).getTime()
-    )
+if(!grouped[date]) grouped[date]=0
+grouped[date]+=t.amount
 
-    let runningBalance = 0
+})
 
-    return sortedDates.map(date=>{
+const sortedDates = Object.keys(grouped).sort(
+(a,b)=>new Date(a).getTime()-new Date(b).getTime()
+)
 
-      runningBalance += grouped[date]
+let runningBalance = 0
 
-      return{
-        date,
-        balance:runningBalance
-      }
+return sortedDates.map(date=>{
 
-    })
+runningBalance += grouped[date]
 
-  },[filteredTransactions])
+return{
+date,
+balance:runningBalance
+}
 
-  /* ================= CATEGORY ================= */
+})
 
-  const createCategory = async ()=>{
+},[filteredTransactions])
 
-    if(!newCategoryName.trim()) return
+/* ================= CATEGORY ================= */
 
-    await api.post("/api/categories",{
-      name:newCategoryName,
-      isRevenue:newCategoryType==="Revenue"
-    })
+const createCategory = async ()=>{
 
-    setNewCategoryName("")
-    await loadData()
+if(!newCategoryName.trim()) return
 
-  }
+await api.post("/api/categories",{
+name:newCategoryName,
+isRevenue:newCategoryType==="Revenue"
+})
 
-  const deleteCategory = async(id:string)=>{
+setNewCategoryName("")
+await loadData()
 
-    await api.delete(`/api/categories/${id}`)
-    await loadData()
+}
 
-  }
+const deleteCategory = async(id:string)=>{
 
-  /* ================= BUSINESS SAVE ================= */
+await api.delete(`/api/categories/${id}`)
+await loadData()
 
-  const saveBusiness = async ()=>{
+}
 
-    const today = new Date().toISOString()
+/* ================= BUSINESS SAVE ================= */
 
-    const entries = categories.map(cat=>{
+const saveBusiness = async ()=>{
 
-      const raw = values[cat.id]
+const today = new Date().toISOString()
 
-      if(!raw) return null
+const entries = categories.map(cat=>{
 
-      const value = Number(raw)
+const raw = values[cat.id]
 
-      if(isNaN(value)) return null
+if(!raw) return null
 
-      return{
-        date:today,
-        description:cat.name,
-        amount:cat.isRevenue ? value : -Math.abs(value),
-        categoryId:cat.id
-      }
+const value = Number(raw)
+if(isNaN(value)) return null
 
-    }).filter(Boolean)
+return{
+date:today,
+description:cat.name,
+amount:cat.isRevenue ? value : -Math.abs(value),
+categoryId:cat.id
+}
 
-    await Promise.all(
-      entries.map(entry=>api.post("/api/transactions",entry))
-    )
+}).filter(Boolean)
 
-    setValues({})
-    await loadData()
-    setActiveTab("transactions")
+await Promise.all(
+entries.map(entry=>api.post("/api/transactions",entry))
+)
 
-  }
+setValues({})
+await loadData()
+setActiveTab("transactions")
 
-  /* ================= DELETE TX ================= */
+}
 
-  const deleteTransactions = async ()=>{
+/* ================= DELETE TX ================= */
 
-    if(selected.length===0) return
+const deleteTransactions = async ()=>{
 
-    await Promise.all(
-      selected.map(id=>api.delete(`/api/transactions/${id}`))
-    )
+if(selected.length===0) return
 
-    setSelected([])
-    await loadData()
+await Promise.all(
+selected.map(id=>api.delete(`/api/transactions/${id}`))
+)
 
-  }
+setSelected([])
+await loadData()
 
-  /* ================= UI ================= */
+}
 
-  return(
+/* ================= LOADING ================= */
+
+if(!tokenReady){
+return (
+
+<div className="h-screen flex items-center justify-center">
+Loading...
+</div>
+)
+}
+
+/* ================= UI ================= */
+
+return (
 
 <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
 
@@ -263,24 +277,17 @@ export default function Dashboard() {
 Albdy
 </h2>
 
-{["dashboard","transactions","business","billing","askai","settings"].map(tab=>(
+{["dashboard","transactions","business","billing","askai"].map(tab=>(
 
 <button
 key={tab}
-onClick={()=>{
-
-if(tab==="settings"){
-setSettingsOpen(true)
-}else{
-setActiveTab(tab as Tab)
-}
-
-}}
+onClick={()=>setActiveTab(tab as Tab)}
 className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
 activeTab===tab
 ? "bg-red-500 text-white"
 : "text-slate-600 hover:bg-indigo-50"
 }`}
+
 >
 
 {tab==="dashboard" && "Overview"}
@@ -288,7 +295,6 @@ activeTab===tab
 {tab==="business" && "Business"}
 {tab==="billing" && "Billing"}
 {tab==="askai" && "Ask AI"}
-{tab==="settings" && "Settings"}
 
 </button>
 
@@ -357,9 +363,10 @@ className="border px-4 py-2 mb-4"
 <button
 onClick={deleteTransactions}
 className="bg-red-500 text-white px-4 py-2 mb-4"
+
 >
-Delete Selected
-</button>
+
+Delete Selected </button>
 
 {filteredTransactions.map(tx=>(
 
@@ -464,8 +471,7 @@ onChange={(e)=>setValues((prev:any)=>({
 />
 
 <button onClick={()=>deleteCategory(cat.id)}>
-Delete
-</button>
+Delete </button>
 
 </div>
 
@@ -480,7 +486,9 @@ onChange={(e)=>setNewCategoryName(e.target.value)}
 <select
 value={newCategoryType}
 onChange={(e)=>setNewCategoryType(e.target.value as any)}
+
 >
+
 <option value="Expense">Expense</option>
 <option value="Revenue">Revenue</option>
 </select>
