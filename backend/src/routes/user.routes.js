@@ -1,7 +1,7 @@
 import { Router } from "express"
 import prisma from "../utils/prisma.js"
 import bcrypt from "bcryptjs"
-import { authMiddleware } from "../middleware/auth.middleware.js"
+import authMiddleware from "../middleware/auth.middleware.js"
 
 const router = Router()
 
