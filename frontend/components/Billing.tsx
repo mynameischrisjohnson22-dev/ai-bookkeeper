@@ -21,7 +21,7 @@ export default function Billing(){
         return
       }
 
-const res = await api.post("/billing/checkout",{
+      const res = await api.post("/api/billing/checkout",{
         plan,
         billing
       })
