@@ -79,12 +79,9 @@ router.post("/checkout", async (req, res) => {
       },
 
       checkout: {
-
-        success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
-
-        cancel_url: `${process.env.FRONTEND_URL}/dashboard`
-
-      }
+  success_url: `${process.env.FRONTEND_URL}/dashboard?payment=success`,
+  cancel_url: `${process.env.FRONTEND_URL}/dashboard`
+}
 
     })
 
