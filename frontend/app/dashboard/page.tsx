@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import api from "@/lib/api"
 
@@ -46,7 +46,6 @@ type Tab =
   | "askai"
 
 /* ================= DASHBOARD ================= */
-
 export default function Dashboard() {
 
   const router = useRouter()
@@ -54,6 +53,8 @@ export default function Dashboard() {
   const [tokenReady,setTokenReady] = useState(false)
 
   useEffect(()=>{
+
+    if(typeof window === "undefined") return
 
     const params = new URLSearchParams(window.location.search)
     const tokenFromUrl = params.get("token")
@@ -72,7 +73,7 @@ export default function Dashboard() {
 
     setTokenReady(true)
 
-  },[])
+  },[router])
 
   if(!tokenReady){
     return null
