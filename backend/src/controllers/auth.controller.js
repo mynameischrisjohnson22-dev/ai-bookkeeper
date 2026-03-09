@@ -33,7 +33,9 @@ export const signup = async (req, res) => {
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" })
+      return res.status(400).json({
+        error: "Password must be at least 6 characters"
+      })
     }
 
     const existing = await prisma.user.findUnique({
@@ -46,9 +48,7 @@ export const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    const verificationToken = crypto
-      .randomBytes(32)
-      .toString("hex")
+    const verificationToken = crypto.randomBytes(32).toString("hex")
 
     await prisma.user.create({
       data: {
@@ -91,13 +91,17 @@ export const login = async (req, res) => {
     })
 
     if (!user || !user.password) {
-      return res.status(401).json({ error: "Invalid email or password" })
+      return res.status(401).json({
+        error: "Invalid email or password"
+      })
     }
 
     const valid = await bcrypt.compare(password, user.password)
 
     if (!valid) {
-      return res.status(401).json({ error: "Invalid email or password" })
+      return res.status(401).json({
+        error: "Invalid email or password"
+      })
     }
 
     if (!user.emailVerified) {
@@ -137,7 +141,13 @@ export const verifyEmail = async (req, res) => {
 
     const { token } = req.query
 
-    const user = await prisma.user.findUnique({
+    if (!token) {
+      return res.status(400).json({
+        error: "Verification token missing"
+      })
+    }
+
+    const user = await prisma.user.findFirst({
       where: { verificationToken: token }
     })
 
@@ -155,10 +165,66 @@ export const verifyEmail = async (req, res) => {
       }
     })
 
-    res.json({ message: "Email verified successfully" })
+    res.json({
+      message: "Email verified successfully"
+    })
 
   } catch (err) {
     console.error("Verify error:", err)
     res.status(500).json({ error: "Verification failed" })
+  }
+}
+
+//////////////////////////////////////////////////////
+// RESEND VERIFICATION
+//////////////////////////////////////////////////////
+
+export const resendVerification = async (req, res) => {
+  try {
+
+    let { email } = req.body
+
+    if (!email) {
+      return res.status(400).json({
+        error: "Email required"
+      })
+    }
+
+    email = email.toLowerCase().trim()
+
+    const user = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found"
+      })
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({
+        error: "Email already verified"
+      })
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString("hex")
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { verificationToken }
+    })
+
+    await sendVerificationEmail(email, verificationToken)
+
+    res.json({
+      message: "Verification email resent"
+    })
+
+  } catch (err) {
+    console.error("Resend verification error:", err)
+    res.status(500).json({
+      error: "Failed to resend verification"
+    })
   }
 }
