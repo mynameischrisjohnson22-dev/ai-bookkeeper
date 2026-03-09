@@ -292,39 +292,42 @@ activeTab===id
 
 {/* OVERVIEW */}
 
-{activeTab==="dashboard" && (
+{activeTab === "dashboard" && (
 
-<div className="bg-white p-10 rounded-3xl shadow-lg">
+<div className="w-full max-w-4xl bg-white p-10 rounded-3xl shadow-lg">
 
-<h2 className="text-lg font-semibold mb-4">
+<h2 className="text-lg font-semibold text-slate-700 mb-2">
 Financial Overview
 </h2>
 
-<div className="text-3xl font-bold mb-6">
+<div className="text-4xl font-bold text-slate-900 mb-8">
 ${balance.toFixed(2)}
 </div>
 
-<ResponsiveContainer width="100%" height={320}>
+<div className="w-full h-[320px]">
+
+<ResponsiveContainer width="100%" height="100%">
 
 <LineChart data={chartData}>
 
-<CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3"/>
+<CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
 
-<XAxis dataKey="date"/>
-<YAxis/>
-<Tooltip/>
-
-<Line
-type="monotone"
-dataKey="balance"
-stroke="#dc2626"
-strokeWidth={3}
+<XAxis
+dataKey="date"
+tick={{ fontSize: 12 }}
+stroke="#94a3b8"
 />
+
+<YAxis stroke="#94a3b8" />
+
+<Tooltip />
 
 <Area
 type="monotone"
 dataKey="balance"
+stroke="#dc2626"
 fill="#fecaca"
+strokeWidth={3}
 />
 
 </LineChart>
@@ -333,37 +336,42 @@ fill="#fecaca"
 
 </div>
 
+</div>
+
 )}
 
 {/* TRANSACTIONS */}
 
-{activeTab==="transactions" && (
+{activeTab === "transactions" && (
 
-<div className="bg-white p-10 rounded-3xl shadow-lg">
+<div className="w-full max-w-4xl bg-white p-10 rounded-3xl shadow-lg">
 
-<div className="flex gap-4 mb-6">
+<div className="flex gap-4 mb-8">
 
 <input
-placeholder="Search..."
+placeholder="Search transactions..."
 value={search}
 onChange={(e)=>setSearch(e.target.value)}
-className="border px-4 py-2 rounded-lg flex-1"
+className="flex-1 border border-slate-200 px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-red-400"
 />
 
 <button
 onClick={deleteTransactions}
-className="bg-red-500 text-white px-4 py-2 rounded-lg"
+className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
 >
-
 Delete Selected
-
 </button>
 
 </div>
 
-{filteredTransactions.map(tx=>(
+<div className="space-y-2">
 
-<div key={tx.id} className="flex justify-between border-b py-3">
+{filteredTransactions.map(tx => (
+
+<div
+key={tx.id}
+className="flex items-center justify-between border-b py-4"
+>
 
 <div className="flex items-center gap-3">
 
@@ -371,21 +379,23 @@ Delete Selected
 type="checkbox"
 checked={selected.includes(tx.id)}
 onChange={()=>{
-
 if(selected.includes(tx.id)){
-setSelected(prev=>prev.filter(id=>id!==tx.id))
+setSelected(prev => prev.filter(id => id !== tx.id))
 }else{
-setSelected(prev=>[...prev,tx.id])
+setSelected(prev => [...prev, tx.id])
 }
-
 }}
 />
 
-<span>{tx.description}</span>
+<span className="text-slate-700">
+{tx.description}
+</span>
 
 </div>
 
-<div>${Math.abs(tx.amount).toFixed(2)}</div>
+<div className="font-medium text-slate-800">
+${Math.abs(tx.amount).toFixed(2)}
+</div>
 
 </div>
 
@@ -393,27 +403,35 @@ setSelected(prev=>[...prev,tx.id])
 
 </div>
 
-)}
+</div>
 
+)}
 {/* BUSINESS */}
 
-{activeTab==="business" && (
+{activeTab === "business" && (
 
-<div className="bg-white p-10 rounded-3xl shadow-lg max-w-3xl">
+<div className="w-full max-w-4xl bg-white p-10 rounded-3xl shadow-lg">
 
-<h2 className="text-lg font-semibold mb-6">
+<h2 className="text-lg font-semibold mb-8 text-slate-700">
 Business Configuration
 </h2>
 
-{categories.map(cat=>(
+<div className="space-y-3">
 
-<div key={cat.id} className="flex justify-between mb-4">
+{categories.map(cat => (
 
-<span>{cat.name}</span>
+<div
+key={cat.id}
+className="flex items-center justify-between border-b py-3"
+>
+
+<span className="text-slate-700">
+{cat.name}
+</span>
 
 <button
 onClick={()=>deleteCategory(cat.id)}
-className="text-red-500"
+className="text-red-500 hover:text-red-600 text-sm"
 >
 Delete
 </button>
@@ -422,40 +440,40 @@ Delete
 
 ))}
 
-<div className="flex gap-3 mt-6">
+</div>
+
+<div className="flex gap-3 mt-8">
 
 <input
 placeholder="Category name"
 value={newCategoryName}
 onChange={(e)=>setNewCategoryName(e.target.value)}
-className="border px-3 py-2 rounded-lg flex-1"
+className="flex-1 border border-slate-200 px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-red-400"
 />
 
 <select
 value={newCategoryType}
 onChange={(e)=>setNewCategoryType(e.target.value as any)}
-className="border px-3 py-2 rounded-lg"
+className="border border-slate-200 px-3 py-2 rounded-lg"
 >
-
 <option value="Expense">Expense</option>
 <option value="Revenue">Revenue</option>
-
 </select>
 
 </div>
 
-<div className="flex gap-3 mt-4">
+<div className="flex gap-3 mt-6">
 
 <button
 onClick={createCategory}
-className="bg-slate-900 text-white px-4 py-2 rounded-lg"
+className="bg-slate-900 hover:bg-black text-white px-4 py-2 rounded-lg"
 >
 Create
 </button>
 
 <button
 onClick={saveBusiness}
-className="bg-red-500 text-white px-4 py-2 rounded-lg"
+className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
 >
 Save Configuration
 </button>
@@ -465,9 +483,6 @@ Save Configuration
 </div>
 
 )}
-
-{activeTab==="billing" && <Billing/>}
-{activeTab==="askai" && <ChatBox/>}
 
 {/* SETTINGS */}
 
