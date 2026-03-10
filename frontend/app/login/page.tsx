@@ -1,131 +1,97 @@
 "use client"
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
-import api from "@/lib/api"
-import type { AxiosError } from "axios"
 
-type LoginResponse = {
-  token: string
-  user: { id: string }
-}
-
-type ApiError = { error?: string }
-
-export default function LoginPage() {
+export default function Login() {
 
   const router = useRouter()
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-
-  const handleLogin = async () => {
-
-    setError("")
-
-    if (!email.trim() || !password.trim()) {
-      setError("Please enter email and password")
-      return
-    }
-
-    try {
-
-      setLoading(true)
-
-      const res = await api.post<LoginResponse>(
-        "/api/auth/login",
-        {
-          email: email.trim(),
-          password: password.trim()
-        }
-      )
-
-      localStorage.setItem("token", res.data.token)
-      localStorage.setItem("userId", res.data.user.id)
-
-      router.push("/dashboard")
-      router.refresh()
-
-    } catch (err) {
-
-      const axiosError = err as AxiosError<ApiError>
-
-      setError(
-        axiosError.response?.data?.error ||
-        "Invalid email or password"
-      )
-
-    } finally {
-
-      setLoading(false)
-
-    }
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
 
-      <div className="w-full max-w-md p-8 border rounded-lg shadow-sm space-y-6">
+    <div className="min-h-screen grid md:grid-cols-2">
 
-        <h1 className="text-2xl font-bold text-center">
-          Login
+      {/* LEFT PANEL */}
+
+      <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-red-600 via-red-500 to-black text-white">
+
+        <h1 className="text-2xl font-bold">
+          Albdy
         </h1>
 
-        {error && (
-          <div className="text-red-500 text-sm text-center">
-            {error}
-          </div>
-        )}
+        <div className="max-w-md">
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-3 w-full rounded"
-        />
+          <h2 className="text-5xl font-bold leading-tight">
+            AI bookkeeping made simple
+          </h2>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-3 w-full rounded"
-        />
+          <p className="mt-6 text-red-100">
+            Track revenue, expenses, and profits automatically.
+          </p>
 
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          className="bg-black text-white px-4 py-3 rounded w-full disabled:opacity-50"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
-
-        <div className="text-center text-sm text-gray-400">
-          OR
         </div>
 
-        <a
-          href={`${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`}
-          className="border px-4 py-3 rounded w-full block text-center hover:bg-gray-50"
-        >
-          Continue with Google
-        </a>
+        <div className="text-sm text-red-200">
+          © Albdy
+        </div>
 
-        <div className="text-center text-sm text-gray-500">
-          Don't have an account?{" "}
-          <a
-            href="/auth/signup"
-            className="text-blue-600 hover:underline"
-          >
-            Create one
-          </a>
+      </div>
+
+
+      {/* RIGHT LOGIN */}
+
+      <div className="flex items-center justify-center p-8 bg-white">
+
+        <div className="w-full max-w-md">
+
+          <h2 className="text-3xl font-bold mb-6">
+            Sign in
+          </h2>
+
+          <form className="space-y-4">
+
+            <input
+              type="email"
+              placeholder="Email"
+              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-red-500"
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-red-500"
+            />
+
+            <button
+              className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition"
+            >
+              Login
+            </button>
+
+          </form>
+
+          <div className="my-6 text-center text-gray-400 text-sm">
+            OR
+          </div>
+
+          <button className="w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-50">
+            Continue with Google
+          </button>
+
+          <p className="text-sm text-gray-600 mt-6 text-center">
+            Don't have an account?{" "}
+            <span
+              onClick={() => router.push("/signup")}
+              className="text-red-600 cursor-pointer"
+            >
+              Create one
+            </span>
+          </p>
+
         </div>
 
       </div>
 
     </div>
+
   )
 }
