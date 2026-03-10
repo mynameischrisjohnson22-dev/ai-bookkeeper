@@ -2,17 +2,16 @@
 
 import { useRouter } from "next/navigation"
 import { BarChart3, Brain, Receipt, ShieldCheck } from "lucide-react"
+import React from "react"
 
 export default function Home() {
 
   const router = useRouter()
 
   return (
-
     <div className="min-h-screen bg-white text-black">
 
       {/* NAVBAR */}
-
       <nav className="sticky top-0 z-50 backdrop-blur bg-white/80 border-b border-gray-200">
 
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -50,7 +49,6 @@ export default function Home() {
 
 
       {/* HERO */}
-
       <section className="relative text-center py-36 px-6 bg-gradient-to-b from-white via-red-50 to-white">
 
         <div className="absolute left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-red-200 blur-3xl opacity-30"></div>
@@ -99,7 +97,6 @@ export default function Home() {
 
 
       {/* DASHBOARD PREVIEW */}
-
       <section className="flex justify-center px-6 pb-28">
 
         <img
@@ -112,7 +109,6 @@ export default function Home() {
 
 
       {/* PROBLEM SECTION */}
-
       <section className="py-24 bg-gray-50">
 
         <div className="max-w-6xl mx-auto px-6 text-center">
@@ -146,7 +142,6 @@ export default function Home() {
 
 
       {/* FEATURES */}
-
       <section className="py-28">
 
         <div className="max-w-6xl mx-auto px-6">
@@ -167,25 +162,25 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8">
 
             <Feature
-              icon={<Brain size={28} />}
+              icon={<Brain size={26} />}
               title="AI Financial Insights"
               text="Ask Albdy questions about revenue and profit instantly."
             />
 
             <Feature
-              icon={<Receipt size={28} />}
+              icon={<Receipt size={26} />}
               title="Expense Tracking"
               text="Upload receipts and categorize expenses automatically."
             />
 
             <Feature
-              icon={<BarChart3 size={28} />}
+              icon={<BarChart3 size={26} />}
               title="Real-Time Dashboards"
               text="Visualize financial trends instantly."
             />
 
             <Feature
-              icon={<ShieldCheck size={28} />}
+              icon={<ShieldCheck size={26} />}
               title="Secure Data"
               text="Bank-level encryption protects your financial data."
             />
@@ -197,23 +192,14 @@ export default function Home() {
       </section>
 
 
-      {/* SOCIAL PROOF */}
-
+      {/* STATS */}
       <section className="bg-gray-50 py-24">
 
-        <div className="max-w-5xl mx-auto text-center px-6">
+        <div className="max-w-5xl mx-auto text-center px-6 grid md:grid-cols-3 gap-10">
 
-          <h2 className="text-3xl font-bold mb-10">
-            Trusted by modern businesses
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-10">
-
-            <Stat number="10x" label="Faster bookkeeping" />
-            <Stat number="80%" label="Less manual work" />
-            <Stat number="24/7" label="AI financial insights" />
-
-          </div>
+          <Stat number="10x" label="Faster bookkeeping" />
+          <Stat number="80%" label="Less manual work" />
+          <Stat number="24/7" label="AI financial insights" />
 
         </div>
 
@@ -221,7 +207,6 @@ export default function Home() {
 
 
       {/* HOW IT WORKS */}
-
       <section className="py-28">
 
         <div className="max-w-5xl mx-auto text-center px-6">
@@ -258,7 +243,6 @@ export default function Home() {
 
 
       {/* CTA */}
-
       <section className="text-center py-32 bg-gradient-to-b from-red-50 to-white">
 
         <h2 className="text-4xl font-bold mb-6">
@@ -280,7 +264,6 @@ export default function Home() {
 
 
       {/* FOOTER */}
-
       <footer className="border-t py-16">
 
         <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8 px-6 text-sm text-gray-500">
@@ -319,42 +302,104 @@ export default function Home() {
 }
 
 
-/* COMPONENTS */
+/* ---------- TYPES ---------- */
 
-function Feature({ icon, title, text }) {
+type FeatureProps = {
+  icon: React.ReactNode
+  title: string
+  text: string
+}
+
+type ProblemProps = {
+  title: string
+  text: string
+}
+
+type StatProps = {
+  number: string
+  label: string
+}
+
+type StepProps = {
+  number: string
+  title: string
+  text: string
+}
+
+
+/* ---------- COMPONENTS ---------- */
+
+function Feature({ icon, title, text }: FeatureProps) {
   return (
-    <div className="border border-gray-200 rounded-2xl p-8 hover:shadow-xl transition">
-      <div className="text-red-600 mb-4">{icon}</div>
-      <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600 text-sm">{text}</p>
+    <div className="group border border-gray-200 rounded-2xl p-8 bg-white hover:shadow-xl hover:-translate-y-1 transition">
+
+      <div className="flex items-center justify-center w-12 h-12 bg-red-50 text-red-600 rounded-xl mb-4 group-hover:scale-110 transition">
+        {icon}
+      </div>
+
+      <h3 className="font-semibold text-lg mb-2">
+        {title}
+      </h3>
+
+      <p className="text-gray-600 text-sm leading-relaxed">
+        {text}
+      </p>
+
     </div>
   )
 }
 
-function Problem({ title, text }) {
+
+function Problem({ title, text }: ProblemProps) {
   return (
-    <div>
-      <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600">{text}</p>
+    <div className="p-6 border border-gray-100 rounded-xl bg-white">
+
+      <h3 className="font-semibold text-lg mb-2">
+        {title}
+      </h3>
+
+      <p className="text-gray-600 leading-relaxed">
+        {text}
+      </p>
+
     </div>
   )
 }
 
-function Stat({ number, label }) {
+
+function Stat({ number, label }: StatProps) {
   return (
-    <div>
-      <h3 className="text-4xl font-bold text-red-600 mb-2">{number}</h3>
-      <p className="text-gray-600">{label}</p>
+    <div className="p-6 text-center">
+
+      <h3 className="text-4xl font-bold text-red-600 mb-2">
+        {number}
+      </h3>
+
+      <p className="text-gray-600 text-sm">
+        {label}
+      </p>
+
     </div>
   )
 }
 
-function Step({ number, title, text }) {
+
+function Step({ number, title, text }: StepProps) {
   return (
-    <div>
-      <div className="text-red-600 font-bold text-2xl mb-3">{number}</div>
-      <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600">{text}</p>
+    <div className="p-6 text-center">
+
+      <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 text-red-600 font-bold text-lg">
+        {number}
+      </div>
+
+      <h3 className="font-semibold text-lg mb-2">
+        {title}
+      </h3>
+
+      <p className="text-gray-600 text-sm leading-relaxed">
+        {text}
+      </p>
+
     </div>
   )
 }
