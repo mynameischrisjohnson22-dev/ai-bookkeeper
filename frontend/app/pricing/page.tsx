@@ -2,92 +2,112 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Check } from "lucide-react"
 
 export default function Pricing() {
 
   const router = useRouter()
   const [billing,setBilling] = useState("monthly")
 
+  const essentialPrice = billing === "monthly" ? "$5" : "$48"
+  const plusPrice = billing === "monthly" ? "$7.99" : "$79"
+
   return (
 
     <div className="min-h-screen bg-gradient-to-b from-white via-red-50 to-white py-32 px-6">
 
-      <div className="max-w-6xl mx-auto text-center">
+      {/* SOFT BACKGROUND GLOW */}
 
-        <h1 className="text-5xl font-bold mb-6">
-          Choose your plan
+      <div className="absolute left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-red-200 blur-3xl opacity-30"></div>
+
+      <div className="relative max-w-6xl mx-auto text-center">
+
+        {/* TITLE */}
+
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
+          Simple pricing
         </h1>
 
-        <p className="text-gray-600 mb-10">
-          Start free and scale as your business grows
+        <p className="text-gray-600 mb-12 text-lg">
+          Start free. Upgrade as your business grows.
         </p>
 
-        {/* BILLING TOGGLE */}
 
-        <div className="flex justify-center gap-6 mb-16">
+        {/* BILLING SWITCH */}
 
-          <button
-            onClick={()=>setBilling("monthly")}
-            className={`px-4 py-2 rounded-lg ${
-              billing==="monthly"
-              ? "bg-red-600 text-white"
-              : "text-gray-600"
-            }`}
-          >
-            Monthly
-          </button>
+        <div className="flex justify-center mb-16">
 
-          <button
-            onClick={()=>setBilling("yearly")}
-            className={`px-4 py-2 rounded-lg ${
-              billing==="yearly"
-              ? "bg-red-600 text-white"
-              : "text-gray-600"
-            }`}
-          >
-            Yearly
-          </button>
+          <div className="flex bg-gray-100 rounded-full p-1">
+
+            <button
+              onClick={()=>setBilling("monthly")}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition ${
+                billing==="monthly"
+                ? "bg-red-600 text-white shadow"
+                : "text-gray-600"
+              }`}
+            >
+              Monthly
+            </button>
+
+            <button
+              onClick={()=>setBilling("yearly")}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition ${
+                billing==="yearly"
+                ? "bg-red-600 text-white shadow"
+                : "text-gray-600"
+              }`}
+            >
+              Yearly
+            </button>
+
+          </div>
 
         </div>
 
-        {/* PRICING CARDS */}
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        {/* PRICING GRID */}
+
+        <div className="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
+
 
           {/* ESSENTIAL */}
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-10 shadow-sm hover:shadow-xl hover:-translate-y-1 transition">
+          <div className="bg-white border border-gray-200 rounded-3xl p-10 shadow-sm hover:shadow-xl hover:-translate-y-1 transition">
 
             <h2 className="text-2xl font-bold mb-4">
               Essential
             </h2>
 
-            <p className="text-4xl font-bold mb-6">
-              $5
+            <p className="text-5xl font-bold mb-8">
+              {essentialPrice}
+              <span className="text-sm text-gray-500 ml-2">
+                /{billing === "monthly" ? "mo" : "yr"}
+              </span>
             </p>
 
-            <ul className="text-gray-600 space-y-2 mb-8 text-sm">
+            <ul className="space-y-3 text-gray-600 mb-10 text-sm">
 
-              <li>AI expense tracking</li>
-              <li>Financial insights</li>
-              <li>Basic dashboards</li>
+              <Feature text="AI expense tracking" />
+              <Feature text="Financial insights" />
+              <Feature text="Basic dashboards" />
 
             </ul>
 
             <button
-              className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition"
+              className="w-full bg-black text-white py-3 rounded-xl hover:bg-gray-800 transition"
             >
-              Subscribe
+              Get Started
             </button>
 
           </div>
 
 
-          {/* PLUS PLAN */}
+          {/* PLUS */}
 
-          <div className="bg-white border-2 border-red-600 rounded-2xl p-10 shadow-lg hover:shadow-xl hover:-translate-y-1 transition relative">
+          <div className="relative bg-white border-2 border-red-600 rounded-3xl p-10 shadow-xl hover:-translate-y-1 transition">
 
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs px-3 py-1 rounded-full">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs px-4 py-1 rounded-full">
               Most Popular
             </div>
 
@@ -95,31 +115,38 @@ export default function Pricing() {
               Plus+
             </h2>
 
-            <p className="text-4xl font-bold mb-6">
-              $7.99
+            <p className="text-5xl font-bold mb-8">
+              {plusPrice}
+              <span className="text-sm text-gray-500 ml-2">
+                /{billing === "monthly" ? "mo" : "yr"}
+              </span>
             </p>
 
-            <ul className="text-gray-600 space-y-2 mb-8 text-sm">
+            <ul className="space-y-3 text-gray-600 mb-10 text-sm">
 
-              <li>Everything in Essential</li>
-              <li>Advanced analytics</li>
-              <li>Priority AI insights</li>
+              <Feature text="Everything in Essential" />
+              <Feature text="Advanced analytics" />
+              <Feature text="Priority AI insights" />
+              <Feature text="Faster financial reports" />
 
             </ul>
 
             <button
-              className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition"
+              className="w-full bg-red-600 text-white py-3 rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-200"
             >
-              Subscribe
+              Upgrade to Plus
             </button>
 
           </div>
 
         </div>
 
+
+        {/* BACK BUTTON */}
+
         <button
           onClick={()=>router.push("/")}
-          className="text-gray-500 mt-16 hover:text-red-600"
+          className="text-gray-500 mt-20 hover:text-red-600 transition"
         >
           ← Back
         </button>
@@ -129,4 +156,23 @@ export default function Pricing() {
     </div>
 
   )
+}
+
+
+/* FEATURE ITEM */
+
+function Feature({ text }: { text:string }) {
+
+  return (
+
+    <li className="flex items-center gap-2">
+
+      <Check className="text-red-600 w-4 h-4" />
+
+      {text}
+
+    </li>
+
+  )
+
 }
