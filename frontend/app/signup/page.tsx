@@ -1,20 +1,30 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
+import { useState } from "react"
 
 export default function Signup() {
 
   const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+  async function handleGoogle() {
+    setLoading(true)
+    await signIn("google", { callbackUrl: "/dashboard" })
+  }
 
   return (
 
     <div className="min-h-screen grid md:grid-cols-2">
 
-      {/* LEFT BRAND PANEL */}
+      {/* LEFT PANEL */}
 
       <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-red-600 via-red-500 to-black text-white">
 
-        <h1 className="text-2xl font-bold">Albdy</h1>
+        <h1 className="text-2xl font-bold">
+          Albdy
+        </h1>
 
         <div className="max-w-md">
 
@@ -23,14 +33,14 @@ export default function Signup() {
           </h2>
 
           <p className="mt-6 text-red-100">
-            AI automatically tracks your revenue, expenses, and financial insights.
+            AI automatically tracks revenue, expenses, and financial insights.
           </p>
 
         </div>
 
-        <div className="text-sm text-red-200">
+        <p className="text-sm text-red-200">
           © Albdy
-        </div>
+        </p>
 
       </div>
 
@@ -50,16 +60,19 @@ export default function Signup() {
             <input
               type="email"
               placeholder="Email"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-red-500"
+              required
+              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500"
             />
 
             <input
               type="password"
               placeholder="Password"
-              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-red-500"
+              required
+              className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500"
             />
 
             <button
+              type="submit"
               className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition"
             >
               Create Account
@@ -71,15 +84,19 @@ export default function Signup() {
             OR
           </div>
 
-          <button className="w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-50">
-            Continue with Google
+          <button
+            onClick={handleGoogle}
+            disabled={loading}
+            className="w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition"
+          >
+            {loading ? "Redirecting..." : "Continue with Google"}
           </button>
 
           <p className="text-sm text-gray-600 mt-6 text-center">
             Already have an account?{" "}
             <span
               onClick={() => router.push("/login")}
-              className="text-red-600 cursor-pointer"
+              className="text-red-600 cursor-pointer hover:underline"
             >
               Log in
             </span>
@@ -90,6 +107,5 @@ export default function Signup() {
       </div>
 
     </div>
-
   )
 }
