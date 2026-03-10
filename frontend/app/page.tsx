@@ -48,52 +48,69 @@ export default function Home() {
       </nav>
 
 
-      {/* HERO */}
-      <section className="relative text-center py-36 px-6 bg-gradient-to-b from-white via-red-50 to-white">
+{/* HERO */}
 
-        <div className="absolute left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-red-200 blur-3xl opacity-30"></div>
+<section className="relative overflow-hidden text-center py-40 px-6 bg-gradient-to-b from-white via-red-50 to-white">
 
-        <div className="relative max-w-5xl mx-auto">
+  {/* Glow background */}
+  <div className="absolute left-1/2 -translate-x-1/2 top-10 w-[900px] h-[400px] bg-red-200 blur-3xl opacity-30"></div>
 
-          <p className="text-red-600 font-semibold mb-4">
-            AI Bookkeeping for Founders
-          </p>
+  <div className="relative max-w-5xl mx-auto">
 
-          <h1 className="text-6xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-            Your AI Financial Assistant
-            <span className="text-red-600"> for Business</span>
-          </h1>
+    {/* Badge */}
 
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-10">
-            Albdy automatically tracks revenue, expenses, and profits
-            so founders can understand their business instantly.
-          </p>
+    <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
+      AI Bookkeeping for Founders
+    </div>
 
-          <div className="flex justify-center gap-4">
+    {/* Headline */}
 
-            <button
-              onClick={() => router.push("/signup")}
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg shadow-lg shadow-red-200 transition"
-            >
-              Start Free
-            </button>
+    <h1 className="text-6xl md:text-7xl font-bold tracking-tight leading-tight mb-6">
 
-            <button
-              onClick={() => router.push("/demo")}
-              className="border border-gray-300 px-8 py-4 rounded-lg hover:border-red-600 hover:text-red-600 transition"
-            >
-              View Demo
-            </button>
+      Your AI Financial Assistant
 
-          </div>
+      <span className="block text-red-600">
+        for Business
+      </span>
 
-          <p className="text-sm text-gray-500 mt-6">
-            No credit card required
-          </p>
+    </h1>
 
-        </div>
+    {/* Subtext */}
 
-      </section>
+    <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-10">
+      Albdy automatically tracks revenue, expenses, and profits so founders
+      can understand their business instantly.
+    </p>
+
+    {/* Buttons */}
+
+    <div className="flex justify-center gap-4 mb-6">
+
+      <button
+        onClick={() => router.push("/signup")}
+        className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg shadow-lg shadow-red-200 transition"
+      >
+        Start Free
+      </button>
+
+      <button
+        onClick={() => router.push("/demo")}
+        className="border border-gray-300 px-8 py-4 rounded-lg hover:border-red-600 hover:text-red-600 transition"
+      >
+        View Demo
+      </button>
+
+    </div>
+
+    {/* Trust text */}
+
+    <p className="text-sm text-gray-500">
+      No credit card required • Setup in under 2 minutes
+    </p>
+
+  </div>
+
+</section>
 
 
       {/* DASHBOARD PREVIEW */}
