@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { BarChart3, Brain, Receipt, ShieldCheck } from "lucide-react"
 import React from "react"
+import Link from "next/link"
 
 export default function Home() {
 
@@ -12,40 +13,57 @@ export default function Home() {
     <div className="min-h-screen bg-white text-black">
 
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 backdrop-blur bg-white/80 border-b border-gray-200">
 
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+<nav className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200">
 
-          <h1 className="text-xl font-bold tracking-tight">
-            Albdy
-          </h1>
+  <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-          <div className="flex items-center gap-6 text-sm">
+    {/* LOGO */}
 
-            <button onClick={() => router.push("/features")} className="hover:text-red-600 transition">
-              Features
-            </button>
+    <Link
+      href="/"
+      className="text-xl font-bold tracking-tight text-black hover:text-red-600 transition"
+    >
+      Albdy
+    </Link>
 
-            <button onClick={() => router.push("/pricing")} className="hover:text-red-600 transition">
-              Pricing
-            </button>
+    {/* NAV LINKS */}
 
-            <button onClick={() => router.push("/login")} className="hover:text-red-600 transition">
-              Login
-            </button>
+    <div className="flex items-center gap-6 text-sm">
 
-            <button
-              onClick={() => router.push("/signup")}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
-            >
-              Start Free
-            </button>
+      <Link
+        href="/features"
+        className="text-gray-700 hover:text-red-600 transition"
+      >
+        Features
+      </Link>
 
-          </div>
+      <Link
+        href="/pricing"
+        className="text-gray-700 hover:text-red-600 transition"
+      >
+        Pricing
+      </Link>
 
-        </div>
+      <Link
+        href="/login"
+        className="text-gray-700 hover:text-red-600 transition"
+      >
+        Login
+      </Link>
 
-      </nav>
+      <Link
+        href="/signup"
+        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+      >
+        Start Free
+      </Link>
+
+    </div>
+
+  </div>
+
+</nav>
 
 
       {/* HERO */}
