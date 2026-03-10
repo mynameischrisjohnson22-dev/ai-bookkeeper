@@ -9,10 +9,13 @@ export default function Home() {
     <div className="min-h-screen bg-white text-black">
 
       {/* NAVBAR */}
-      <nav className="sticky top-0 bg-white/80 backdrop-blur z-50 border-b">
-        <div className="flex justify-between items-center max-w-6xl mx-auto px-6 py-4">
+      <nav className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b border-gray-200">
 
-          <h1 className="text-xl font-bold tracking-tight">Albdy</h1>
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+
+          <h1 className="text-xl font-bold tracking-tight">
+            Albdy
+          </h1>
 
           <div className="flex items-center gap-6 text-sm">
 
@@ -39,7 +42,7 @@ export default function Home() {
 
             <button
               onClick={() => router.push("/signup")}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition active:scale-95"
             >
               Start Free
             </button>
@@ -47,19 +50,23 @@ export default function Home() {
           </div>
 
         </div>
+
       </nav>
 
       {/* HERO */}
-      <section className="text-center py-36 px-6 bg-gradient-to-b from-white to-red-50">
+      <section className="relative text-center py-40 px-6 bg-gradient-to-b from-white via-red-50 to-white">
 
-        <div className="max-w-3xl mx-auto">
+        {/* Glow background */}
+        <div className="absolute left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-red-200 blur-3xl opacity-30"></div>
 
-          <h1 className="text-5xl font-bold mb-6 tracking-tight">
-            AI Bookkeeping for Modern Businesses
+        <div className="relative max-w-3xl mx-auto">
+
+          <h1 className="text-6xl md:text-7xl font-bold tracking-tight mb-6">
+            Your <span className="text-red-600">AI Bookkeeping Assistant</span>
           </h1>
 
-          <p className="text-lg text-gray-600 mb-10">
-            Automatically track revenue, expenses, and financial insights
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+            Albdy automatically tracks revenue, expenses, and financial insights
             so you can focus on growing your business.
           </p>
 
@@ -67,7 +74,7 @@ export default function Home() {
 
             <button
               onClick={() => router.push("/signup")}
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg transition"
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg transition active:scale-95 shadow-lg shadow-red-200"
             >
               Start Free
             </button>
@@ -81,6 +88,10 @@ export default function Home() {
 
           </div>
 
+          <p className="text-sm text-gray-500 mt-6">
+            Trusted by founders and small businesses worldwide
+          </p>
+
         </div>
 
       </section>
@@ -90,11 +101,14 @@ export default function Home() {
 
         <img
           src="/dashboard-preview.png"
-          className="rounded-2xl shadow-2xl max-w-6xl w-full"
+          className="rounded-2xl shadow-[0_40px_80px_rgba(0,0,0,0.15)] max-w-6xl w-full"
           alt="Albdy dashboard preview"
         />
 
       </section>
+
+      {/* Divider */}
+      <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent max-w-6xl mx-auto"></div>
 
       {/* PROBLEM SECTION */}
       <section className="bg-gray-50 py-32">
@@ -148,7 +162,7 @@ export default function Home() {
 
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10 px-6">
 
-          <div className="border rounded-xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-2 hover:scale-[1.02] transition duration-300">
 
             <h3 className="text-xl font-semibold mb-3 text-red-600">
               AI Financial Insights
@@ -160,7 +174,7 @@ export default function Home() {
 
           </div>
 
-          <div className="border rounded-xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-2 hover:scale-[1.02] transition duration-300">
 
             <h3 className="text-xl font-semibold mb-3 text-red-600">
               Automatic Expense Tracking
@@ -172,7 +186,7 @@ export default function Home() {
 
           </div>
 
-          <div className="border rounded-xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm hover:shadow-xl hover:-translate-y-2 hover:scale-[1.02] transition duration-300">
 
             <h3 className="text-xl font-semibold mb-3 text-red-600">
               Real-Time Dashboards
@@ -236,15 +250,19 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="text-center py-36 bg-red-50">
+      <section className="text-center py-40 bg-gradient-to-b from-red-50 to-white">
 
         <h2 className="text-4xl font-bold mb-6">
-          Ready to automate your bookkeeping?
+          Stop guessing your finances.
         </h2>
+
+        <p className="text-gray-600 mb-8">
+          Let Albdy automatically handle your bookkeeping.
+        </p>
 
         <button
           onClick={() => router.push("/signup")}
-          className="bg-red-600 hover:bg-red-700 text-white px-12 py-5 rounded-xl text-lg transition"
+          className="bg-red-600 hover:bg-red-700 text-white px-14 py-6 rounded-xl text-lg shadow-lg shadow-red-200 transition active:scale-95"
         >
           Start Using Albdy
         </button>
@@ -252,34 +270,34 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-gray-100 py-16">
+      <footer className="border-t bg-white py-16">
 
-        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8 px-6 text-sm">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8 px-6 text-sm text-gray-500">
 
           <div>
             <h3 className="font-bold mb-3 text-red-600">
               Albdy
             </h3>
 
-            <p className="text-gray-600">
+            <p>
               AI bookkeeping for modern businesses.
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3">Product</h4>
+            <h4 className="font-semibold mb-3 text-black">Product</h4>
             <p>Features</p>
             <p>Pricing</p>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3">Company</h4>
+            <h4 className="font-semibold mb-3 text-black">Company</h4>
             <p>About</p>
             <p>Contact</p>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-3">Legal</h4>
+            <h4 className="font-semibold mb-3 text-black">Legal</h4>
             <p>Privacy</p>
             <p>Terms</p>
           </div>
