@@ -22,66 +22,68 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">
 
-        {/* GLOBAL NAVBAR */}
+        {/* NAVBAR */}
 
-        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200">
+        <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur">
 
-          <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
 
             {/* LOGO */}
 
             <Link
               href="/"
-              className="text-xl font-bold tracking-tight hover:text-red-600 transition"
+              className="text-2xl font-bold tracking-tight text-slate-900 hover:text-red-600 transition"
             >
               Albdy
             </Link>
 
             {/* NAV LINKS */}
 
-            <div className="flex items-center gap-6 text-sm">
+            <nav className="flex items-center gap-8 text-sm font-medium">
 
               <Link
                 href="/features"
-                className="hover:text-red-600 transition"
+                className="text-slate-600 hover:text-red-600 transition"
               >
                 Features
               </Link>
 
               <Link
                 href="/pricing"
-                className="hover:text-red-600 transition"
+                className="text-slate-600 hover:text-red-600 transition"
               >
                 Pricing
               </Link>
 
               <Link
                 href="/login"
-                className="hover:text-red-600 transition"
+                className="text-slate-600 hover:text-red-600 transition"
               >
                 Login
               </Link>
 
               <Link
                 href="/signup"
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+                className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 transition"
               >
                 Start Free
               </Link>
 
-            </div>
+            </nav>
 
           </div>
 
-        </nav>
+        </header>
+
 
         {/* PAGE CONTENT */}
 
-        <main className="min-h-screen w-full">
+        <main className="w-full">
           {children}
         </main>
 
-        {/* TOASTS */}
+
+        {/* TOAST NOTIFICATIONS */}
 
         <Toaster
           position="top-right"
