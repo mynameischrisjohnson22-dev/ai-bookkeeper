@@ -8,11 +8,11 @@
   "engines": {
     "node": ">=18"
   },
-"scripts": {
-  "dev": "node src/server.js",
-  "start": "npx prisma generate && npx prisma db push && node src/server.js",
-  "build": "prisma generate"
-},
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "npx prisma generate && npx prisma db push && node src/server.js",
+    "build": "prisma generate"
+  },
   "dependencies": {
     "@paddle/paddle-node-sdk": "^3.6.0",
     "@prisma/client": "^5.22.0",
@@ -27,6 +27,7 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "next-auth": "^4.24.13",
     "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
     "openai": "^6.25.0",
