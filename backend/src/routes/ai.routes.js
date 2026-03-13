@@ -20,15 +20,23 @@ router.post("/", async (req, res) => {
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
-        {
-          role: "system",
-          content: "You are Albdy AI, a financial assistant helping businesses understand their finances."
-        },
-        {
-          role: "user",
-          content: question
-        }
-      ]
+  {
+    role: "system",
+    content: "You are Albdy AI, a financial assistant that analyzes business transactions."
+  },
+  {
+    role: "user",
+    content: `
+User question: ${question}
+
+Transactions:
+${JSON.stringify(transactions)}
+
+Categories:
+${JSON.stringify(categories)}
+`
+  }
+]
     })
 
     res.json({
