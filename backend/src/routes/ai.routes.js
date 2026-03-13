@@ -11,7 +11,7 @@ router.post("/", async (req, res) => {
 
   try {
 
-    const { question } = req.body
+    const { question, transactions = [], categories = [] } = req.body
 
     if (!question) {
       return res.status(400).json({
@@ -24,17 +24,40 @@ router.post("/", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are Albdy AI, a financial assistant for businesses."
+          content: `
+You are Albdy AI, an intelligent financial assistant for businesses.
+
+You analyze financial data and answer questions about:
+- income
+- expenses
+- profit
+- financial trends
+- spending categories
+
+Always use the provided transaction data to calculate answers.
+Be concise and clear.
+`
         },
         {
           role: "user",
-          content: question
+          content: `
+User question:
+${question}
+
+Transactions:
+${JSON.stringify(transactions, null, 2)}
+
+Categories:
+${JSON.stringify(categories, null, 2)}
+`
         }
       ]
     })
 
+    const answer = completion.choices?.[0]?.message?.content || "No response from AI."
+
     res.json({
-      answer: completion.choices[0].message.content
+      answer
     })
 
   } catch (error) {
