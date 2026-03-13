@@ -69,7 +69,7 @@ const askAI = async () => {
 
   try {
 
-    const res = await api.post("/api/ask-ai",{
+    const res = await api.post("/api/ai",{
       question
     })
 
