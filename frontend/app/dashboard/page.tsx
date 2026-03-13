@@ -63,23 +63,32 @@ const [loading,setLoading] = useState(false)
 
 const askAI = async () => {
 
-  if(!question.trim()) return
+  if (!question.trim()) return
 
   setLoading(true)
+  setAnswer("")
 
   try {
 
-    const res = await api.post("/api/ai",{
-      question
+    const res = await api.post("/api/ai", {
+      question,
+      transactions: transactions || [],
+      categories: categories || []
     })
 
-    setAnswer(res.data.answer)
+    setAnswer(res.data?.answer || "AI could not generate a response.")
 
-  } catch(err){
-    console.error(err)
+  } catch (err) {
+
+    console.error("AI request failed:", err)
+
+    setAnswer("Something went wrong while contacting AI.")
+
+  } finally {
+
+    setLoading(false)
+
   }
-
-  setLoading(false)
 
 }
   const [newCategoryName,setNewCategoryName] = useState("")
@@ -782,7 +791,7 @@ className="bg-red-500 text-white px-5 py-2 rounded-lg"
 </button>
 
 {answer && (
-<div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-slate-700">
+<div className="bg-gray-50 p-4 rounded-lg mt-4">
 {answer}
 </div>
 )}
