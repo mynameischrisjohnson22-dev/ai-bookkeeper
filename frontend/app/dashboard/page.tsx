@@ -727,6 +727,36 @@ Save Configuration
 
 )}
 
+{/* ================= ASK AI ================= */}
+
+{activeTab === "askai" && (
+
+<div className="max-w-3xl space-y-6">
+
+<h1 className="text-2xl font-semibold text-slate-800">
+Ask AI
+</h1>
+
+<div className="bg-white rounded-2xl shadow p-6 space-y-4">
+
+<p className="text-slate-500 text-sm">
+Ask Albdy AI about your business finances.
+</p>
+
+<textarea
+placeholder="Example: How can I reduce my expenses?"
+className="w-full border rounded-lg px-4 py-3 h-32"
+/>
+
+<button className="bg-red-500 text-white px-5 py-2 rounded-lg">
+Ask AI
+</button>
+
+</div>
+
+</div>
+
+)}
 
 {/* ================= SETTINGS ================= */}
 
