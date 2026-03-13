@@ -14,38 +14,32 @@ router.post("/", async (req, res) => {
     const { question } = req.body
 
     if (!question) {
-      return res.status(400).json({ error: "Question required" })
+      return res.status(400).json({
+        error: "Question required"
+      })
     }
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
-  {
-    role: "system",
-    content: "You are Albdy AI, a financial assistant that analyzes business transactions."
-  },
-  {
-    role: "user",
-    content: `
-User question: ${question}
-
-Transactions:
-${JSON.stringify(transactions)}
-
-Categories:
-${JSON.stringify(categories)}
-`
-  }
-]
+        {
+          role: "system",
+          content: "You are Albdy AI, a financial assistant for businesses."
+        },
+        {
+          role: "user",
+          content: question
+        }
+      ]
     })
 
     res.json({
       answer: completion.choices[0].message.content
     })
 
-  } catch (err) {
+  } catch (error) {
 
-    console.error(err)
+    console.error("AI ERROR:", error)
 
     res.status(500).json({
       error: "AI request failed"
