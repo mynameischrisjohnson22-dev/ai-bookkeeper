@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import api from "@/lib/api"
 
-import ChatBox from "@/components/ChatBox"
 import Billing from "@/components/Billing"
 
 import {
@@ -15,7 +14,8 @@ XAxis,
 YAxis,
 Tooltip,
 ResponsiveContainer,
-CartesianGrid
+CartesianGrid,
+Legend
 } from "recharts"
 
 /* ================= TYPES ================= */
@@ -41,6 +41,7 @@ type Tab =
 | "billing"
 | "askai"
 | "settings"
+
 /* ================= DASHBOARD ================= */
 
 export default function Dashboard(){
@@ -56,8 +57,6 @@ const [values,setValues] = useState<Record<string,string>>({})
 const [activeTab,setActiveTab] = useState<Tab>("dashboard")
 const [search,setSearch] = useState("")
 const [selected,setSelected] = useState<string[]>([])
-
-const [settingsOpen, setSettingsOpen] = useState(false)
 
 const [newCategoryName,setNewCategoryName] = useState("")
 const [newCategoryType,setNewCategoryType] =
@@ -86,7 +85,7 @@ setTokenReady(true)
 
 },[router])
 
-/* ================= LOAD ================= */
+/* ================= LOAD DATA ================= */
 
 const loadData = async ()=>{
 
@@ -113,11 +112,9 @@ if(tokenReady) loadData()
 /* ================= FILTER ================= */
 
 const filteredTransactions = useMemo(()=>{
-
-return transactions.filter(t=>
+return transactions.filter(t =>
 t.description.toLowerCase().includes(search.toLowerCase())
 )
-
 },[transactions,search])
 
 /* ================= TOTALS ================= */
@@ -132,43 +129,66 @@ const expenses = filteredTransactions
 
 const balance = income + expenses
 
-/* ================= CHART ================= */
+/* ================= CHART DATA ================= */
 
-const chartData = useMemo(()=>{
+type ChartPoint = {
+date:string
+revenue:number
+expenses:number
+profit:number
+balance:number
+}
 
-const grouped:Record<string,number> = {}
+const chartData = useMemo<ChartPoint[]>(()=>{
 
-filteredTransactions.forEach(t=>{
+const grouped:Record<string,ChartPoint> = {}
 
-const date = new Date(t.date).toLocaleDateString()
+transactions.forEach(t=>{
 
-if(!grouped[date]) grouped[date]=0
-grouped[date]+=t.amount
+const date = new Date(t.date).toISOString().slice(0,10)
+
+if(!grouped[date]){
+grouped[date] = {
+date,
+revenue:0,
+expenses:0,
+profit:0,
+balance:0
+}
+}
+
+if(t.amount>0){
+grouped[date].revenue += t.amount
+}else{
+grouped[date].expenses += Math.abs(t.amount)
+}
 
 })
 
-const sorted = Object.keys(grouped).sort(
-(a,b)=>new Date(a).getTime()-new Date(b).getTime()
+const sorted = Object.values(grouped).sort(
+(a,b)=>new Date(a.date).getTime()-new Date(b.date).getTime()
 )
 
 let running = 0
 
-return sorted.map(date=>{
+return sorted.map(d=>{
 
-running += grouped[date]
+const profit = d.revenue - d.expenses
+running += profit
 
 return{
-date,
+...d,
+profit,
 balance:running
 }
 
 })
 
-},[filteredTransactions])
+},[transactions])
 
 /* ================= CATEGORY ================= */
 
-const createCategory = async ()=>{
+const createCategory = async()=>{
 
 if(!newCategoryName.trim()) return
 
@@ -183,48 +203,13 @@ loadData()
 }
 
 const deleteCategory = async(id:string)=>{
-
 await api.delete(`/api/categories/${id}`)
 loadData()
-
-}
-
-/* ================= SAVE BUSINESS ================= */
-
-const saveBusiness = async ()=>{
-
-const today = new Date().toISOString()
-
-const entries = categories.map(cat=>{
-
-const raw = values[cat.id]
-if(!raw) return null
-
-const value = Number(raw)
-if(isNaN(value)) return null
-
-return{
-date:today,
-description:cat.name,
-amount:cat.isRevenue ? value : -Math.abs(value),
-categoryId:cat.id
-}
-
-}).filter(Boolean)
-
-await Promise.all(
-entries.map(entry=>api.post("/api/transactions",entry))
-)
-
-setValues({})
-loadData()
-setActiveTab("transactions")
-
 }
 
 /* ================= DELETE TX ================= */
 
-const deleteTransactions = async ()=>{
+const deleteTransactions = async()=>{
 
 if(selected.length===0) return
 
@@ -240,22 +225,20 @@ loadData()
 /* ================= LOADING ================= */
 
 if(!tokenReady){
-
 return(
 <div className="h-screen flex items-center justify-center">
 Loading...
 </div>
 )
-
 }
 
 /* ================= UI ================= */
 
 return(
 
-<div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
+<div className="min-h-screen flex bg-gradient-to-br from-slate-50 to-indigo-50">
 
-{/* SIDEBAR */}
+{/* ================= SIDEBAR ================= */}
 
 <aside className="w-64 bg-white border-r p-8">
 
@@ -267,15 +250,14 @@ Albdy
 ["dashboard","Overview"],
 ["transactions","Transactions"],
 ["business","Business"],
-["billing","Billing"],
-["askai","Ask AI"]
-].map(([id,label]) => (
+["billing","Billing"]
+].map(([id,label])=>(
 
 <button
 key={id}
-onClick={() => setActiveTab(id as Tab)}
+onClick={()=>setActiveTab(id as Tab)}
 className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
-activeTab === id
+activeTab===id
 ? "bg-red-500 text-white"
 : "text-slate-600 hover:bg-slate-100"
 }`}
@@ -285,10 +267,8 @@ activeTab === id
 
 ))}
 
-{/* SETTINGS BUTTON */}
-
 <button
-onClick={() => setActiveTab("settings")}
+onClick={()=>setActiveTab("settings")}
 className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
 >
 Settings
@@ -296,77 +276,55 @@ Settings
 
 </aside>
 
-{/* MAIN */}
+{/* ================= MAIN ================= */}
 
-<main className="flex-1 p-14 space-y-12">
+<main className="flex-1 p-10 space-y-10">
 
+{/* ================= DASHBOARD ================= */}
 
-{/* OVERVIEW */}
+{activeTab==="dashboard" && (
 
-{activeTab === "dashboard" && (
+<section className="max-w-6xl space-y-8">
 
-<div className="space-y-8 max-w-5xl">
+<div className="bg-white p-8 rounded-3xl shadow border">
 
-{/* BALANCE CARD */}
+<p className="text-sm text-slate-500">Current Balance</p>
 
-<div className="bg-white p-8 rounded-3xl shadow-lg">
-
-<p className="text-sm text-slate-500">
-Current Balance
-</p>
-
-<h2 className="text-4xl font-bold text-green-600 mt-1">
+<h2 className="text-4xl font-bold text-green-600 mt-2">
 ${balance.toFixed(2)}
 </h2>
 
-<p className="text-slate-400 text-sm mt-1">
+<p className="text-sm text-slate-400">
 Income minus expenses
 </p>
 
 </div>
 
-
-{/* INCOME / EXPENSE CARDS */}
-
-<div className="grid grid-cols-2 gap-6">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
 <div className="bg-white p-6 rounded-2xl shadow">
-
-<p className="text-slate-500 text-sm">
-Income
-</p>
-
+<p className="text-sm text-slate-500">Income</p>
 <p className="text-2xl font-bold text-green-600">
 ${income.toFixed(2)}
 </p>
-
 </div>
 
-
 <div className="bg-white p-6 rounded-2xl shadow">
-
-<p className="text-slate-500 text-sm">
-Expenses
-</p>
-
+<p className="text-sm text-slate-500">Expenses</p>
 <p className="text-2xl font-bold text-red-500">
 ${Math.abs(expenses).toFixed(2)}
 </p>
-
 </div>
 
 </div>
 
-
-{/* CHART */}
-
-<div className="bg-white p-10 rounded-3xl shadow-lg">
+<div className="bg-white p-10 rounded-3xl shadow border">
 
 <h2 className="text-lg font-semibold mb-6">
 Financial Overview
 </h2>
 
-<ResponsiveContainer width="100%" height={320}>
+<ResponsiveContainer width="100%" height={340}>
 
 <LineChart data={chartData}>
 
@@ -376,13 +334,26 @@ Financial Overview
 
 <YAxis/>
 
-<Tooltip/>
+<Tooltip formatter={(v:number)=>`$${v.toFixed(2)}`}/>
+
+<Legend/>
+
+<Line type="monotone" dataKey="revenue" stroke="#22c55e"/>
+<Line type="monotone" dataKey="expenses" stroke="#ef4444"/>
+
+<Area
+type="monotone"
+dataKey="profit"
+stroke="#16a34a"
+fillOpacity={0.2}
+fill="#16a34a"
+/>
 
 <Line
 type="monotone"
 dataKey="balance"
-stroke="#dc2626"
-strokeWidth={3}
+stroke="#6366f1"
+strokeDasharray="5 5"
 />
 
 </LineChart>
@@ -391,13 +362,13 @@ strokeWidth={3}
 
 </div>
 
-</div>
+</section>
 
 )}
 
-{/* TRANSACTIONS */}
+{/* ================= TRANSACTIONS ================= */}
 
-{activeTab === "transactions" && (
+{activeTab==="transactions" && (
 
 <div className="max-w-4xl space-y-6">
 
@@ -405,44 +376,23 @@ strokeWidth={3}
 placeholder="Search transactions..."
 value={search}
 onChange={(e)=>setSearch(e.target.value)}
-className="w-full border border-slate-200 px-4 py-3 rounded-xl"
+className="w-full border px-4 py-3 rounded-xl"
 />
-
 
 <div className="bg-white rounded-3xl shadow divide-y">
 
-{filteredTransactions.map(tx => {
+{filteredTransactions.map(tx=>{
 
-const positive = tx.amount > 0
+const positive = tx.amount>0
 
-return (
+return(
 
-<div
-key={tx.id}
-className="flex items-center justify-between px-6 py-5"
->
-
-<div className="flex items-start gap-3">
-
-<input
-type="checkbox"
-checked={selected.includes(tx.id)}
-onChange={()=>{
-
-if(selected.includes(tx.id)){
-setSelected(prev => prev.filter(id => id !== tx.id))
-}else{
-setSelected(prev => [...prev, tx.id])
-}
-
-}}
-/>
+<div key={tx.id}
+className="flex justify-between px-6 py-5">
 
 <div>
 
-<p className="font-medium text-slate-800">
-{tx.description}
-</p>
+<p className="font-medium">{tx.description}</p>
 
 <p className="text-xs text-slate-400">
 {new Date(tx.date).toLocaleDateString()}
@@ -450,14 +400,12 @@ setSelected(prev => [...prev, tx.id])
 
 </div>
 
-</div>
+<div className={
+positive ? "text-green-600 font-semibold"
+: "text-red-500 font-semibold"
+}>
 
-
-<div className={`font-semibold ${
-positive ? "text-green-600" : "text-red-500"
-}`}>
-
-{positive ? "+" : "-"}${Math.abs(tx.amount).toFixed(2)}
+{positive?"+":"-"}${Math.abs(tx.amount).toFixed(2)}
 
 </div>
 
@@ -473,250 +421,27 @@ positive ? "text-green-600" : "text-red-500"
 
 )}
 
-{/* BUSINESS */}
+{/* ================= BILLING ================= */}
 
-{activeTab === "business" && (
-
-<div className="space-y-10 max-w-5xl">
-
-{/* REVENUE */}
-
-<div className="bg-white p-8 rounded-3xl shadow">
-
-<h2 className="text-lg font-semibold mb-6">
-Revenue
-</h2>
-
-<div className="grid grid-cols-2 gap-6">
-
-{categories.filter(c=>c.isRevenue).map(cat => (
-
-<div
-key={cat.id}
-className="border rounded-xl p-4"
->
-
-<div className="flex justify-between mb-2">
-
-<p className="text-sm font-medium">
-{cat.name}
-</p>
-
-<span className="text-slate-400">
-•••
-</span>
-
+{activeTab==="billing" && (
+<div className="max-w-4xl">
+<Billing/>
 </div>
-
-<input
-className="w-full border rounded-md px-3 py-2 mb-2"
-/>
-
-<button
-onClick={()=>deleteCategory(cat.id)}
-className="text-red-500 text-sm"
->
-Delete
-</button>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-
-{/* EXPENSES */}
-
-<div className="bg-white p-8 rounded-3xl shadow">
-
-<h2 className="text-lg font-semibold mb-6">
-Expenses
-</h2>
-
-<div className="grid grid-cols-2 gap-6">
-
-{categories.filter(c=>!c.isRevenue).map(cat => (
-
-<div
-key={cat.id}
-className="border rounded-xl p-4"
->
-
-<div className="flex justify-between mb-2">
-
-<p className="text-sm font-medium">
-{cat.name}
-</p>
-
-<span className="text-slate-400">
-•••
-</span>
-
-</div>
-
-<input
-className="w-full border rounded-md px-3 py-2 mb-2"
-/>
-
-<button
-onClick={()=>deleteCategory(cat.id)}
-className="text-red-500 text-sm"
->
-Delete
-</button>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-
-{/* CREATE CATEGORY */}
-
-<div className="bg-white p-6 rounded-2xl shadow flex gap-3">
-
-<input
-placeholder="Category name"
-value={newCategoryName}
-onChange={(e)=>setNewCategoryName(e.target.value)}
-className="border px-3 py-2 rounded-lg flex-1"
-/>
-
-<select
-value={newCategoryType}
-onChange={(e)=>setNewCategoryType(e.target.value as any)}
-className="border px-3 py-2 rounded-lg"
->
-<option value="Expense">Expense</option>
-<option value="Revenue">Revenue</option>
-</select>
-
-<button
-onClick={createCategory}
-className="bg-red-500 text-white px-4 py-2 rounded-lg"
->
-Create
-</button>
-
-<button
-onClick={saveBusiness}
-className="bg-red-500 text-white px-4 py-2 rounded-lg"
->
-Save Configuration
-</button>
-
-</div>
-
-</div>
-
 )}
 
-{/* BILLING */}
-{activeTab === "billing" && (
-  <div className="max-w-4xl">
-    <Billing />
-  </div>
-)}
+{/* ================= SETTINGS ================= */}
 
-
-
-{/* SETTINGS */}
-
-{activeTab === "settings" && (
+{activeTab==="settings" && (
 
 <div className="max-w-3xl space-y-8">
 
-<h1 className="text-2xl font-semibold text-slate-800">
+<h1 className="text-2xl font-semibold">
 Settings
 </h1>
 
+<section className="bg-white p-8 rounded-2xl shadow space-y-4">
 
-{/* PROFILE */}
-
-<section className="bg-white rounded-2xl shadow p-8 space-y-5">
-
-<h2 className="text-lg font-semibold">
-Profile
-</h2>
-
-<p className="text-sm text-slate-500">
-Manage your account information and preferences.
-</p>
-
-<input
-value="albdyfinancial@gmail.com"
-readOnly
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<input
-placeholder="Business Name"
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<select className="w-full border border-slate-200 rounded-lg px-4 py-3">
-<option value="USD">USD</option>
-<option value="EUR">EUR</option>
-<option value="GBP">GBP</option>
-</select>
-
-<button className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg">
-Save Profile
-</button>
-
-</section>
-
-
-{/* SECURITY */}
-
-<section className="bg-white rounded-2xl shadow p-8 space-y-5">
-
-<h2 className="text-lg font-semibold">
-Security
-</h2>
-
-<p className="text-sm text-slate-500">
-Update your password and secure your account.
-</p>
-
-<input
-type="password"
-placeholder="Current Password"
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<input
-type="password"
-placeholder="New Password"
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<input
-type="password"
-placeholder="Confirm Password"
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<button className="bg-black text-white px-5 py-2 rounded-lg">
-Update Password
-</button>
-
-</section>
-
-
-{/* ACCOUNT */}
-
-<section className="bg-white rounded-2xl shadow p-8 space-y-4">
-
-<h2 className="text-lg font-semibold">
-Account
-</h2>
+<h2 className="font-semibold">Account</h2>
 
 <button
 onClick={()=>{
@@ -730,25 +455,6 @@ Log Out
 
 </section>
 
-
-{/* DANGER ZONE */}
-
-<section className="bg-red-50 border border-red-200 rounded-2xl shadow p-8 space-y-4">
-
-<h2 className="text-lg font-semibold text-red-600">
-Danger Zone
-</h2>
-
-<p className="text-sm text-red-500">
-Deleting your account permanently removes all financial data.
-</p>
-
-<button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg">
-Delete Account
-</button>
-
-</section>
-
 </div>
 
 )}
@@ -758,4 +464,5 @@ Delete Account
 </div>
 
 )
+
 }
