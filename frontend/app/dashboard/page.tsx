@@ -7,40 +7,40 @@ import api from "@/lib/api"
 import Billing from "@/components/Billing"
 
 import {
-LineChart,
-Line,
-Area,
-XAxis,
-YAxis,
-Tooltip,
-ResponsiveContainer,
-CartesianGrid,
-Legend
+  LineChart,
+  Line,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend
 } from "recharts"
 
 /* ================= TYPES ================= */
 
 type Transaction = {
-id: string
-date: string
-description: string
-amount: number
-categoryId?: string
+  id: string
+  date: string
+  description: string
+  amount: number
+  categoryId?: string
 }
 
 type Category = {
-id: string
-name: string
-isRevenue: boolean
+  id: string
+  name: string
+  isRevenue: boolean
 }
 
 type Tab =
-| "dashboard"
-| "transactions"
-| "business"
-| "billing"
-| "askai"
-| "settings"
+  | "dashboard"
+  | "transactions"
+  | "business"
+  | "billing"
+  | "askai"
+  | "settings"
 
 /* ================= DASHBOARD ================= */
 
@@ -57,6 +57,8 @@ const [values,setValues] = useState<Record<string,string>>({})
 const [activeTab,setActiveTab] = useState<Tab>("dashboard")
 const [search,setSearch] = useState("")
 const [selected,setSelected] = useState<string[]>([])
+
+const [settingsOpen, setSettingsOpen] = useState(false)
 
 const [newCategoryName,setNewCategoryName] = useState("")
 const [newCategoryType,setNewCategoryType] =
@@ -85,7 +87,7 @@ setTokenReady(true)
 
 },[router])
 
-/* ================= LOAD DATA ================= */
+/* ================= LOAD ================= */
 
 const loadData = async ()=>{
 
@@ -112,9 +114,11 @@ if(tokenReady) loadData()
 /* ================= FILTER ================= */
 
 const filteredTransactions = useMemo(()=>{
-return transactions.filter(t =>
+
+return transactions.filter(t=>
 t.description.toLowerCase().includes(search.toLowerCase())
 )
+
 },[transactions,search])
 
 /* ================= TOTALS ================= */
@@ -132,63 +136,63 @@ const balance = income + expenses
 /* ================= CHART DATA ================= */
 
 type ChartPoint = {
-date:string
-revenue:number
-expenses:number
-profit:number
-balance:number
+date: string
+revenue: number
+expenses: number
+profit: number
+balance: number
 }
 
-const chartData = useMemo<ChartPoint[]>(()=>{
+const chartData = useMemo<ChartPoint[]>(() => {
 
-const grouped:Record<string,ChartPoint> = {}
+const grouped: Record<string, ChartPoint> = {}
 
-transactions.forEach(t=>{
+transactions.forEach((t) => {
 
-const date = new Date(t.date).toISOString().slice(0,10)
+const date = new Date(t.date).toISOString().slice(0, 10)
 
-if(!grouped[date]){
+if (!grouped[date]) {
 grouped[date] = {
 date,
-revenue:0,
-expenses:0,
-profit:0,
-balance:0
+revenue: 0,
+expenses: 0,
+profit: 0,
+balance: 0
 }
 }
 
-if(t.amount>0){
+if (t.amount > 0) {
 grouped[date].revenue += t.amount
-}else{
+} else {
 grouped[date].expenses += Math.abs(t.amount)
 }
 
 })
 
 const sorted = Object.values(grouped).sort(
-(a,b)=>new Date(a.date).getTime()-new Date(b.date).getTime()
+(a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
 )
 
-let running = 0
+let runningBalance = 0
 
-return sorted.map(d=>{
+return sorted.map((d) => {
 
 const profit = d.revenue - d.expenses
-running += profit
+runningBalance += profit
 
-return{
+return {
 ...d,
 profit,
-balance:running
+balance: runningBalance
 }
 
 })
 
-},[transactions])
+}, [transactions])
 
 /* ================= CATEGORY ================= */
 
-const createCategory = async()=>{
+const createCategory = async ()=>{
 
 if(!newCategoryName.trim()) return
 
@@ -203,13 +207,48 @@ loadData()
 }
 
 const deleteCategory = async(id:string)=>{
+
 await api.delete(`/api/categories/${id}`)
 loadData()
+
+}
+
+/* ================= SAVE BUSINESS ================= */
+
+const saveBusiness = async ()=>{
+
+const today = new Date().toISOString()
+
+const entries = categories.map(cat=>{
+
+const raw = values[cat.id]
+if(!raw) return null
+
+const value = Number(raw)
+if(isNaN(value)) return null
+
+return{
+date:today,
+description:cat.name,
+amount:cat.isRevenue ? value : -Math.abs(value),
+categoryId:cat.id
+}
+
+}).filter(Boolean)
+
+await Promise.all(
+entries.map(entry=>api.post("/api/transactions",entry))
+)
+
+setValues({})
+loadData()
+setActiveTab("transactions")
+
 }
 
 /* ================= DELETE TX ================= */
 
-const deleteTransactions = async()=>{
+const deleteTransactions = async ()=>{
 
 if(selected.length===0) return
 
@@ -225,20 +264,22 @@ loadData()
 /* ================= LOADING ================= */
 
 if(!tokenReady){
+
 return(
 <div className="h-screen flex items-center justify-center">
 Loading...
 </div>
 )
+
 }
 
 /* ================= UI ================= */
 
 return(
 
-<div className="min-h-screen flex bg-gradient-to-br from-slate-50 to-indigo-50">
+<div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
 
-{/* ================= SIDEBAR ================= */}
+{/* SIDEBAR */}
 
 <aside className="w-64 bg-white border-r p-8">
 
@@ -250,14 +291,15 @@ Albdy
 ["dashboard","Overview"],
 ["transactions","Transactions"],
 ["business","Business"],
-["billing","Billing"]
-].map(([id,label])=>(
+["billing","Billing"],
+["askai","Ask AI"]
+].map(([id,label]) => (
 
 <button
 key={id}
-onClick={()=>setActiveTab(id as Tab)}
+onClick={() => setActiveTab(id as Tab)}
 className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
-activeTab===id
+activeTab === id
 ? "bg-red-500 text-white"
 : "text-slate-600 hover:bg-slate-100"
 }`}
@@ -268,7 +310,7 @@ activeTab===id
 ))}
 
 <button
-onClick={()=>setActiveTab("settings")}
+onClick={() => setActiveTab("settings")}
 className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
 >
 Settings
@@ -276,25 +318,27 @@ Settings
 
 </aside>
 
-{/* ================= MAIN ================= */}
+{/* MAIN */}
 
 <main className="flex-1 p-10 space-y-10">
 
-{/* ================= DASHBOARD ================= */}
+{/* DASHBOARD */}
 
-{activeTab==="dashboard" && (
+{activeTab === "dashboard" && (
 
 <section className="max-w-6xl space-y-8">
 
-<div className="bg-white p-8 rounded-3xl shadow border">
+<div className="bg-white rounded-3xl p-8 shadow-lg border border-slate-100">
 
-<p className="text-sm text-slate-500">Current Balance</p>
+<p className="text-sm text-slate-500">
+Current Balance
+</p>
 
 <h2 className="text-4xl font-bold text-green-600 mt-2">
 ${balance.toFixed(2)}
 </h2>
 
-<p className="text-sm text-slate-400">
+<p className="text-slate-400 text-sm mt-1">
 Income minus expenses
 </p>
 
@@ -302,23 +346,23 @@ Income minus expenses
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-<div className="bg-white p-6 rounded-2xl shadow">
+<div className="bg-white rounded-2xl p-6 shadow border border-slate-100">
 <p className="text-sm text-slate-500">Income</p>
-<p className="text-2xl font-bold text-green-600">
+<p className="text-2xl font-bold text-green-600 mt-1">
 ${income.toFixed(2)}
 </p>
 </div>
 
-<div className="bg-white p-6 rounded-2xl shadow">
+<div className="bg-white rounded-2xl p-6 shadow border border-slate-100">
 <p className="text-sm text-slate-500">Expenses</p>
-<p className="text-2xl font-bold text-red-500">
+<p className="text-2xl font-bold text-red-500 mt-1">
 ${Math.abs(expenses).toFixed(2)}
 </p>
 </div>
 
 </div>
 
-<div className="bg-white p-10 rounded-3xl shadow border">
+<div className="bg-white rounded-3xl p-10 shadow-lg border border-slate-100">
 
 <h2 className="text-lg font-semibold mb-6">
 Financial Overview
@@ -326,31 +370,32 @@ Financial Overview
 
 <ResponsiveContainer width="100%" height={340}>
 
-<LineChart data={chartData}>
+<LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
 
-<CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3"/>
+<CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
 
-<XAxis dataKey="date"/>
+<XAxis dataKey="date" />
 
-<YAxis/>
+<YAxis />
 
-<Tooltip formatter={(v:number)=>`$${v.toFixed(2)}`}/>
+<Tooltip formatter={(value:number)=>`$${value.toFixed(2)}`} />
 
-<Legend/>
+<Legend />
 
-<Line type="monotone" dataKey="revenue" stroke="#22c55e"/>
-<Line type="monotone" dataKey="expenses" stroke="#ef4444"/>
+<Line type="natural" dataKey="revenue" stroke="#22c55e" strokeWidth={3} />
+
+<Line type="natural" dataKey="expenses" stroke="#ef4444" strokeWidth={2} />
 
 <Area
-type="monotone"
+type="natural"
 dataKey="profit"
 stroke="#16a34a"
+fill="#22c55e"
 fillOpacity={0.2}
-fill="#16a34a"
 />
 
 <Line
-type="monotone"
+type="natural"
 dataKey="balance"
 stroke="#6366f1"
 strokeDasharray="5 5"
@@ -366,97 +411,12 @@ strokeDasharray="5 5"
 
 )}
 
-{/* ================= TRANSACTIONS ================= */}
+{/* BILLING */}
 
-{activeTab==="transactions" && (
-
-<div className="max-w-4xl space-y-6">
-
-<input
-placeholder="Search transactions..."
-value={search}
-onChange={(e)=>setSearch(e.target.value)}
-className="w-full border px-4 py-3 rounded-xl"
-/>
-
-<div className="bg-white rounded-3xl shadow divide-y">
-
-{filteredTransactions.map(tx=>{
-
-const positive = tx.amount>0
-
-return(
-
-<div key={tx.id}
-className="flex justify-between px-6 py-5">
-
-<div>
-
-<p className="font-medium">{tx.description}</p>
-
-<p className="text-xs text-slate-400">
-{new Date(tx.date).toLocaleDateString()}
-</p>
-
-</div>
-
-<div className={
-positive ? "text-green-600 font-semibold"
-: "text-red-500 font-semibold"
-}>
-
-{positive?"+":"-"}${Math.abs(tx.amount).toFixed(2)}
-
-</div>
-
-</div>
-
-)
-
-})}
-
-</div>
-
-</div>
-
-)}
-
-{/* ================= BILLING ================= */}
-
-{activeTab==="billing" && (
+{activeTab === "billing" && (
 <div className="max-w-4xl">
-<Billing/>
+<Billing />
 </div>
-)}
-
-{/* ================= SETTINGS ================= */}
-
-{activeTab==="settings" && (
-
-<div className="max-w-3xl space-y-8">
-
-<h1 className="text-2xl font-semibold">
-Settings
-</h1>
-
-<section className="bg-white p-8 rounded-2xl shadow space-y-4">
-
-<h2 className="font-semibold">Account</h2>
-
-<button
-onClick={()=>{
-localStorage.removeItem("token")
-router.push("/auth/login")
-}}
-className="bg-black text-white px-5 py-2 rounded-lg"
->
-Log Out
-</button>
-
-</section>
-
-</div>
-
 )}
 
 </main>
