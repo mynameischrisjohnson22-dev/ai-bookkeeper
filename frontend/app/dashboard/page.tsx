@@ -57,7 +57,31 @@ export default function Dashboard(){
   const [search,setSearch] = useState("")
   const [selected,setSelected] = useState<string[]>([])
   const [settingsOpen, setSettingsOpen] = useState(false)
+const [question,setQuestion] = useState("")
+const [answer,setAnswer] = useState("")
+const [loading,setLoading] = useState(false)
 
+const askAI = async () => {
+
+  if(!question.trim()) return
+
+  setLoading(true)
+
+  try {
+
+    const res = await api.post("/api/ask-ai",{
+      question
+    })
+
+    setAnswer(res.data.answer)
+
+  } catch(err){
+    console.error(err)
+  }
+
+  setLoading(false)
+
+}
   const [newCategoryName,setNewCategoryName] = useState("")
   const [newCategoryType,setNewCategoryType] =
     useState<"Revenue"|"Expense">("Expense")
@@ -731,7 +755,7 @@ Save Configuration
 
 {activeTab === "askai" && (
 
-<div className="max-w-3xl space-y-6">
+<section className="max-w-3xl space-y-6">
 
 <h1 className="text-2xl font-semibold text-slate-800">
 Ask AI
@@ -739,25 +763,35 @@ Ask AI
 
 <div className="bg-white rounded-2xl shadow p-6 space-y-4">
 
-<p className="text-slate-500 text-sm">
+<p className="text-sm text-slate-500">
 Ask Albdy AI about your business finances.
 </p>
 
 <textarea
+value={question}
+onChange={(e)=>setQuestion(e.target.value)}
 placeholder="Example: How can I reduce my expenses?"
 className="w-full border rounded-lg px-4 py-3 h-32"
 />
 
-<button className="bg-red-500 text-white px-5 py-2 rounded-lg">
-Ask AI
+<button
+onClick={askAI}
+className="bg-red-500 text-white px-5 py-2 rounded-lg"
+>
+{loading ? "Thinking..." : "Ask AI"}
 </button>
 
+{answer && (
+<div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-slate-700">
+{answer}
 </div>
-
-</div>
-
 )}
 
+</div>
+
+</section>
+
+)}
 {/* ================= SETTINGS ================= */}
 
 {activeTab === "settings" && (
