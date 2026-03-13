@@ -1,58 +1,50 @@
-import { Router } from "express"
+import express from "express"
 import OpenAI from "openai"
-import authMiddleware from "../middleware/auth.middleware.js"
-import prisma from "../utils/prisma.js"
 
-const router = Router()
+const router = express.Router()
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 })
 
-// POST /api/ai/ask
-router.post("/ask", authMiddleware, async (req, res) => {
-  try {
-    const { message } = req.body
+router.post("/", async (req, res) => {
 
-    if (!message) {
-      return res.status(400).json({ error: "Message required" })
+  try {
+
+    const { question } = req.body
+
+    if (!question) {
+      return res.status(400).json({ error: "Question required" })
     }
 
-    // Fetch user's transactions
-    const transactions = await prisma.transaction.findMany({
-      where: { userId: req.user.id },
-      orderBy: { date: "desc" },
-    })
-
-    const formatted = transactions
-      .map(
-        (t) =>
-          `${t.date.toISOString()} | ${t.description} | ${t.amount}`
-      )
-      .join("\n")
-
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4.1-mini",
       messages: [
         {
           role: "system",
-          content:
-            "You are a financial assistant. Answer using the user's transaction data.",
+          content: "You are Albdy AI, a financial assistant helping businesses understand their finances."
         },
         {
           role: "user",
-          content: `User Transactions:\n${formatted}\n\nQuestion:\n${message}`,
-        },
-      ],
+          content: question
+        }
+      ]
     })
 
-    return res.json({
-      answer: completion.choices[0].message.content,
+    res.json({
+      answer: completion.choices[0].message.content
     })
+
   } catch (err) {
-    console.error("AI ERROR:", err)
-    return res.status(500).json({ error: "AI failed" })
+
+    console.error(err)
+
+    res.status(500).json({
+      error: "AI request failed"
+    })
+
   }
+
 })
 
 export default router
