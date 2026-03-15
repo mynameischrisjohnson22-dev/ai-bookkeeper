@@ -56,454 +56,523 @@ export default function Dashboard(){
   const [activeTab,setActiveTab] = useState<Tab>("dashboard")
   const [search,setSearch] = useState("")
   const [selected,setSelected] = useState<string[]>([])
-  const [settingsOpen, setSettingsOpen] = useState(false)
-const [question,setQuestion] = useState("")
-const [answer,setAnswer] = useState("")
-const [loading,setLoading] = useState(false)
+  const [settingsOpen,setSettingsOpen] = useState(false)
 
-const askAI = async () => {
+  /* ================= ASK AI ================= */
 
-  if (!question.trim()) return
+  const [question,setQuestion] = useState("")
+  const [answer,setAnswer] = useState("")
+  const [loading,setLoading] = useState(false)
 
-  setLoading(true)
-  setAnswer("")
+  const askAI = async () => {
 
-  try {
+    if(!question.trim()) return
 
-    const res = await api.post("/api/ai", {
-      question,
-      transactions: transactions || [],
-      categories: categories || []
-    })
+    setLoading(true)
+    setAnswer("")
 
-    setAnswer(res.data?.answer || "AI could not generate a response.")
+    try{
 
-  } catch (err) {
+      const res = await api.post("/api/ai",{
+        question,
+        transactions,
+        categories
+      })
 
-    console.error("AI request failed:", err)
+      setAnswer(res.data?.answer || "AI could not generate a response.")
 
-    setAnswer("Something went wrong while contacting AI.")
+    }catch(err){
 
-  } finally {
+      console.error("AI request failed:",err)
+      setAnswer("Something went wrong while contacting AI.")
 
-    setLoading(false)
+    }finally{
+
+      setLoading(false)
+
+    }
 
   }
 
-}
+
+  /* ================= CATEGORY ================= */
+
   const [newCategoryName,setNewCategoryName] = useState("")
   const [newCategoryType,setNewCategoryType] =
     useState<"Revenue"|"Expense">("Expense")
 
 
-/* ================= AUTH ================= */
+  /* ================= RECENT TRANSACTIONS ================= */
 
-useEffect(()=>{
+  const recentTransactions = useMemo(()=>{
 
-  const params = new URLSearchParams(window.location.search)
-  const tokenFromUrl = params.get("token")
+    return transactions
+      .slice()
+      .sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime())
+      .slice(0,5)
 
-  if(tokenFromUrl){
-    localStorage.setItem("token",tokenFromUrl)
-    window.history.replaceState({}, "", "/dashboard")
+  },[transactions])
+
+
+  /* ================= AUTH ================= */
+
+  useEffect(()=>{
+
+    const params = new URLSearchParams(window.location.search)
+    const tokenFromUrl = params.get("token")
+
+    if(tokenFromUrl){
+      localStorage.setItem("token",tokenFromUrl)
+      window.history.replaceState({}, "", "/dashboard")
+    }
+
+    const token = localStorage.getItem("token")
+
+    if(!token){
+      router.push("/auth/login")
+      return
+    }
+
+    setTokenReady(true)
+
+  },[router])
+
+
+  /* ================= LOAD DATA ================= */
+
+  const loadData = async ()=>{
+
+    const [txRes,catRes] = await Promise.all([
+      api.get("/api/transactions"),
+      api.get("/api/categories")
+    ])
+
+    setTransactions(txRes.data || [])
+
+    setCategories(
+      (catRes.data || []).map((c:any)=>({
+        ...c,
+        isRevenue:Boolean(c.isRevenue)
+      }))
+    )
+
   }
 
-  const token = localStorage.getItem("token")
+  useEffect(()=>{
+    if(tokenReady) loadData()
+  },[tokenReady])
 
-  if(!token){
-    router.push("/auth/login")
-    return
+
+  /* ================= FILTER ================= */
+
+  const filteredTransactions = useMemo(()=>{
+
+    return transactions.filter(t=>
+      t.description.toLowerCase().includes(search.toLowerCase())
+    )
+
+  },[transactions,search])
+
+
+  /* ================= TOTALS ================= */
+
+  const income =
+    filteredTransactions
+      .filter(t=>t.amount>0)
+      .reduce((sum,t)=>sum+t.amount,0)
+
+  const expenses =
+    filteredTransactions
+      .filter(t=>t.amount<0)
+      .reduce((sum,t)=>sum+t.amount,0)
+
+  const balance = income + expenses
+
+
+  /* ================= CHART DATA ================= */
+
+  type ChartPoint = {
+    date: string
+    revenue: number
+    expenses: number
+    profit: number
+    balance: number
   }
 
-  setTokenReady(true)
+  const chartData = useMemo<ChartPoint[]>(()=>{
 
-},[router])
+    const grouped: Record<string, ChartPoint> = {}
 
+    transactions.forEach((t)=>{
 
-/* ================= LOAD ================= */
+      const date = new Date(t.date).toISOString().slice(0,10)
 
-const loadData = async ()=>{
-
-  const [txRes,catRes] = await Promise.all([
-    api.get("/api/transactions"),
-    api.get("/api/categories")
-  ])
-
-  setTransactions(txRes.data || [])
-
-  setCategories(
-    (catRes.data || []).map((c:any)=>({
-      ...c,
-      isRevenue:Boolean(c.isRevenue)
-    }))
-  )
-
-}
-
-useEffect(()=>{
-  if(tokenReady) loadData()
-},[tokenReady])
-
-
-/* ================= FILTER ================= */
-
-const filteredTransactions = useMemo(()=>{
-  return transactions.filter(t=>
-    t.description.toLowerCase().includes(search.toLowerCase())
-  )
-},[transactions,search])
-
-
-/* ================= TOTALS ================= */
-
-const income =
-filteredTransactions
-.filter(t=>t.amount>0)
-.reduce((sum,t)=>sum+t.amount,0)
-
-const expenses =
-filteredTransactions
-.filter(t=>t.amount<0)
-.reduce((sum,t)=>sum+t.amount,0)
-
-const balance = income + expenses
-
-
-/* ================= CHART DATA ================= */
-
-type ChartPoint = {
-  date: string
-  revenue: number
-  expenses: number
-  profit: number
-  balance: number
-}
-
-const chartData = useMemo<ChartPoint[]>(() => {
-
-  const grouped: Record<string, ChartPoint> = {}
-
-  transactions.forEach((t) => {
-
-    const date = new Date(t.date).toISOString().slice(0, 10)
-
-    if (!grouped[date]) {
-      grouped[date] = {
-        date,
-        revenue: 0,
-        expenses: 0,
-        profit: 0,
-        balance: 0
+      if(!grouped[date]){
+        grouped[date] = {
+          date,
+          revenue:0,
+          expenses:0,
+          profit:0,
+          balance:0
+        }
       }
-    }
 
-    if (t.amount > 0) {
-      grouped[date].revenue += t.amount
-    } else {
-      grouped[date].expenses += Math.abs(t.amount)
-    }
+      if(t.amount>0){
+        grouped[date].revenue += t.amount
+      }else{
+        grouped[date].expenses += Math.abs(t.amount)
+      }
 
-  })
+    })
 
-  const sorted = Object.values(grouped).sort(
-    (a, b) =>
-      new Date(a.date).getTime() -
-      new Date(b.date).getTime()
-  )
+    const sorted = Object.values(grouped).sort(
+      (a,b)=>new Date(a.date).getTime()-new Date(b.date).getTime()
+    )
 
-  let runningBalance = 0
+    let runningBalance = 0
 
-  return sorted.map((d) => {
+    return sorted.map((d)=>{
 
-    const profit = d.revenue - d.expenses
-    runningBalance += profit
+      const profit = d.revenue - d.expenses
+      runningBalance += profit
 
-    return {
-      ...d,
-      profit,
-      balance: runningBalance
-    }
+      return{
+        ...d,
+        profit,
+        balance:runningBalance
+      }
 
-  })
+    })
 
-}, [transactions])
+  },[transactions])
 
+  /* ================= CREATE CATEGORY ================= */
 
-/* ================= CATEGORY ================= */
+const createCategory = async () => {
 
-const createCategory = async ()=>{
+  if (!newCategoryName.trim()) return
 
-  if(!newCategoryName.trim()) return
+  try {
 
-  await api.post("/api/categories",{
-    name:newCategoryName,
-    isRevenue:newCategoryType==="Revenue"
-  })
+    await api.post("/api/categories", {
+      name: newCategoryName,
+      isRevenue: newCategoryType === "Revenue"
+    })
 
-  setNewCategoryName("")
-  loadData()
+    setNewCategoryName("")
+    loadData()
 
-}
+  } catch (err) {
 
-const deleteCategory = async(id:string)=>{
-  await api.delete(`/api/categories/${id}`)
-  loadData()
-}
+    console.error("Failed to create category:", err)
 
-
-/* ================= SAVE BUSINESS ================= */
-
-const saveBusiness = async ()=>{
-
-  const today = new Date().toISOString()
-
-  const entries = categories.map(cat=>{
-
-    const raw = values[cat.id]
-
-    if(!raw) return null
-
-    const value = Number(raw)
-    if(isNaN(value)) return null
-
-    return{
-      date:today,
-      description:cat.name,
-      amount:cat.isRevenue ? value : -Math.abs(value),
-      categoryId:cat.id
-    }
-
-  }).filter(Boolean)
-
-  await Promise.all(
-    entries.map(entry=>api.post("/api/transactions",entry))
-  )
-
-  setValues({})
-  loadData()
-  setActiveTab("transactions")
+  }
 
 }
 
+    /* ================= DELETE CATEGORY ================= */
 
-/* ================= DELETE TX ================= */
+  const deleteCategory = async(id:string)=>{
 
-const deleteTransactions = async ()=>{
+    await api.delete(`/api/categories/${id}`)
+    loadData()
 
-  if(selected.length===0) return
-
-  await Promise.all(
-    selected.map(id=>api.delete(`/api/transactions/${id}`))
-  )
-
-  setSelected([])
-  loadData()
-
-}
+  }
 
 
-/* ================= LOADING ================= */
+  /* ================= SAVE BUSINESS ================= */
 
-if(!tokenReady){
+  const saveBusiness = async ()=>{
+
+    const today = new Date().toISOString()
+
+    const entries = categories.map(cat=>{
+
+      const raw = values[cat.id]
+
+      if(!raw) return null
+
+      const value = Number(raw)
+      if(isNaN(value)) return null
+
+      return{
+        date:today,
+        description:cat.name,
+        amount:cat.isRevenue ? value : -Math.abs(value),
+        categoryId:cat.id
+      }
+
+    }).filter(Boolean)
+
+    await Promise.all(
+      entries.map(entry=>api.post("/api/transactions",entry))
+    )
+
+    setValues({})
+    loadData()
+    setActiveTab("transactions")
+
+  }
+
+
+  /* ================= DELETE TRANSACTIONS ================= */
+
+  const deleteTransactions = async ()=>{
+
+    if(selected.length===0) return
+
+    await Promise.all(
+      selected.map(id=>api.delete(`/api/transactions/${id}`))
+    )
+
+    setSelected([])
+    loadData()
+
+  }
+
+
+  /* ================= LOADING ================= */
+
+  if(!tokenReady){
+    return(
+      <div className="h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    )
+  }
+
+
+  /* ================= UI ================= */
+
   return(
-    <div className="h-screen flex items-center justify-center">
-      Loading...
-    </div>
+
+  <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
+
+
+  {/* SIDEBAR */}
+
+  <aside className="w-64 bg-white border-r p-8">
+
+  <h2 className="text-red-500 font-bold text-xl mb-10">
+  Albdy
+  </h2>
+
+  {[
+  ["dashboard","Overview"],
+  ["transactions","Transactions"],
+  ["business","Business"],
+  ["billing","Billing"],
+  ["askai","Ask AI"]
+  ].map(([id,label]) => (
+
+  <button
+  key={id}
+  onClick={()=>setActiveTab(id as Tab)}
+  className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
+  activeTab===id
+  ? "bg-red-500 text-white"
+  : "text-slate-600 hover:bg-slate-100"
+  }`}
+  >
+  {label}
+  </button>
+
+  ))}
+
+  <button
+  onClick={()=>setActiveTab("settings")}
+  className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
+  >
+  Settings
+  </button>
+
+  </aside>
+
+
+  {/* MAIN */}
+
+  <main className="flex-1 p-10 space-y-10">
+
+
+  {/* ================= OVERVIEW ================= */}
+
+  {activeTab === "dashboard" && (
+
+  <section className="max-w-6xl space-y-8">
+
+
+  {/* BALANCE CARD */}
+
+  <div className="bg-white rounded-3xl p-8 shadow-lg border border-slate-100">
+
+  <p className="text-sm text-slate-500">
+  Current Balance
+  </p>
+
+  <h2 className="text-4xl font-bold text-green-600 mt-2">
+  ${balance.toFixed(2)}
+  </h2>
+
+  <p className="text-slate-400 text-sm mt-1">
+  Income minus expenses
+  </p>
+
+  </div>
+
+
+  {/* INCOME + EXPENSE CARDS */}
+
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+  <div className="bg-white rounded-2xl p-6 shadow border border-slate-100">
+
+  <p className="text-sm text-slate-500">
+  Income
+  </p>
+
+  <p className="text-2xl font-bold text-green-600 mt-1">
+  ${income.toFixed(2)}
+  </p>
+
+  </div>
+
+
+  <div className="bg-white rounded-2xl p-6 shadow border border-slate-100">
+
+  <p className="text-sm text-slate-500">
+  Expenses
+  </p>
+
+  <p className="text-2xl font-bold text-red-500 mt-1">
+  ${Math.abs(expenses).toFixed(2)}
+  </p>
+
+  </div>
+
+
+  {/* RECENT ACTIVITY */}
+
+  <div className="bg-white rounded-2xl p-6 shadow border border-slate-100">
+
+  <h3 className="font-semibold mb-4 text-slate-700">
+  Recent Activity
+  </h3>
+
+  {recentTransactions.length===0 && (
+
+  <p className="text-sm text-slate-400">
+  No transactions yet
+  </p>
+
+  )}
+
+  {recentTransactions.map(tx=>{
+
+  const positive = tx.amount>0
+
+  return(
+
+  <div key={tx.id} className="flex justify-between text-sm py-1">
+
+  <span className="text-slate-600">
+  {tx.description}
+  </span>
+
+  <span className={positive
+  ? "text-green-600 font-medium"
+  : "text-red-500 font-medium"}>
+
+  {positive ? "+" : "-"}${Math.abs(tx.amount)}
+
+  </span>
+
+  </div>
+
   )
-}
+
+  })}
+
+  </div>
+
+  </div>
 
 
-/* ================= UI ================= */
+  {/* FINANCIAL OVERVIEW CHART */}
 
-return(
+  <div className="bg-white rounded-3xl p-10 shadow-lg border border-slate-100">
 
-<div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex">
+  <h2 className="text-lg font-semibold mb-6">
+  Financial Overview
+  </h2>
 
+  <ResponsiveContainer width="100%" height={340}>
 
-{/* SIDEBAR */}
+  <LineChart
+  data={chartData}
+  margin={{ top:10,right:20,left:0,bottom:0 }}
+  >
 
-<aside className="w-64 bg-white border-r p-8">
+  <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3"/>
 
-<h2 className="text-red-500 font-bold text-xl mb-10">
-Albdy
-</h2>
+  <XAxis
+  dataKey="date"
+  tick={{fontSize:12}}
+  tickFormatter={(date)=>
+  new Date(date).toLocaleDateString(undefined,{
+  month:"short",
+  day:"numeric"
+  })}
+  />
 
-{[
-["dashboard","Overview"],
-["transactions","Transactions"],
-["business","Business"],
-["billing","Billing"],
-["askai","Ask AI"]
-].map(([id,label]) => (
+  <YAxis
+  tick={{fontSize:12}}
+  tickFormatter={(v)=>`$${v}`}
+  />
 
-<button
-key={id}
-onClick={() => setActiveTab(id as Tab)}
-className={`w-full text-left px-4 py-3 rounded-xl mb-2 ${
-activeTab === id
-? "bg-red-500 text-white"
-: "text-slate-600 hover:bg-slate-100"
-}`}
->
-{label}
-</button>
+  <Tooltip
+  formatter={(value:number)=>`$${value.toFixed(2)}`}
+  />
 
-))}
+  <Legend/>
 
-<button
-onClick={() => setActiveTab("settings")}
-className="w-full text-left px-4 py-3 rounded-xl mt-2 text-slate-600 hover:bg-slate-100"
->
-Settings
-</button>
+  <Line
+  type="natural"
+  dataKey="revenue"
+  stroke="#22c55e"
+  strokeWidth={3}
+  dot={false}
+  name="Revenue"
+  />
 
-</aside>
+  <Line
+  type="natural"
+  dataKey="expenses"
+  stroke="#ef4444"
+  strokeWidth={2}
+  dot={false}
+  name="Expenses"
+  />
 
+  <Line
+  type="natural"
+  dataKey="balance"
+  stroke="#6366f1"
+  strokeWidth={2}
+  strokeDasharray="5 5"
+  dot={false}
+  name="Balance"
+  />
 
-{/* MAIN */}
+  </LineChart>
 
-<main className="flex-1 p-10 space-y-10">
+  </ResponsiveContainer>
 
+  </div>
 
-{/* ================= OVERVIEW ================= */}
+  </section>
 
-{activeTab === "dashboard" && (
-
-<section className="max-w-6xl space-y-8">
-
-
-<div className="bg-white rounded-3xl p-8 shadow-lg border border-slate-100">
-
-<p className="text-sm text-slate-500">
-Current Balance
-</p>
-
-<h2 className="text-4xl font-bold text-green-600 mt-2">
-${balance.toFixed(2)}
-</h2>
-
-<p className="text-slate-400 text-sm mt-1">
-Income minus expenses
-</p>
-
-</div>
-
-
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-<div className="bg-white rounded-2xl p-6 shadow border border-slate-100">
-<p className="text-sm text-slate-500">Income</p>
-<p className="text-2xl font-bold text-green-600 mt-1">
-${income.toFixed(2)}
-</p>
-</div>
-
-<div className="bg-white rounded-2xl p-6 shadow border border-slate-100">
-<p className="text-sm text-slate-500">Expenses</p>
-<p className="text-2xl font-bold text-red-500 mt-1">
-${Math.abs(expenses).toFixed(2)}
-</p>
-</div>
-
-</div>
-
-
-<div className="bg-white rounded-3xl p-10 shadow-lg border border-slate-100">
-
-<h2 className="text-lg font-semibold mb-6">
-Financial Overview
-</h2>
-
-
-<ResponsiveContainer width="100%" height={340}>
-
-<LineChart
-data={chartData}
-margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
->
-
-<CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-
-<XAxis
-dataKey="date"
-tick={{ fontSize: 12 }}
-tickFormatter={(date)=>
-new Date(date).toLocaleDateString(undefined,{
-month:"short",
-day:"numeric"
-})
-}
-/>
-
-<YAxis
-tick={{ fontSize: 12 }}
-tickFormatter={(v)=>`$${v}`}
-/>
-
-<Tooltip
-formatter={(value:number)=>`$${value.toFixed(2)}`}
-contentStyle={{
-borderRadius:"10px",
-border:"1px solid #e5e7eb",
-fontSize:"13px"
-}}
-/>
-
-<Legend />
-
-<Line
-type="natural"
-dataKey="revenue"
-stroke="#22c55e"
-strokeWidth={3}
-dot={false}
-animationDuration={700}
-name="Revenue"
-/>
-
-<Line
-type="natural"
-dataKey="expenses"
-stroke="#ef4444"
-strokeWidth={2}
-dot={false}
-animationDuration={700}
-name="Expenses"
-/>
-
-<Area
-type="natural"
-dataKey="profit"
-stroke="#16a34a"
-fill="url(#profitGradient)"
-strokeWidth={2}
-animationDuration={700}
-name="Profit"
-/>
-
-<Line
-type="natural"
-dataKey="balance"
-stroke="#6366f1"
-strokeWidth={2}
-strokeDasharray="5 5"
-dot={false}
-animationDuration={700}
-name="Balance"
-/>
-
-</LineChart>
-
-</ResponsiveContainer>
-
-</div>
-
-</section>
-
-)}
-
-
-{/* ================= TRANSACTIONS ================= */}
+  )}
+  {/* ================= TRANSACTIONS ================= */}
 
 {activeTab === "transactions" && (
 
@@ -518,7 +587,7 @@ className="w-full border border-slate-200 px-4 py-3 rounded-xl"
 
 <div className="bg-white rounded-3xl shadow divide-y">
 
-{filteredTransactions.map(tx => {
+{filteredTransactions.map(tx=>{
 
 const positive = tx.amount > 0
 
@@ -575,6 +644,13 @@ positive ? "text-green-600" : "text-red-500"
 
 </div>
 
+<button
+onClick={deleteTransactions}
+className="bg-red-500 text-white px-5 py-2 rounded-lg"
+>
+Delete Selected
+</button>
+
 </div>
 
 )}
@@ -585,6 +661,7 @@ positive ? "text-green-600" : "text-red-500"
 {activeTab === "business" && (
 
 <div className="space-y-10 max-w-5xl">
+
 
 {/* REVENUE */}
 
@@ -610,10 +687,6 @@ className="border rounded-xl p-4"
 <p className="text-sm font-medium">
 {cat.name}
 </p>
-
-<span className="text-slate-400">
-•••
-</span>
 
 </div>
 
@@ -668,10 +741,6 @@ className="border rounded-xl p-4"
 <p className="text-sm font-medium">
 {cat.name}
 </p>
-
-<span className="text-slate-400">
-•••
-</span>
 
 </div>
 
@@ -760,6 +829,7 @@ Save Configuration
 
 )}
 
+
 {/* ================= ASK AI ================= */}
 
 {activeTab === "askai" && (
@@ -801,6 +871,8 @@ className="bg-red-500 text-white px-5 py-2 rounded-lg"
 </section>
 
 )}
+
+
 {/* ================= SETTINGS ================= */}
 
 {activeTab === "settings" && (
@@ -812,84 +884,7 @@ Settings
 </h1>
 
 
-{/* PROFILE */}
-
 <section className="bg-white rounded-2xl shadow p-8 space-y-5">
-
-<h2 className="text-lg font-semibold">
-Profile
-</h2>
-
-<p className="text-sm text-slate-500">
-Manage your account information and preferences.
-</p>
-
-<input
-value="albdyfinancial@gmail.com"
-readOnly
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<input
-placeholder="Business Name"
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<select className="w-full border border-slate-200 rounded-lg px-4 py-3">
-
-<option value="USD">USD</option>
-<option value="EUR">EUR</option>
-<option value="GBP">GBP</option>
-
-</select>
-
-<button className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg">
-Save Profile
-</button>
-
-</section>
-
-
-{/* SECURITY */}
-
-<section className="bg-white rounded-2xl shadow p-8 space-y-5">
-
-<h2 className="text-lg font-semibold">
-Security
-</h2>
-
-<p className="text-sm text-slate-500">
-Update your password and secure your account.
-</p>
-
-<input
-type="password"
-placeholder="Current Password"
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<input
-type="password"
-placeholder="New Password"
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<input
-type="password"
-placeholder="Confirm Password"
-className="w-full border border-slate-200 rounded-lg px-4 py-3"
-/>
-
-<button className="bg-black text-white px-5 py-2 rounded-lg">
-Update Password
-</button>
-
-</section>
-
-
-{/* ACCOUNT */}
-
-<section className="bg-white rounded-2xl shadow p-8 space-y-4">
 
 <h2 className="text-lg font-semibold">
 Account
@@ -903,25 +898,6 @@ router.push("/auth/login")
 className="bg-black text-white px-5 py-2 rounded-lg"
 >
 Log Out
-</button>
-
-</section>
-
-
-{/* DANGER ZONE */}
-
-<section className="bg-red-50 border border-red-200 rounded-2xl shadow p-8 space-y-4">
-
-<h2 className="text-lg font-semibold text-red-600">
-Danger Zone
-</h2>
-
-<p className="text-sm text-red-500">
-Deleting your account permanently removes all financial data.
-</p>
-
-<button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg">
-Delete Account
 </button>
 
 </section>
