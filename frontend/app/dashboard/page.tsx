@@ -188,6 +188,34 @@ export default function Dashboard(){
 
   const balance = income + expenses
 
+  /* ================= FINANCIAL HEALTH SCORE ================= */
+
+const financialHealthScore = useMemo(() => {
+
+  const revenue = transactions
+    .filter(t => t.amount > 0)
+    .reduce((s,t) => s + t.amount, 0)
+
+  const expense = Math.abs(
+    transactions
+      .filter(t => t.amount < 0)
+      .reduce((s,t) => s + t.amount, 0)
+  )
+
+  if(revenue === 0) return 50
+
+  const profitMargin = (revenue - expense) / revenue
+  const expenseRatio = expense / revenue
+
+  let score = 50
+
+  score += profitMargin * 40
+  score += (1 - expenseRatio) * 30
+
+  return Math.max(0, Math.min(100, Math.round(score)))
+
+}, [transactions])
+
 
   /* ================= CHART DATA ================= */
 
